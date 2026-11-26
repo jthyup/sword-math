@@ -193,6 +193,8 @@ body.testing .codexnote{display:inline}
 .slot b{display:block;font-family:"Black Han Sans";font-weight:400;font-size:16px;color:var(--ember2)}
 .slot.empty{background:transparent;border:2px dashed var(--line);color:var(--mute);cursor:default;display:flex;align-items:center;justify-content:center}
 .slot[aria-pressed=true]{border-color:var(--ember2);box-shadow:0 0 14px rgba(255,160,60,.45)}
+.goldpill{font-size:15px;color:#ffd98a;background:rgba(255,190,80,.12);border:1px solid rgba(255,190,80,.35);border-radius:999px;padding:4px 12px}
+.goldpill b{font-family:"Black Han Sans";font-weight:400;font-size:17px;margin-left:4px}
 .slot .tag{position:absolute;top:4px;right:4px;background:var(--ember);color:#fff;border-radius:6px;padding:1px 5px;font-size:11px}
 .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;align-items:center}
 .btn.merge{background:linear-gradient(180deg,#ff7a1a,#c2410c)}
@@ -297,7 +299,7 @@ legend{font-family:"Black Han Sans";font-size:18px;padding:0 6px}
 <header class="band wrap">
   <div><h1>연산 대장간</h1><p>문제를 맞히면 강화권! 망치로 두드려 전설의 검을 만들어 보세요.</p></div>
   <div class="who" id="who"></div>
-  <div class="stats"><span>푼 문제 <b id="sSolved">0</b></span><span>정답률 <b id="sAcc">0%</b></span><span>연속 정답 <b id="sCombo">0</b></span><span>최고 무기 <b id="sBest">나무 검</b></span><span>파괴 <b id="sBoom">0</b>번</span></div>
+  <div class="stats"><span>푼 문제 <b id="sSolved">0</b></span><span>정답률 <b id="sAcc">0%</b></span><span>연속 정답 <b id="sCombo">0</b></span><span>최고 무기 <b id="sBest">나무 검</b></span><span>파괴 <b id="sBoom">0</b>번</span><span>골드 <b id="sGold">0</b></span></div>
 </header>
 
 <main class="band" style="padding-top:12px">
@@ -365,6 +367,11 @@ legend{font-family:"Black Han Sans";font-size:18px;padding:0 6px}
   <div class="actions" id="invActions"></div>
   <p class="note" id="invMsg"></p>
 </section>
+<section class="card shelfcard shopcard">
+  <div class="shelfhead"><h2>상점</h2><span class="goldpill">가진 골드 <b id="shopGold">0</b></span></div>
+  <div class="shelf"><div class="slot empty">준비 중</div><div class="slot empty">준비 중</div><div class="slot empty">준비 중</div><div class="slot empty">준비 중</div></div>
+  <p class="note">보관함의 무기를 팔면 골드를 받아요. 상점 물건은 곧 들어와요.</p>
+</section>
 </main>
 
 <section class="band" style="padding-top:8px">
@@ -387,7 +394,7 @@ legend{font-family:"Black Han Sans";font-size:18px;padding:0 6px}
       <li>파괴가 걱정되면 무기를 보관하고 새 나무 검으로 다시 시작해요 (보관함 10칸)</li>
       <li>강화 단계가 같은 무기 두 자루를 합치면 다음 단계로 100% 강화돼요 (예: +12 두 자루 → +13)</li>
       <li>작업대 무기와 보관함 무기의 단계가 같으면 바로 합칠 수 있어요</li>
-      <li>필요 없는 무기는 녹여서 강화권을 돌려받아요 (강화 단계의 절반)</li>
+      <li>필요 없는 무기는 팔아서 골드를 받아요 (강화 단계가 높을수록 비싸요: +10 → 1,000골드, +20 → 4,000골드)</li>
       <li>정답 1개 → 강화권 1장 (★ 어려운 문제는 2장)</li>
       <li>5연속 정답 → 보너스 강화권 1장</li>
       <li>오답 → 정답을 보여 주고 연속 기록 초기화</li>
@@ -414,7 +421,7 @@ legend{font-family:"Black Han Sans";font-size:18px;padding:0 6px}
   </form>
   <p class="note" id="tMsg">학생은 로그인 화면에서 "처음 왔어요"로 가입하고, 다음부터 이름과 비밀번호 4자리로 들어와요.</p>
   <div class="tbl" style="margin-top:14px">
-    <table><thead><tr><th>학생</th><th>랭킹 별명</th><th>문제 범위</th><th class="n">푼 문제</th><th class="n">정답률</th><th>현재 무기</th><th>최고 무기</th><th class="n">파괴</th><th>약한 단원</th><th>마지막 접속</th><th></th></tr></thead><tbody id="roster"></tbody></table>
+    <table><thead><tr><th>학생</th><th>랭킹 별명</th><th>문제 범위</th><th class="n">푼 문제</th><th class="n">정답률</th><th>현재 무기</th><th>최고 무기</th><th class="n">골드</th><th class="n">파괴</th><th>약한 단원</th><th>마지막 접속</th><th></th></tr></thead><tbody id="roster"></tbody></table>
   </div>
 </div>
 </section>
@@ -490,7 +497,8 @@ function baseRate(L){
 }
 const PITY_STEP=3,PITY_MAX=15;
 
-const def={w:{L:0},inv:[],best:0,tk:0,solved:0,right:0,combo:0,fails:0,booms:0,units:[],byUnit:{},nick:'',wk:'',wn:0,rangeSet:false};
+const sellPrice=L=>L<1?5:L*L*10;
+const def={w:{L:0},inv:[],best:0,tk:0,gold:0,solved:0,right:0,combo:0,fails:0,booms:0,units:[],byUnit:{},nick:'',wk:'',wn:0,rangeSet:false};
 const fresh=()=>JSON.parse(JSON.stringify(def));
 let S=fresh();
 const $=id=>document.getElementById(id);
@@ -612,7 +620,7 @@ function fromRaw(raw){
   if(raw.units===undefined&&typeof raw.unit==='string'&&raw.unit!=='mix')o.units=[raw.unit];
   o.rangeSet=o.rangeSet===true;
   o.nick=typeof o.nick==='string'?o.nick.slice(0,8):'';o.wk=typeof o.wk==='string'?o.wk:'';
-  for(const k of ['tk','solved','right','combo','fails','booms','wn'])o[k]=Math.max(0,Math.floor(+o[k]||0));
+  for(const k of ['tk','gold','solved','right','combo','fails','booms','wn'])o[k]=Math.max(0,Math.floor(+o[k]||0));
   return o;
 }
 const r1=v=>+(+v).toFixed(1);
@@ -926,7 +934,7 @@ function render(){
   $('nextBar').style.width=(k/STEP*100)+'%';
   $('tk').textContent=test?'∞':S.tk;
   $('hammer').disabled=busy||(!test&&S.tk<1);
-  $('sSolved').textContent=S.solved;
+  $('sSolved').textContent=S.solved;$('sGold').textContent=S.gold.toLocaleString('ko-KR');$('shopGold').textContent=S.gold.toLocaleString('ko-KR');
   $('sAcc').textContent=S.solved?Math.round(S.right/S.solved*100)+'%':'0%';
   $('sCombo').textContent=S.combo;$('sBest').textContent=wname(S.best);$('sBoom').textContent=S.booms;
   renderQ();renderShelf();
@@ -944,7 +952,7 @@ function renderShelf(){
     return `<button class="slot" data-slot="${i}" aria-pressed="${sel.includes(i)}">${pairOf(i)?'<span class="tag">짝</span>':''}<svg viewBox="0 0 128 128">${swordSVG(gOf(x.L),x.L%STEP,'s'+i,x.L)}</svg><b>+${x.L}</b>${esc(gname(gOf(x.L)))}</button>`}).join('');
   const A=$('invActions'),M=$('invMsg'),mi=L>=1?inv.findIndex(x=>x.L===L):-1;
   if(sel.length===1){const i=sel[0],x=inv[i],same=x.L===L&&L>=1;
-    A.innerHTML=(same?`<button class="btn sm merge" data-mw="${i}">작업대 무기와 합치기 → +${L+1}</button>`:'')+`<button class="btn sm" id="swapW">꺼내서 강화하기</button><button class="ghost" id="meltW">녹이기 (강화권 +${Math.floor(x.L/2)})</button>`;
+    A.innerHTML=(same?`<button class="btn sm merge" data-mw="${i}">작업대 무기와 합치기 → +${L+1}</button>`:'')+`<button class="btn sm" id="swapW">꺼내서 강화하기</button><button class="ghost" id="sellW">팔기 (골드 +${sellPrice(x.L).toLocaleString('ko-KR')})</button>`;
     M.textContent=`${wname(x.L)}을(를) 골랐어요. 꺼내면 지금 작업대의 무기가 이 칸에 들어가요.`+(same?' 작업대 무기와 단계가 같아서 바로 합칠 수 있어요.':' 같은 단계 무기를 하나 더 고르면 합칠 수 있어요.');
   }else if(sel.length===2){const [a,b]=sel.map(i=>inv[i]);
     if(canMerge(a,b)){A.innerHTML=`<button class="btn sm merge" id="mergeW">합치기 → +${a.L+1} (100%)</button>`;M.textContent='같은 단계 두 자루를 합치면 다음 단계로 확실하게 강화돼요. 합친 무기는 작업대에 올라가요.'}
@@ -1125,9 +1133,9 @@ function renderRoster(){
     const acc=s.solved?Math.round(s.right/s.solved*100)+'%':'-';
     const last=s.last?new Date(s.last).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}):'-';
     const fresh7=s.self&&s.joined&&Date.now()-Date.parse(s.joined)<7*864e5;
-    return `<tr><td>${esc(s.name)}${fresh7?'<span class="newtag">새로 가입</span>':''}</td><td>${s.nick?`${esc(s.nick)} <button class="linkbtn" data-clrnick="${esc(s.id)}">지우기</button>`:'-'}</td><td style="white-space:nowrap">${normR(s.range)?`<b>개별 ${normR(s.range).length}개</b>`:'반 공통'} <button class="linkbtn" data-srange="${esc(s.id)}">정하기</button></td><td class="n">${+s.solved||0}</td><td class="n">${acc}</td><td>${esc(wname(st.w.L))}</td><td>${esc(wname(st.best))}</td><td class="n">${+s.booms||0}</td><td>${esc(weak(s))}</td><td>${esc(last)}</td>
+    return `<tr><td>${esc(s.name)}${fresh7?'<span class="newtag">새로 가입</span>':''}</td><td>${s.nick?`${esc(s.nick)} <button class="linkbtn" data-clrnick="${esc(s.id)}">지우기</button>`:'-'}</td><td style="white-space:nowrap">${normR(s.range)?`<b>개별 ${normR(s.range).length}개</b>`:'반 공통'} <button class="linkbtn" data-srange="${esc(s.id)}">정하기</button></td><td class="n">${+s.solved||0}</td><td class="n">${acc}</td><td>${esc(wname(st.w.L))}</td><td>${esc(wname(st.best))}</td><td class="n">${st.gold.toLocaleString('ko-KR')}</td><td class="n">${+s.booms||0}</td><td>${esc(weak(s))}</td><td>${esc(last)}</td>
     <td style="white-space:nowrap"><button class="ghost danger" data-del="${esc(s.id)}">기록 삭제</button></td></tr>`}).join('')
-    ||'<tr><td colspan="11" class="note">아직 학생이 없어요. 학생이 가입하면 여기에 바로 나타나요.</td></tr>';
+    ||'<tr><td colspan="12" class="note">아직 학생이 없어요. 학생이 가입하면 여기에 바로 나타나요.</td></tr>';
 }
 $('allowSignup').addEventListener('change',async e=>{
   const v=e.target.checked;
@@ -1347,13 +1355,13 @@ $('forceWin').addEventListener('change',e=>{forceWin=test&&e.target.checked;rend
 $('keepNew').addEventListener('click',()=>{
   const M=$('invMsg');
   if(S.w.L===0){M.textContent='아직 강화하지 않은 새 나무 검이에요. 조금 강화한 뒤 보관해 보세요.';return}
-  if(S.inv.length>=INV_MAX){M.textContent='보관함이 가득 찼어요. 무기를 합치거나 녹여서 자리를 만들어 주세요.';return}
+  if(S.inv.length>=INV_MAX){M.textContent='보관함이 가득 찼어요. 무기를 합치거나 팔아서 자리를 만들어 주세요.';return}
   if(busy)return;
   morph(()=>{S.inv.push({...S.w});S.w={L:0};S.fails=0;sel=[]},false,'새 나무 검으로 시작!');
 });
 document.addEventListener('click',e=>{
   const sl=e.target.closest('[data-slot]'),mw=e.target.closest('[data-mw]');
-  if(busy&&(sl||mw||['swapW','meltW','mergeW'].includes(e.target.id)))return;
+  if(busy&&(sl||mw||['swapW','sellW','mergeW'].includes(e.target.id)))return;
   if(sl){const i=+sl.dataset.slot;sel=sel.includes(i)?sel.filter(x=>x!==i):[...sel,i].slice(-2);renderShelf();return}
   const id=e.target.id;
   if(id==='clearSel'){sel=[];renderShelf()}
@@ -1361,10 +1369,10 @@ document.addEventListener('click',e=>{
     const nl=L+1,up=gOf(nl)>gOf(L);
     morph(()=>{S.inv.splice(i,1);S.w={L:nl};S.fails=0;S.best=Math.max(S.best,nl);sel=[]},up,up?`변신! ${gname(gOf(nl))}`:`합성 성공! +${nl}`)}
   if(id==='swapW'&&sel.length===1){const i=sel[0],t=S.inv[i];morph(()=>{S.inv[i]={...S.w};S.w=t;S.fails=0;sel=[]},false,wname(t.L))}
-  if(id==='meltW'&&sel.length===1){const b=e.target;
-    if(!b.dataset.ok){b.dataset.ok=1;b.textContent='정말 녹일까요? 한 번 더 누르기';return}
-    const i=sel[0],x=S.inv[i],back=Math.floor(x.L/2);S.inv.splice(i,1);S.tk+=back;sel=[];render();save();
-    $('invMsg').textContent=`${wname(x.L)}을(를) 녹여 강화권 ${back}장을 돌려받았어요.`}
+  if(id==='sellW'&&sel.length===1){const b=e.target;
+    if(!b.dataset.ok){b.dataset.ok=1;b.textContent='정말 팔까요? 한 번 더 누르기';return}
+    const i=sel[0],x=S.inv[i],got=sellPrice(x.L);S.inv.splice(i,1);S.gold+=got;sel=[];render();save();
+    $('invMsg').textContent=`${wname(x.L)}을(를) 팔아서 ${got.toLocaleString('ko-KR')}골드를 받았어요.`}
   if(id==='mergeW'&&sel.length===2){
     const [i,j]=sel,a=S.inv[i],b=S.inv[j];if(!canMerge(a,b))return;
     const nw={L:a.L+1},old={...S.w},keepOld=old.L>0,up=gOf(nw.L)>gOf(a.L);
