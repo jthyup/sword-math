@@ -955,7 +955,7 @@ function renderShelf(){
     M.textContent='파괴가 걱정되면 작업대 무기를 보관하고 새로 시작하세요. 같은 단계 무기 두 자루를 합치면 다음 단계로 100% 강화돼요.';
   }
 }
-const canTest=()=>mode==='local'||canManage;
+const canTest=()=>isTeacher&&canManage;
 function renderWho(){
   const w=$('who'),tb=canTest()&&!test?'<button class="ghost testbtn" id="testOn">테스트 모드</button>':'';
   if(mode==='fb'&&me)w.innerHTML=`<span><b>${esc(me.name)}</b> 대장장이</span>${tb}<button class="ghost" id="logout">로그아웃</button>`;
