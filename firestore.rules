@@ -57,9 +57,14 @@ service cloud.firestore {
     match /sm_students/{uid} {
       allow read: if signedIn() && (request.auth.uid == uid || isTeacher());
       allow create: if isTeacher()
-        || (signedIn() && request.auth.uid == uid && signupOpen() && validStudent());
+        || (signedIn() && request.auth.uid == uid && signupOpen() && validStudent()
+            && request.resource.data.get('care', false) == false
+            && request.resource.data.get('range', null) == null);
+      // 학생은 자기 기록을 고칠 수 있지만, 선생님이 정한 '기초 지원'과 '문제 범위'는 못 바꿔요.
       allow update: if isTeacher()
-        || (signedIn() && request.auth.uid == uid && validStudent());
+        || (signedIn() && request.auth.uid == uid && validStudent()
+            && request.resource.data.get('care', false) == resource.data.get('care', false)
+            && request.resource.data.get('range', null) == resource.data.get('range', null));
       allow delete: if isTeacher();
     }
 
