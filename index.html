@@ -96,7 +96,18 @@ body.testing .codexnote{display:inline}
 .tiers .lock svg{filter:brightness(0);opacity:.45}.tiers .lock{color:#8a7a6e}
 .rules>.card:first-child{grid-column:1/-1}
 .tiers svg{height:84px}
-.hammerfx{position:absolute;left:62%;top:22%;width:26%;height:auto;aspect-ratio:1;z-index:3;transform-origin:50% 94%;transform:rotate(-15deg);filter:drop-shadow(0 6px 8px rgba(0,0,0,.5));pointer-events:none}
+.hammerbtn{position:absolute;left:58%;top:12%;width:34%;z-index:3;border:0;background:none;padding:0;cursor:pointer;display:flex;flex-direction:column;align-items:center;font:inherit;color:#fff}
+.hammerfx{display:block;width:76%;height:auto;aspect-ratio:1;transform-origin:50% 94%;transform:rotate(-15deg);filter:drop-shadow(0 6px 8px rgba(0,0,0,.5));margin-left:12%}
+.hlabel{margin-top:2px;font-family:"Black Han Sans";font-size:clamp(16px,3.4vw,22px);line-height:1.1;padding:6px 12px 7px;border-radius:12px;background:linear-gradient(180deg,#ff7a1a,#c2410c);box-shadow:0 4px 0 #7c2d12;text-align:center;white-space:nowrap}
+.hlabel small{display:block;font-family:"Gowun Dodum",sans-serif;font-weight:700;font-size:12px;opacity:.95}
+.hlabel b{font-weight:800}
+.hammerbtn:active .hlabel{transform:translateY(3px);box-shadow:0 1px 0 #7c2d12}
+.hammerbtn:hover .hammerfx{filter:drop-shadow(0 0 10px rgba(255,200,120,.8))}
+.hammerbtn:focus-visible{outline:3px solid var(--ember2);outline-offset:4px;border-radius:12px}
+.hammerbtn:disabled{cursor:not-allowed}
+.hammerbtn:disabled .hlabel{filter:grayscale(1);opacity:.6}
+.hammerbtn:not(:disabled) .hlabel{animation:nudge 2.4s ease-in-out infinite}
+@keyframes nudge{0%,80%,100%{transform:none}88%{transform:translateY(-3px)}}
 .hammerfx.swing{animation:swing .52s cubic-bezier(.5,0,.6,1)}
 @keyframes swing{0%{transform:rotate(-15deg)}35%{transform:rotate(28deg)}55%{transform:rotate(-80deg)}68%{transform:rotate(-70deg)}100%{transform:rotate(-15deg)}}
 .stage.shake{animation:shake .22s}
@@ -129,6 +140,23 @@ body.testing .codexnote{display:inline}
 @keyframes flapL{0%,100%{transform:rotate(0)}50%{transform:rotate(9deg)}}
 @keyframes halo{0%,100%{opacity:.45;transform:scale(.96)}50%{opacity:.9;transform:scale(1.04)}}
 @keyframes twinkle{0%,100%{opacity:0;transform:scale(.3)}50%{opacity:1;transform:scale(1)}}
+/* 학년별 단원 고르기 (작은 칩) */
+.rp{display:grid;gap:8px}
+.rp-row{display:grid;grid-template-columns:88px minmax(0,1fr);gap:8px;align-items:start}
+.rp .rp-row:has(.rp-head){grid-template-columns:minmax(0,1fr);gap:6px;padding:6px 0;border-bottom:1px solid var(--line)}
+.rp-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.rp-more{font:inherit;font-size:13px;min-height:34px;padding:0 10px;border:0;background:none;color:var(--mute);text-decoration:underline;cursor:pointer}
+.rp-sem{align-self:center;font-size:11px;font-weight:700;color:var(--mute);padding:0 2px 0 4px}
+.rp-sem:not(:first-child){margin-left:6px;border-left:1px solid var(--line);padding-left:10px}
+.rp-grade{font:inherit;font-weight:700;font-size:14px;min-height:36px;padding:0 10px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer;white-space:nowrap}
+.rp-grade small{font-weight:400;opacity:.75;margin-left:2px}
+.rp-grade[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:var(--panel)}
+.rp-units{display:flex;flex-wrap:wrap;gap:6px}
+.rp-u{font:inherit;font-size:13px;min-height:34px;padding:0 10px;border-radius:999px;border:1.5px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
+.rp-u i{font-style:normal;font-size:11px;opacity:.65;margin-right:3px}
+.rp-u[aria-pressed=true]{background:var(--ember);border-color:var(--ember);color:#fff}
+.rp-u[aria-pressed=true] i{opacity:.85}
+@media(max-width:520px){.rp-row{grid-template-columns:minmax(0,1fr)}.rp-grade{justify-self:start}}
 .shelfcard{max-width:1180px;margin:20px auto 0}
 .gbox.srbox{width:min(100%,960px)}
 .qpic{display:block;margin:10px auto 0;max-width:100%;height:auto}
@@ -202,7 +230,7 @@ legend{font-family:"Black Han Sans";font-size:18px;padding:0 6px}
 .ck{display:flex;align-items:center;gap:10px;min-height:44px;cursor:pointer}
 .ck input{flex:none;width:22px;height:22px;min-height:0;accent-color:var(--ember)}
 @media(max-width:760px){.game{grid-template-columns:minmax(0,1fr)}.stage{min-height:500px}}
-@media(max-width:460px){.forge{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.hammer{grid-column:1/-1}}
+
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.msg.show{opacity:1}}
 </style>
 </head>
@@ -221,6 +249,7 @@ legend{font-family:"Black Han Sans";font-size:18px;padding:0 6px}
     <div class="tier"><span id="tierIdx">1단계 무기</span><b id="tierName">나무 검</b></div>
     <div class="swordbox">
       <svg id="sword" viewBox="-24 -48 176 176" aria-hidden="true"></svg>
+      <button class="hammerbtn" id="hammer" aria-label="망치질해서 강화하기">
       <svg class="hammerfx" id="hammerFx" viewBox="0 0 110 110" aria-hidden="true">
       <defs><linearGradient id="hh" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#aab3bd"/><stop offset=".45" stop-color="#5e6873"/><stop offset="1" stop-color="#2c3238"/></linearGradient>
       <linearGradient id="hw" x1="0" x2="1"><stop offset="0" stop-color="#b07a45"/><stop offset="1" stop-color="#6b4423"/></linearGradient></defs>
@@ -229,6 +258,8 @@ legend{font-family:"Black Han Sans";font-size:18px;padding:0 6px}
       <rect x="14" y="6" width="5" height="34" rx="1.5" fill="#d7dde3" opacity=".8"/>
       <rect x="46" y="33" width="18" height="8" rx="2" fill="#3b414a"/>
     </svg>
+      <span class="hlabel">망치질!<small>강화권 <b id="tk">0</b>장</small></span>
+      </button>
     </div>
     <svg class="anvil" viewBox="0 0 320 90" aria-hidden="true">
       <defs><linearGradient id="av" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6b7480"/><stop offset=".25" stop-color="#3b414a"/><stop offset="1" stop-color="#1c1f24"/></linearGradient></defs>
@@ -262,10 +293,6 @@ legend{font-family:"Black Han Sans";font-size:18px;padding:0 6px}
       </form>
       <div class="choices" id="choices" hidden></div>
       <div class="feedback" id="fb" aria-live="polite">문제를 맞히면 강화권을 받아요!</div>
-    </div>
-    <div class="card forge">
-      <div class="inv"><span class="big" id="tk">0</span> 장 <small>강화권</small></div>
-      <button class="hammer" id="hammer">망치질!</button>
     </div>
   </div>
 </section>
@@ -316,7 +343,7 @@ legend{font-family:"Black Han Sans";font-size:18px;padding:0 6px}
   <h2>선생님 관리</h2>
   <h3>출제 범위</h3>
   <p class="note" style="margin-top:0">체크한 단원에서만 문제가 나와요. 진도에 맞춰 바꿔 주세요.</p>
-  <div class="range" id="range"></div>
+  <div id="range" style="margin-top:10px"></div>
   <div class="row"><button class="btn sm" id="saveRange">출제 범위 저장</button><span class="note" id="rMsg" style="margin:0"></span></div>
   <h3>학생 관리 <span class="note" id="rosterCount" style="font-family:'Gowun Dodum';font-size:15px"></span></h3>
   <label class="ck"><input type="checkbox" id="allowSignup" checked> 학생이 스스로 가입할 수 있어요</label>
@@ -751,7 +778,9 @@ let cur=gen();
 function chips(){
   const list=enabled.filter(id=>U[id]);
   const c=chosen(),all=c.length===list.length,none=!c.length;
-  $('ops').innerHTML=`<button class="chip" data-unit="all" aria-pressed="${all}">전체</button>`+list.map(id=>`<button class="chip" data-unit="${id}" aria-pressed="${c.includes(id)}"><span class="unitlbl">${U[id].sem}</span>${U[id].name}</button>`).join('');
+  const grades=[1,2,3].map(String).filter(g=>list.some(id=>U[id].sem[0]===g));
+  $('ops').innerHTML=`<div class="rp"><div><button class="rp-grade" data-unit="all" aria-pressed="${all}">전체</button></div>${grades.map(g=>{const ids=list.filter(id=>U[id].sem[0]===g),on=ids.filter(i=>c.includes(i)).length;
+    return `<div class="rp-row"><button class="rp-grade" data-unit="g${g}" aria-pressed="${on===ids.length}">${g}학년 <small>${on}/${ids.length}</small></button><div class="rp-units">${unitChips(ids,new Set(c),'data-unit')}</div></div>`}).join('')}</div>`;
   $('rangeNote').textContent=none?'고른 단원이 없어요. 풀고 싶은 단원을 눌러 주세요.':(c.length===1&&!all?`${U[c[0]].sem} ${U[c[0]].name} 문제만 나와요.`:`${all?'모든 단원':c.length+'개 단원'}에서 문제가 섞여 나와요.`)+' 여러 개를 눌러 고를 수 있어요.'+(mode==='fb'?(me&&myRange?` (선생님이 정해 준 나만의 범위 ${list.length}개 단원)`:` (선생님이 연 범위 ${list.length}개 단원)`):'');
 }
 function renderQ(){
@@ -908,7 +937,7 @@ async function onAuth(u){
   if(google){
     if(u.email===TEACHER_EMAIL){
       isTeacher=true;canManage=true;me=null;S=fresh();$('gate').hidden=true;
-      startRoster();renderRange();render();renderWho();subRank();$('allowRank').checked=cfg.ranking!==false;
+      rpOpen.r=rpPartial(new Set(enabled));startRoster();renderRange();render();renderWho();subRank();$('allowRank').checked=cfg.ranking!==false;
       $('allowSignup').checked=cfg.signup!==false;
       setTimeout(()=>$('teacher').scrollIntoView({behavior:'smooth'}),300);
       return;
@@ -968,7 +997,7 @@ document.addEventListener('submit',async e=>{
 let rangeDraft=null;
 function renderRange(){
   if(!canManage)return;const sel=new Set(rangeDraft||enabled);
-  $('range').innerHTML=SEMS.map(sem=>`<fieldset><legend>${sem}학기</legend>${UNITS.filter(u=>u.sem===sem).map(u=>`<label class="ck"><input type="checkbox" data-rid="${u.id}" ${sel.has(u.id)?'checked':''}> ${u.name}</label>`).join('')}<button class="ghost" data-sem="${sem}">${sem} 전체 선택/해제</button></fieldset>`).join('');
+  $('range').innerHTML=rangePicker(sel,'r');
 }
 async function saveSettings(over){return FF.setDoc(FF.doc(fs,COL_SET,'class'),{units:enabled,signup:cfg.signup!==false,ranking:cfg.ranking!==false,...over})}
 async function saveRange(){
@@ -1027,25 +1056,42 @@ document.addEventListener('click',async e=>{
   }
 });
 
+// 학기 이름표 + 단원 칩
+function unitChips(ids,sel,attr){
+  const by={};ids.forEach(id=>(by[U[id].sem]=by[U[id].sem]||[]).push(id));
+  return Object.entries(by).map(([sem,arr])=>`<span class="rp-sem">${sem.slice(2)}학기</span>${arr.map(id=>`<button class="rp-u" ${attr}="${id}" aria-pressed="${sel.has(id)}">${U[id].name}</button>`).join('')}`).join('');
+}
+// 학년별로 접는 단원 고르기: sel=Set, pfx='r'(반 공통) 또는 's'(학생별)
+const rpOpen={r:new Set(),s:new Set()};
+function rangePicker(sel,pfx){
+  return `<div class="rp">${[1,2,3].map(String).map(g=>{const ids=UNITS.filter(u=>u.sem[0]===g).map(u=>u.id),on=ids.filter(i=>sel.has(i)).length,open=rpOpen[pfx].has(g);
+    return `<div class="rp-row"><div class="rp-head"><button class="rp-grade" data-${pfx}g="${g}" aria-pressed="${on===ids.length}">${g}학년 <small>${on}/${ids.length}</small></button><button class="rp-more" data-${pfx}x="${g}" aria-expanded="${open}">${open?'접기':'단원 고르기'}</button></div>${open?`<div class="rp-units">${unitChips(ids,sel,`data-${pfx}u`)}</div>`:''}</div>`}).join('')}</div>`;
+}
+const rpPartial=sel=>new Set(['1','2','3'].filter(g=>{const ids=UNITS.filter(u=>u.sem[0]===g).map(u=>u.id),on=ids.filter(i=>sel.has(i)).length;return on>0&&on<ids.length}));
+function togglePick(set,btn,pfx){
+  const u=btn.dataset[pfx+'u'],g=btn.dataset[pfx+'g'];
+  if(u){set.has(u)?set.delete(u):set.add(u)}
+  if(g){const ids=UNITS.filter(x=>x.sem[0]===g).map(x=>x.id),all=ids.every(i=>set.has(i));ids.forEach(i=>all?set.delete(i):set.add(i))}
+}
 /* ---------- 학생별 문제 범위 ---------- */
 let srId=null,srDraft=null;
 function openSR(id){
   const s=students.find(x=>x.id===id);if(!s)return;
-  srId=id;srDraft=new Set(normR(s.range)||classUnits);renderSR();$('srModal').hidden=false;
+  srId=id;srDraft=new Set(normR(s.range)||classUnits);rpOpen.s=rpPartial(srDraft);renderSR();$('srModal').hidden=false;
 }
 function renderSR(){
   const s=students.find(x=>x.id===srId)||{};
   $('srBox').innerHTML=`<h2>${esc(s.name||'학생')} 문제 범위</h2>
     <p class="note" style="margin-top:0">체크한 단원만 이 학생에게 나와요. 반 공통 범위보다 이 설정이 먼저 적용돼요. 기초가 필요한 학생은 1·2학년 단원을 켜 주세요.</p>
-    <div class="range">${SEMS.map(sem=>`<fieldset><legend>${sem}학기</legend>${UNITS.filter(u=>u.sem===sem).map(u=>`<label class="ck"><input type="checkbox" data-srid="${u.id}" ${srDraft.has(u.id)?'checked':''}> ${u.name}</label>`).join('')}<button class="ghost" data-ssem="${sem}">${sem} 전체 선택/해제</button></fieldset>`).join('')}</div>
+    ${rangePicker(srDraft,'s')}
     <div class="err" id="srErr"></div>
     <div class="actions"><button class="btn sm" id="srSave">이 학생 범위 저장</button><button class="ghost" id="srReset">반 공통으로 되돌리기</button><button class="ghost" id="srClose">닫기</button></div>`;
 }
-document.addEventListener('change',e=>{const c=e.target.closest('[data-srid]');if(!c)return;c.checked?srDraft.add(c.dataset.srid):srDraft.delete(c.dataset.srid)});
 document.addEventListener('click',async e=>{
   const sr=e.target.closest('[data-srange]');if(sr&&isTeacher){openSR(sr.dataset.srange);return}
-  const ss=e.target.closest('[data-ssem]');
-  if(ss&&srDraft){const ids=UNITS.filter(u=>u.sem===ss.dataset.ssem).map(u=>u.id),all=ids.every(i=>srDraft.has(i));ids.forEach(i=>all?srDraft.delete(i):srDraft.add(i));renderSR()}
+  const sx=e.target.closest('[data-sx]');if(sx&&srDraft){const g=sx.dataset.sx;rpOpen.s.has(g)?rpOpen.s.delete(g):rpOpen.s.add(g);renderSR();return}
+  const sb=e.target.closest('[data-su],[data-sg]');
+  if(sb&&srDraft){togglePick(srDraft,sb,'s');renderSR()}
   const id=e.target.id;
   if(id==='srClose'){$('srModal').hidden=true;srId=null}
   if(id==='srSave'||id==='srReset'){
@@ -1131,17 +1177,20 @@ $('allowRank').addEventListener('change',async e=>{
 
 /* ---------- 게임 조작 ---------- */
 document.addEventListener('click',e=>{
-  const un=e.target.closest('[data-unit]'),ch=e.target.closest('[data-ch]'),sem=e.target.closest('[data-sem]');
+  const un=e.target.closest('[data-unit]'),ch=e.target.closest('[data-ch]');
   if(un){
     const list=(enabled.length?enabled:UNITS.map(u=>u.id)).filter(id=>U[id]),c=chosen(),id=un.dataset.unit;
     let next;
     if(id==='all')next=c.length===list.length?['-']:[]; // 전체를 한 번 더 누르면 모두 해제
+    else if(/^g\d$/.test(id)){const ids=list.filter(x=>U[x].sem[0]===id[1]),allOn=ids.every(x=>c.includes(x));next=allOn?c.filter(x=>!ids.includes(x)):[...new Set([...c,...ids])];if(!next.length)next=['-']}
     else if(c.includes(id)){next=c.filter(x=>x!==id);if(!next.length)next=['-']}
     else next=[...c,id];
     S.units=next.length===list.length&&!next.includes('-')?[]:next;
     chips();if(!chosen().includes(cur.unit)){cur=gen()}render();save();focusAns()}
   if(ch&&cur.choices)answer(cur.choices[+ch.dataset.ch]===cur.ans);
-  if(sem){const ids=UNITS.filter(u=>u.sem===sem.dataset.sem).map(u=>u.id),d=new Set(rangeDraft||enabled),all=ids.every(i=>d.has(i));ids.forEach(i=>all?d.delete(i):d.add(i));rangeDraft=UNITS.map(u=>u.id).filter(i=>d.has(i));renderRange();$('rMsg').textContent='저장하지 않은 변경이 있어요.'}
+  const rx=e.target.closest('[data-rx]');if(rx){const g=rx.dataset.rx;rpOpen.r.has(g)?rpOpen.r.delete(g):rpOpen.r.add(g);renderRange();return}
+  const rb=e.target.closest('[data-ru],[data-rg]');
+  if(rb&&canManage){const d=new Set(rangeDraft||enabled);togglePick(d,rb,'r');rangeDraft=UNITS.map(u=>u.id).filter(i=>d.has(i));renderRange();$('rMsg').textContent='저장하지 않은 변경이 있어요.'}
   if(e.target.id==='saveRange')saveRange();
   if(e.target.id==='logout')logout();
   const jp=e.target.closest('[data-jump]');
@@ -1157,7 +1206,6 @@ document.addEventListener('click',e=>{
 });
 document.addEventListener('keydown',e=>{
   if($('gate').hidden&&cur.choices&&/^[1-4]$/.test(e.key)&&!e.target.closest('input')){const i=+e.key-1;if(cur.choices[i])answer(cur.choices[i]===cur.ans)}});
-document.addEventListener('change',e=>{const c=e.target.closest('[data-rid]');if(!c)return;rangeDraft=[...document.querySelectorAll('[data-rid]')].filter(x=>x.checked).map(x=>x.dataset.rid);$('rMsg').textContent='저장하지 않은 변경이 있어요.'});
 function answer(ok){
   if(cur.none)return;
   const fb=$('fb'),u=cur.unit,bu=Array.isArray(S.byUnit[u])?S.byUnit[u]:[0,0];
