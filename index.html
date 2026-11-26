@@ -87,6 +87,8 @@ header p{margin:4px 0 0;color:#e2cdb6;text-shadow:0 2px 6px rgba(0,0,0,.8)}
 .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--ember),var(--ember2));border-radius:9px;transition:width .4s}
 .wingfx{transform-box:view-box;transform-origin:64px 70px;animation:wingbreath 3.2s ease-in-out infinite}
 @keyframes wingbreath{0%,100%{transform:translateY(0) scale(1,1)}50%{transform:translateY(-3px) scale(1.035,1.05)}}
+.goldpop{position:fixed;z-index:60;pointer-events:none;font:400 30px "Black Han Sans",sans-serif;color:#ffd66b;text-shadow:0 2px 0 #000}
+.goldbit{position:fixed;z-index:55;pointer-events:none;width:12px;height:12px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3b0,#f2b632 55%,#a86400)}
 .sparks{position:absolute;inset:0;pointer-events:none;z-index:3}
 .sparks span{position:absolute;left:50%;top:50%;width:6px;height:6px;border-radius:50%;background:var(--spk,#ffd27a);box-shadow:0 0 8px var(--spk,#ff9b2f);animation:fly .7s ease-out forwards}
 @keyframes fly{to{transform:translate(var(--x),var(--y));opacity:0}}
@@ -1080,6 +1082,29 @@ function showCombo(c,tier,tags){
   el.innerHTML=`<b>${c}</b><span>COMBO!</span>${tags.map(x=>`<i>${x}</i>`).join('')}`;
   void el.offsetWidth;el.classList.add('show');
 }
+function sellFly(src,amount){
+  return new Promise(done=>{
+    const coin=document.querySelector('.goldbar .coin');
+    if(RM||!src||!coin||!src.getBoundingClientRect().width){done();return}
+    const r=src.getBoundingClientRect(),c=coin.getBoundingClientRect();
+    const fly=src.cloneNode(true);fly.removeAttribute('id');
+    Object.assign(fly.style,{position:'fixed',left:r.left+'px',top:r.top+'px',width:r.width+'px',height:r.height+'px',zIndex:50,pointerEvents:'none',margin:0,filter:'drop-shadow(0 0 14px rgba(255,210,90,.9))'});
+    document.body.appendChild(fly);src.style.visibility='hidden';
+    const dx=c.left+c.width/2-(r.left+r.width/2),dy=c.top+c.height/2-(r.top+r.height/2);
+    const a=fly.animate([
+      {transform:'translate(0,0) rotate(0) scale(1)'},
+      {transform:`translate(${dx*.15}px,-60px) rotate(200deg) scale(.8)`,offset:.3},
+      {transform:`translate(${dx*.6}px,${dy*.5-80}px) rotate(540deg) scale(.4)`,offset:.65},
+      {transform:`translate(${dx}px,${dy}px) rotate(900deg) scale(.06)`}],{duration:1100,easing:'cubic-bezier(.45,0,.6,1)',fill:'forwards'});
+    a.onfinish=()=>{fly.remove();src.style.visibility='';
+      const pop=document.createElement('div');pop.className='goldpop';pop.textContent='+'+amount.toLocaleString('ko-KR');
+      Object.assign(pop.style,{left:(c.right+10)+'px',top:(c.top-4)+'px'});document.body.appendChild(pop);
+      pop.animate([{transform:'translateY(0)',opacity:1},{transform:'translateY(-40px)',opacity:0}],{duration:1000,fill:'forwards'}).onfinish=()=>pop.remove();
+      for(let i=0;i<8;i++){const s=document.createElement('div');s.className='goldbit';Object.assign(s.style,{left:(c.left+c.width/2-6)+'px',top:(c.top+c.height/2-6)+'px'});document.body.appendChild(s);
+        const g=i/8*Math.PI*2;s.animate([{transform:'translate(0,0)',opacity:1},{transform:`translate(${Math.cos(g)*52}px,${Math.sin(g)*52}px)`,opacity:0}],{duration:650,fill:'forwards'}).onfinish=()=>s.remove()}
+      done()};
+  });
+}
 function applyBg(){
   const id=S.bg,st=$('stage');
   if(id){st.classList.add('hasbg');st.style.backgroundImage=`linear-gradient(180deg,rgba(0,0,0,.35),rgba(0,0,0,0) 30%,rgba(0,0,0,0) 70%,rgba(0,0,0,.45)),url(img/bg-${id}.webp)`}
@@ -1561,8 +1586,10 @@ $('sellNow').addEventListener('click',()=>{
   const L=S.w.L;if(busy||L<1)return;
   if(!sellArm){sellArm=true;clearTimeout(sellArmT);sellArmT=setTimeout(()=>{sellArm=false;render()},3000);render();return}
   sellArm=false;clearTimeout(sellArmT);const got=sellGold(L),nm=wname(L);
-  morph(()=>{S.gold+=got;S.w={L:0};S.fails=0;sel=[]},false,`판매! +${got.toLocaleString('ko-KR')}골드`)
-    .then(()=>{$('invMsg').textContent=`${nm}을(를) 팔아서 ${got.toLocaleString('ko-KR')}골드를 받았어요. 새 나무 검으로 시작해요.`});
+  busy=true;render();
+  sellFly($('sword'),got).then(()=>{S.gold+=got;S.w={L:0};S.fails=0;sel=[];busy=false;render();save();
+    const sw=$('sword');replay(sw,'reveal');setTimeout(()=>sw.classList.remove('reveal'),760);
+    $('invMsg').textContent=`${nm}을(를) 팔아서 ${got.toLocaleString('ko-KR')}골드를 받았어요. 새 나무 검으로 시작해요.`});
 });
 $('forceWin').addEventListener('change',e=>{forceWin=test&&e.target.checked;render()});
 $('keepNew').addEventListener('click',()=>{
@@ -1614,8 +1641,9 @@ document.addEventListener('click',e=>{
     $('shopMsg').textContent=`'${it.name}'을(를) 샀어요! 강화대 배경으로 바로 바꿨어요.`;return}
   if(id==='sellW'&&sel.length===1){const b=e.target;
     if(!b.dataset.ok){b.dataset.ok=1;b.textContent='정말 팔까요? 한 번 더 누르기';return}
-    const i=sel[0],x=S.inv[i],got=sellGold(x.L);S.inv.splice(i,1);S.gold+=got;sel=[];render();save();
-    $('invMsg').textContent=`${wname(x.L)}을(를) 팔아서 ${got.toLocaleString('ko-KR')}골드를 받았어요.`}
+    const i=sel[0],x=S.inv[i],got=sellGold(x.L),slot=document.querySelector(`[data-slot="${i}"] svg`);busy=true;
+    sellFly(slot,got).then(()=>{S.inv.splice(i,1);S.gold+=got;sel=[];busy=false;render();save();
+      $('invMsg').textContent=`${wname(x.L)}을(를) 팔아서 ${got.toLocaleString('ko-KR')}골드를 받았어요.`})}
   if(id==='mergeW'&&sel.length===2){
     const [i,j]=sel,a=S.inv[i],b=S.inv[j];if(!canMerge(a,b))return;
     const nw={L:a.L+1},old={...S.w},keepOld=old.L>0,up=gOf(nw.L)>gOf(a.L);
