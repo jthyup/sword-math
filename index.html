@@ -59,7 +59,8 @@ header p{margin:4px 0 0;color:#e2cdb6;text-shadow:0 2px 6px rgba(0,0,0,.8)}
 .sparks span{position:absolute;left:50%;top:50%;width:6px;height:6px;border-radius:50%;background:#ffd27a;box-shadow:0 0 8px #ff9b2f;animation:fly .7s ease-out forwards}
 @keyframes fly{to{transform:translate(var(--x),var(--y));opacity:0}}
 .hit{animation:hit .35s}@keyframes hit{30%{transform:rotate(-4deg) translateY(4px)}60%{transform:rotate(3deg)}}
-.msg{position:absolute;top:36%;left:0;right:0;text-align:center;font-family:"Black Han Sans";font-size:clamp(30px,6vw,46px);z-index:4;opacity:0;pointer-events:none;text-shadow:0 3px 0 rgba(0,0,0,.5);padding:0 10px}
+.anvilwrap{position:relative;width:100%;display:flex;justify-content:center;z-index:4}
+.msg{position:absolute;top:50%;left:50%;width:max-content;max-width:100%;translate:-50% -50%;text-align:center;font-family:"Black Han Sans";font-size:clamp(30px,6vw,46px);z-index:4;opacity:0;pointer-events:none;text-shadow:0 3px 0 rgba(0,0,0,.5);padding:0 10px}
 .msg.show{animation:pop 1.5s}@keyframes pop{0%{opacity:0;transform:scale(.6)}15%{opacity:1;transform:scale(1.08)}70%{opacity:1}100%{opacity:0;transform:translateY(-20px)}}
 .side{display:flex;flex-direction:column;gap:16px}
 .card{background:rgba(26,19,14,.82);border:1px solid rgba(255,170,90,.22);border-radius:20px;padding:20px;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);box-shadow:0 12px 34px rgba(0,0,0,.45)}
@@ -352,12 +353,13 @@ legend{font-family:"Black Han Sans";font-size:18px;padding:0 6px}
       <span class="hlabel">망치질!<small>강화권 <b id="tk">0</b>장</small></span>
       </button>
     </div>
+    <div class="anvilwrap"><div class="msg" id="msg"></div>
     <svg class="anvil" viewBox="0 0 320 90" aria-hidden="true">
       <defs><linearGradient id="av" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6b7480"/><stop offset=".25" stop-color="#3b414a"/><stop offset="1" stop-color="#1c1f24"/></linearGradient></defs>
       <path d="M20 8 H300 Q300 26 268 30 L230 34 Q214 40 214 56 H106 Q106 40 90 34 L40 30 Q8 26 20 8Z" fill="url(#av)"/>
       <rect x="20" y="6" width="280" height="4" rx="2" fill="#ffb37a" opacity=".55"/>
       <path d="M96 56 H224 L244 86 H76Z" fill="#23272d"/>
-    </svg>
+    </svg></div>
     <div class="odds" aria-live="polite">
       <div class="oddbar" id="oddbar"><span class="o-up"></span><span class="o-keep"></span><span class="o-boom"></span></div>
       <div class="oddkey"><span class="k-up">강화 <b id="pUp">100%</b></span><span class="k-keep">유지 <b id="pKeep">0%</b></span><span class="k-boom">파괴 <b id="pBoom">0%</b></span></div>
@@ -368,7 +370,6 @@ legend{font-family:"Black Han Sans";font-size:18px;padding:0 6px}
     <div class="bang" id="bang">뚝딱!</div>
     <div class="flashfx" id="flashfx"></div>
     <div class="sparks" id="sparks"></div>
-    <div class="msg" id="msg"></div>
   </div>
 
   <div class="side">
