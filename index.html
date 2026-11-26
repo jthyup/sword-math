@@ -13,16 +13,22 @@
    COLOUR and TYPE: 숯빛 바탕, 쇳물 주황 강조, 강철 회청; Black Han Sans + Gowun Dodum
    LAYOUT: 왼쪽 검 무대, 오른쪽 문제판과 강화 버튼, 아래 규칙과 선생님 관리 */
 :root{color-scheme:light dark;--bg:light-dark(#f3ece2,#16120f);--panel:light-dark(#fffaf3,#231c17);--ink:light-dark(#241a12,#f3e7d8);--mute:light-dark(#76665a,#a8978a);--line:light-dark(#e2d5c4,#3a2f27);--ember:#e8590c;--ember2:#ffb347;--steel:#5b7186;--ok:#2f9e44;--bad:#c92a2a}
-:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+/* 대장간 분위기로 항상 어두운 색을 써요 */
+:root,:root[data-theme=light],:root[data-theme=dark]{color-scheme:dark}
 *{box-sizing:border-box;min-width:0}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Gowun Dodum",system-ui,sans-serif;overflow-x:clip}
+body{margin:0;background:#0b0807;color:var(--ink);font:16px/1.55 "Gowun Dodum",system-ui,sans-serif;overflow-x:clip;position:relative;isolation:isolate}
+/* 게임 화면 뒤 배경: 로그인 화면과 같은 대장간을 어둡게 */
+body::before{content:"";position:fixed;inset:-12px;z-index:-2;background:url(img/login-bg.webp) center/cover no-repeat;filter:brightness(.36) saturate(1.1) blur(2px)}
+body::after{content:"";position:fixed;inset:0;z-index:-1;background:radial-gradient(ellipse 60% 45% at 50% 62%,rgba(255,120,30,.14),transparent 70%),linear-gradient(180deg,rgba(8,6,5,.35),rgba(8,6,5,.15) 40%,rgba(8,6,5,.6));pointer-events:none;animation:bgflick 3.4s infinite}
+@keyframes bgflick{0%,100%{opacity:.85}20%{opacity:1}45%{opacity:.8}70%{opacity:.95}}
 h1,h2,.big{font-family:"Black Han Sans",sans-serif;font-weight:400;line-height:1.05;text-wrap:balance}
 h1{font-size:clamp(30px,5vw,44px);margin:0}
+header h1{background:linear-gradient(180deg,#fff3c4 0%,#ffb347 45%,#e8590c 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 14px rgba(255,140,40,.45)) drop-shadow(0 3px 0 rgba(0,0,0,.6))}
 h2{font-size:28px;margin:0 0 14px}
 .band{padding:clamp(20px,3vw,40px) max(5vw,16px)}
 .wrap{max-width:1180px;margin:0 auto}
 header.band{padding-bottom:8px;display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:10px}
-header p{margin:4px 0 0;color:var(--mute)}
+header p{margin:4px 0 0;color:#e2cdb6;text-shadow:0 2px 6px rgba(0,0,0,.8)}
 .who{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:15px}
 .who b{font-size:18px}
 .stats{display:flex;gap:18px;flex-wrap:wrap;color:var(--mute);font-size:14px;width:100%;justify-content:flex-end}
@@ -56,7 +62,7 @@ header p{margin:4px 0 0;color:var(--mute)}
 .msg{position:absolute;top:36%;left:0;right:0;text-align:center;font-family:"Black Han Sans";font-size:clamp(30px,6vw,46px);z-index:4;opacity:0;pointer-events:none;text-shadow:0 3px 0 rgba(0,0,0,.5);padding:0 10px}
 .msg.show{animation:pop 1.5s}@keyframes pop{0%{opacity:0;transform:scale(.6)}15%{opacity:1;transform:scale(1.08)}70%{opacity:1}100%{opacity:0;transform:translateY(-20px)}}
 .side{display:flex;flex-direction:column;gap:16px}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:20px}
+.card{background:rgba(26,19,14,.82);border:1px solid rgba(255,170,90,.22);border-radius:20px;padding:20px;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);box-shadow:0 12px 34px rgba(0,0,0,.45)}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chip{font:inherit;font-size:15px;min-height:44px;padding:0 16px;border-radius:999px;border:1.5px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
 .chip[aria-pressed=true]{background:var(--ink);color:var(--panel);border-color:var(--ink)}
@@ -68,7 +74,7 @@ form{display:flex;gap:10px;flex-wrap:wrap}
 input{flex:1;font:inherit;font-size:16px;min-height:48px;padding:0 14px;border-radius:12px;border:2px solid var(--line);background:var(--bg);color:var(--ink)}
 #ans{font-size:24px;min-height:56px;text-align:center;border-radius:14px}
 input:focus-visible,button:focus-visible{outline:3px solid var(--ember2);outline-offset:2px}
-.btn{font-family:"Black Han Sans";font-size:20px;min-height:56px;padding:0 22px;border:0;border-radius:14px;background:var(--steel);color:#fff;cursor:pointer}
+.btn{font-family:"Black Han Sans";font-size:20px;min-height:56px;padding:0 22px;border:0;border-radius:14px;background:linear-gradient(180deg,#ff7a1a,#c2410c);box-shadow:0 4px 0 #7c2d12;color:#fff;cursor:pointer}
 .btn.sm{font-size:16px;min-height:48px;padding:0 16px;border-radius:12px}
 .ghost{font:inherit;font-size:14px;min-height:44px;padding:0 14px;border-radius:12px;border:1.5px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
 .feedback{min-height:26px;text-align:center;margin-top:10px;font-size:16px}
