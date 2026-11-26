@@ -1582,7 +1582,7 @@ function enterStudent(id,data){
   S=fromRaw(data);sel=[];joining=false;$('combo').className='combo';
   myRange=normR(data.range);myCare=data.care===true;myGrade=+data.grade||0;me.cls=+data.cls||0;applyRange();
   if(unsubMe)unsubMe();
-  unsubMe=FF.onSnapshot(FF.doc(fs,COL_ST,id),d=>{if(!d.exists()||!me)return;myCare=d.data().care===true;{const ng=+d.data().grade||0;if(ng&&ng!==myGrade){myGrade=ng;me.cls=+d.data().cls||0;applyRange();renderWho()}}if(d.data().nick===''&&S.nick){S.nick='';editingNick=false;lastRankJ='';renderRank()}const rr=normR(d.data().range);if(JSON.stringify(rr)!==JSON.stringify(myRange)){myRange=rr;applyRange();$('fb').className='feedback';$('fb').textContent='선생님이 문제 범위를 바꿨어요.'}},()=>{});
+  unsubMe=FF.onSnapshot(FF.doc(fs,COL_ST,id),d=>{if(!me)return;if(!d.exists()){if(!signingUp&&!(d.metadata&&d.metadata.fromCache)){dirty=false;clearTimeout(wTimer);gateMsg='선생님이 기록을 지웠어요. 다시 가입해 주세요.';logout()}return}myCare=d.data().care===true;{const ng=+d.data().grade||0;if(ng&&ng!==myGrade){myGrade=ng;me.cls=+d.data().cls||0;applyRange();renderWho()}}if(d.data().nick===''&&S.nick){S.nick='';editingNick=false;lastRankJ='';renderRank()}const rr=normR(d.data().range);if(JSON.stringify(rr)!==JSON.stringify(myRange)){myRange=rr;applyRange();$('fb').className='feedback';$('fb').textContent='선생님이 문제 범위를 바꿨어요.'}},()=>{});
   lastRankJ='';editingNick=false;
   $('gate').hidden=true;chips();cur=gen();render();renderWho();focusAns();subRank();
   if(S.nick){dirty=true;flush()}
@@ -1724,10 +1724,13 @@ $('addForm').addEventListener('submit',async e=>{
   btn.disabled=false;
 });
 document.addEventListener('click',async e=>{
+  const rd=e.target.closest('[data-rdel]');
+  if(rd&&isTeacher){if(!rd.dataset.c){rd.dataset.c=1;rd.textContent='정말 뺄까요?';setTimeout(()=>{delete rd.dataset.c;rd.textContent='빼기'},3000);return}
+    try{await FF.deleteDoc(FF.doc(fs,COL_RANK,rd.dataset.rdel));const s=students.find(x=>x.id===rd.dataset.rdel);if(s)await FF.setDoc(FF.doc(fs,COL_ST,s.id),{nick:''},{merge:true});$('tMsg').textContent='랭킹에서 뺐어요.';subRank()}catch(x){$('tMsg').textContent='랭킹에서 빼지 못했어요.'}return}
   const del=e.target.closest('[data-del]');
   if(del){
     if(!del.dataset.c){del.dataset.c=1;del.textContent='정말 삭제?';setTimeout(()=>{delete del.dataset.c;del.textContent='기록 삭제'},3000);return}
-    try{await FF.deleteDoc(FF.doc(fs,COL_ST,del.dataset.del));$('tMsg').textContent='기록을 지웠어요. 그 학생이 같은 이름과 예전 비밀번호로 다시 가입하면 새 기록으로 시작해요.'}
+    try{await FF.deleteDoc(FF.doc(fs,COL_ST,del.dataset.del));try{await FF.deleteDoc(FF.doc(fs,COL_RANK,del.dataset.del))}catch(x){}$('tMsg').textContent='기록과 랭킹을 지웠어요. 그 학생이 같은 이름과 예전 비밀번호로 다시 가입하면 새 기록으로 시작해요.'}
     catch(err){$('tMsg').textContent='삭제하지 못했어요.'}
   }
 });
@@ -1823,7 +1826,7 @@ function renderRank(){
   const f='wn_'+weekKey(),val=r=>Math.max(0,Math.floor(+(rtab==='best'?r.best:r[f])||0));
   // 같은 기록이면 같은 등수
   B.innerHTML=off+`<ol class="ranklist">${rankRows.map((r,i)=>{const b=Math.max(0,Math.floor(+r.best||0)),mine=me&&r.id===me.id,rk=rankRows.filter(x=>val(x)>val(r)).length+1;
-    return `<li class="${mine?'me':''} r${rk}"><span class="rk">${rk}</span><svg viewBox="0 0 128 128" aria-hidden="true">${swordSVG(gOf(b),b%STEP,'r'+i,b)}</svg><span class="nk">${esc(r.nick||'?')}${mine?' (나)':''}</span><span class="val">${rtab==='best'?`${esc(gname(gOf(b)))} <b>+${b}</b>`:`<b>${Math.max(0,Math.floor(+r[f]||0))}</b>문제`}</span></li>`}).join('')}</ol>`
+    return `<li class="${mine?'me':''} r${rk}"><span class="rk">${rk}</span><svg viewBox="0 0 128 128" aria-hidden="true">${swordSVG(gOf(b),b%STEP,'r'+i,b)}</svg><span class="nk">${esc(r.nick||'?')}${mine?' (나)':''}</span><span class="val">${rtab==='best'?`${esc(gname(gOf(b)))} <b>+${b}</b>`:`<b>${Math.max(0,Math.floor(+r[f]||0))}</b>문제`}</span>${isTeacher?`<button class="linkbtn" data-rdel="${esc(r.id)}" title="랭킹에서 빼기">빼기</button>`:''}</li>`}).join('')}</ol>`
     +(me?(S.nickTk>0?'<button class="linkbtn" id="nickEdit">내 별명 바꾸기 (변경권 1장 사용)</button>':'<button class="linkbtn" id="nickShop">별명을 바꾸려면 변경권이 필요해요 (상점 → 기타)</button>'):'');
 }
 document.addEventListener('click',async e=>{
