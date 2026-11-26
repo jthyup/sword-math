@@ -31,7 +31,6 @@ GitHub Pages 주소: https://jthyup.github.io/sword-math/
 ## 파일 구성
 
 - `index.html`: 게임 전체(화면, 문제 생성, 강화 규칙, 저장)
-- `img/w00.webp` ~ `img/w19.webp`: 일러스트 검 그림(20단계)
 - `img/fx*.png`: 날개 효과 애니메이션(가로 8장)
 - 픽셀 검 그림은 `index.html` 안에 들어 있어요.
 
@@ -40,7 +39,6 @@ GitHub Pages 주소: https://jthyup.github.io/sword-math/
 | 그림 | 출처 | 라이선스 |
 |---|---|---|
 | 픽셀 검 | Willibab, *Willibab's Simple Weapon Icons* (itch.io) | 상업·비상업 무료 |
-| 일러스트 검 | Wenrexa, *Weapon: Swords* (itch.io) | 상업·비상업 무료, 출처 표기 불필요 |
 | 날개 효과 | BDragon1727, *Spells effects of wings and skill* (itch.io) | 비상업 게임에 무료 |
 
 날개 효과는 비상업용으로만 쓸 수 있어요. 이 게임을 판매하거나 상업적으로 쓰려면 다른 그림으로 바꿔야 합니다.
