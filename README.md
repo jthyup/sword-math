@@ -43,5 +43,6 @@ GitHub Pages 주소: https://jthyup.github.io/sword-math/
 | 픽셀 검 | Willibab, *Willibab's Simple Weapon Icons* (itch.io) | 상업·비상업 무료 |
 | 날개 효과 | BDragon1727, *Spells effects of wings and skill* (itch.io) | 비상업 게임에 무료 |
 | 로그인 배경 | VGDR, *The Forge Background Pack* (itch.io) | 상업용 포함 무료 |
+| 상점 강화대 배경 | VGDR, *Dungeon Background Pack* (itch.io) | 상업용 포함 무료 |
 
 날개 효과는 비상업용으로만 쓸 수 있어요. 이 게임을 판매하거나 상업적으로 쓰려면 다른 그림으로 바꿔야 합니다.

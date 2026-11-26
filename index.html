@@ -195,6 +195,21 @@ body.testing .codexnote{display:inline}
 .slot[aria-pressed=true]{border-color:var(--ember2);box-shadow:0 0 14px rgba(255,160,60,.45)}
 .goldpill{font-size:15px;color:#ffd98a;background:rgba(255,190,80,.12);border:1px solid rgba(255,190,80,.35);border-radius:999px;padding:4px 12px}
 .goldpill b{font-family:"Black Han Sans";font-weight:400;font-size:17px;margin-left:4px}
+.shopcat{margin-bottom:10px}
+.shopgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.item{background:#1d1511;border:2px solid transparent;border-radius:14px;overflow:hidden;color:#f3e7d8;display:flex;flex-direction:column}
+.item .th{font:inherit;display:block;width:100%;border:0;padding:0;aspect-ratio:16/10;background:#2a1710 center 62%/cover;position:relative;cursor:pointer}
+.item .th.def{background:radial-gradient(ellipse 70% 55% at 50% 70%,#7a2e0a 0%,#2a1710 55%,#120d0a 100%)}
+.item .badge{position:absolute;top:6px;left:6px;font-size:12px;padding:2px 8px;border-radius:999px;background:rgba(0,0,0,.6);color:#f3e7d8}
+.item .bd{padding:8px 10px 10px;display:flex;flex-direction:column;gap:6px;flex:1}
+.item .nm{font-weight:700;font-size:15px}
+.item .pr{font-size:14px;color:#ffd98a}
+.item .bt{margin-top:auto;font:inherit;font-size:14px;font-weight:700;border-radius:10px;padding:7px;border:0;cursor:pointer;background:linear-gradient(180deg,#ff9a3c,#e2571b);color:#fff}
+.item .bt.use{background:transparent;border:1.5px solid #6b5247;color:#e9d5c4}
+.item .bt:disabled{background:#3a2e29;color:#9c8678;cursor:default;border:0}
+.item.on{border-color:#ffb347;box-shadow:0 0 14px rgba(255,160,60,.35)}
+.item.on .badge{background:#ff9a3c;color:#2b1300}
+.stage.hasbg{background-position:center 62%;background-size:cover}
 .slot .tag{position:absolute;top:4px;right:4px;background:var(--ember);color:#fff;border-radius:6px;padding:1px 5px;font-size:11px}
 .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;align-items:center}
 .btn.merge{background:linear-gradient(180deg,#ff7a1a,#c2410c)}
@@ -369,8 +384,9 @@ legend{font-family:"Black Han Sans";font-size:18px;padding:0 6px}
 </section>
 <section class="card shelfcard shopcard">
   <div class="shelfhead"><h2>상점</h2><span class="goldpill">가진 골드 <b id="shopGold">0</b></span></div>
-  <div class="shelf"><div class="slot empty">준비 중</div><div class="slot empty">준비 중</div><div class="slot empty">준비 중</div><div class="slot empty">준비 중</div></div>
-  <p class="note">보관함의 무기를 팔면 골드를 받아요. 상점 물건은 곧 들어와요.</p>
+  <div class="chips shopcat"><button class="chip" aria-pressed="true">강화대 배경</button><button class="chip" aria-pressed="false" disabled>효과 (준비 중)</button></div>
+  <div class="shopgrid" id="shopGrid"></div>
+  <p class="note" id="shopMsg">보관함의 무기를 팔면 골드를 받아요. 산 배경은 언제든 바꿔 쓸 수 있고, 그림을 누르면 미리 볼 수 있어요.</p>
 </section>
 </main>
 
@@ -497,8 +513,14 @@ function baseRate(L){
 }
 const PITY_STEP=3,PITY_MAX=15;
 
+const SHOP_BG=[
+  {id:'lava',name:'용암 동굴',price:3000},
+  {id:'candle',name:'촛불 지하 복도',price:5000},
+  {id:'gold',name:'황금 마법진 전당',price:8000},
+  {id:'ice',name:'얼음 수정 동굴',price:12000}];
+let previewBg='',previewT=0;
 const sellPrice=L=>L<1?5:L*L*10;
-const def={w:{L:0},inv:[],best:0,tk:0,gold:0,solved:0,right:0,combo:0,fails:0,booms:0,units:[],byUnit:{},nick:'',wk:'',wn:0,rangeSet:false};
+const def={w:{L:0},inv:[],best:0,tk:0,gold:0,bgs:[],bg:'',solved:0,right:0,combo:0,fails:0,booms:0,units:[],byUnit:{},nick:'',wk:'',wn:0,rangeSet:false};
 const fresh=()=>JSON.parse(JSON.stringify(def));
 let S=fresh();
 const $=id=>document.getElementById(id);
@@ -619,6 +641,7 @@ function fromRaw(raw){
   o.units=Array.isArray(o.units)?o.units.filter(x=>typeof x==='string'):[];
   if(raw.units===undefined&&typeof raw.unit==='string'&&raw.unit!=='mix')o.units=[raw.unit];
   o.rangeSet=o.rangeSet===true;
+  o.bgs=Array.isArray(o.bgs)?o.bgs.filter(x=>SHOP_BG.some(b=>b.id===x)):[];o.bg=o.bgs.includes(o.bg)?o.bg:'';
   o.nick=typeof o.nick==='string'?o.nick.slice(0,8):'';o.wk=typeof o.wk==='string'?o.wk:'';
   for(const k of ['tk','gold','solved','right','combo','fails','booms','wn'])o[k]=Math.max(0,Math.floor(+o[k]||0));
   return o;
@@ -920,6 +943,19 @@ async function morph(apply,big,msg){
   if(big)sparks(40);if(msg)flash(msg,'#ffd27a');
   await wait(750);sw.classList.remove('reveal');busy=false;render();
 }
+function applyBg(){
+  const id=previewBg||S.bg,st=$('stage');
+  if(id){st.classList.add('hasbg');st.style.backgroundImage=`linear-gradient(180deg,rgba(0,0,0,.35),rgba(0,0,0,0) 30%,rgba(0,0,0,0) 70%,rgba(0,0,0,.45)),url(img/bg-${id}.webp)`}
+  else{st.classList.remove('hasbg');st.style.backgroundImage=''}
+}
+function renderShop(){
+  const fmt=n=>n.toLocaleString('ko-KR'),cur=S.bg;
+  const card=(id,name,price,th)=>{const own=!id||S.bgs.includes(id),on=cur===id;
+    const btn=on?'<button class="bt" disabled>사용 중</button>':own?`<button class="bt use" data-usebg="${id}">사용하기</button>`:S.gold>=price?`<button class="bt" data-buybg="${id}">사기</button>`:`<button class="bt" disabled>${fmt(price-S.gold)} 골드 부족</button>`;
+    return `<div class="item${on?' on':''}"><button class="th${id?'':' def'}" data-pvbg="${id}" ${id?`style="background-image:url(img/bg-${id}-s.webp)"`:''} aria-label="${name} 미리 보기">${on?'<span class="badge">사용 중</span>':own?'<span class="badge">보유</span>':''}</button><div class="bd"><span class="nm">${name}</span><span class="pr">${price?fmt(price)+' 골드':'기본 제공'}</span>${btn}</div></div>`};
+  $('shopGrid').innerHTML=card('','기본 대장간',0)+SHOP_BG.map(b=>card(b.id,b.name,b.price)).join('');
+  applyBg();
+}
 function render(){
   const L=S.w.L,g=gOf(L),k=L%STEP;
   $('sword').innerHTML=swordSVG(g,k,'m',L,true);
@@ -937,7 +973,7 @@ function render(){
   $('sSolved').textContent=S.solved;$('sGold').textContent=S.gold.toLocaleString('ko-KR');$('shopGold').textContent=S.gold.toLocaleString('ko-KR');
   $('sAcc').textContent=S.solved?Math.round(S.right/S.solved*100)+'%':'0%';
   $('sCombo').textContent=S.combo;$('sBest').textContent=wname(S.best);$('sBoom').textContent=S.booms;
-  renderQ();renderShelf();
+  renderQ();renderShelf();renderShop();
   const bg=gOf(S.best),shown=test?Math.max(LAST+3,bg+1):Math.max(LAST,bg+1);
   document.body.classList.toggle('testing',test);
   $('tiers').innerHTML=Array.from({length:shown+1},(_,i)=>{const open=test||i<=bg,hint=i===bg+1,inner=`<svg viewBox="0 0 128 128">${swordSVG(i,0,'t'+i,i*STEP)}</svg><br>+${i*STEP}<br>${open||hint?gname(i):'???'}`;
@@ -1369,6 +1405,18 @@ document.addEventListener('click',e=>{
     const nl=L+1,up=gOf(nl)>gOf(L);
     morph(()=>{S.inv.splice(i,1);S.w={L:nl};S.fails=0;S.best=Math.max(S.best,nl);sel=[]},up,up?`변신! ${gname(gOf(nl))}`:`합성 성공! +${nl}`)}
   if(id==='swapW'&&sel.length===1){const i=sel[0],t=S.inv[i];morph(()=>{S.inv[i]={...S.w};S.w=t;S.fails=0;sel=[]},false,wname(t.L))}
+  const pv=e.target.closest('[data-pvbg]');
+  if(pv){clearTimeout(previewT);previewBg=pv.dataset.pvbg;applyBg();const nm=pv.getAttribute('aria-label').replace(' 미리 보기','');
+    $('shopMsg').textContent=previewBg?`'${nm}'을(를) 미리 보는 중이에요. 잠시 뒤 원래 배경으로 돌아가요.`:'기본 대장간을 미리 보는 중이에요.';
+    $('stage').scrollIntoView({behavior:'smooth',block:'center'});
+    previewT=setTimeout(()=>{previewBg='';applyBg();$('shopMsg').textContent='보관함의 무기를 팔면 골드를 받아요. 산 배경은 언제든 바꿔 쓸 수 있고, 그림을 누르면 미리 볼 수 있어요.'},4000);return}
+  const ub=e.target.closest('[data-usebg]');
+  if(ub){clearTimeout(previewT);previewBg='';S.bg=ub.dataset.usebg;render();save();$('shopMsg').textContent=S.bg?`강화대 배경을 '${SHOP_BG.find(b=>b.id===S.bg).name}'(으)로 바꿨어요.`:'기본 대장간으로 돌아왔어요.';return}
+  const bb=e.target.closest('[data-buybg]');
+  if(bb){const it=SHOP_BG.find(b=>b.id===bb.dataset.buybg);if(!it||S.bgs.includes(it.id)||S.gold<it.price)return;
+    if(!bb.dataset.ok){bb.dataset.ok=1;bb.textContent='정말 살까요? 한 번 더';return}
+    clearTimeout(previewT);previewBg='';S.gold-=it.price;S.bgs.push(it.id);S.bg=it.id;render();save();
+    $('shopMsg').textContent=`'${it.name}'을(를) 샀어요! 강화대 배경으로 바로 바꿨어요.`;return}
   if(id==='sellW'&&sel.length===1){const b=e.target;
     if(!b.dataset.ok){b.dataset.ok=1;b.textContent='정말 팔까요? 한 번 더 누르기';return}
     const i=sel[0],x=S.inv[i],got=sellPrice(x.L);S.inv.splice(i,1);S.gold+=got;sel=[];render();save();
