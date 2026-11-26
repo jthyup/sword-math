@@ -157,6 +157,11 @@ body.testing .codexnote{display:inline}
 .rp-u[aria-pressed=true]{background:var(--ember);border-color:var(--ember);color:#fff}
 .rp-u[aria-pressed=true] i{opacity:.85}
 @media(max-width:520px){.rp-row{grid-template-columns:minmax(0,1fr)}.rp-grade{justify-self:start}}
+.rangebar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:14px 18px}
+.rb-text{display:flex;flex-direction:column;gap:2px;min-width:0}
+.rb-text b{font-size:13px;color:var(--mute)}
+.rb-text span{font-weight:700;font-size:16px}
+.gbox.urbox{width:min(100%,720px)}
 .shelfcard{max-width:1180px;margin:20px auto 0}
 .gbox.srbox{width:min(100%,960px)}
 .qpic{display:block;margin:10px auto 0;max-width:100%;height:auto}
@@ -281,9 +286,9 @@ legend{font-family:"Black Han Sans";font-size:18px;padding:0 6px}
   </div>
 
   <div class="side">
-    <div class="card">
-      <div class="chips" id="ops"></div>
-      <p class="note" id="rangeNote"></p>
+    <div class="card rangebar">
+      <div class="rb-text"><b>문제 범위</b><span id="rangeSum"></span></div>
+      <button class="btn sm" id="openRange">범위 고르기</button>
     </div>
     <div class="card">
       <div class="q" id="q" aria-live="polite">3 + 4 = ?</div>
@@ -361,6 +366,14 @@ legend{font-family:"Black Han Sans";font-size:18px;padding:0 6px}
 </div>
 </section>
 
+<div class="gate" id="urModal" hidden><div class="gbox urbox">
+  <h2>어떤 문제를 풀까요?</h2>
+  <p class="note" style="margin:0 0 12px">풀고 싶은 단원을 눌러 고르세요. 여러 개를 고르면 섞여서 나와요.</p>
+  <div id="ops"></div>
+  <p class="note" id="rangeNote"></p>
+  <div class="err" id="urErr"></div>
+  <div class="actions"><button class="btn" id="urDone">이 범위로 풀기</button></div>
+</div></div>
 <div class="gate" id="srModal" hidden><div class="gbox srbox" id="srBox"></div></div>
 <div class="gate" id="gate" hidden>
   <div class="gbox" id="gbox"></div>
@@ -401,7 +414,7 @@ function baseRate(L){
 }
 const PITY_STEP=3,PITY_MAX=15;
 
-const def={w:{L:0},inv:[],best:0,tk:0,solved:0,right:0,combo:0,fails:0,booms:0,units:[],byUnit:{},nick:'',wk:'',wn:0};
+const def={w:{L:0},inv:[],best:0,tk:0,solved:0,right:0,combo:0,fails:0,booms:0,units:[],byUnit:{},nick:'',wk:'',wn:0,rangeSet:false};
 const fresh=()=>JSON.parse(JSON.stringify(def));
 let S=fresh();
 const $=id=>document.getElementById(id);
@@ -521,6 +534,7 @@ function fromRaw(raw){
   if(!o.byUnit||typeof o.byUnit!=='object'||Array.isArray(o.byUnit))o.byUnit={};
   o.units=Array.isArray(o.units)?o.units.filter(x=>typeof x==='string'):[];
   if(raw.units===undefined&&typeof raw.unit==='string'&&raw.unit!=='mix')o.units=[raw.unit];
+  o.rangeSet=o.rangeSet===true;
   o.nick=typeof o.nick==='string'?o.nick.slice(0,8):'';o.wk=typeof o.wk==='string'?o.wk:'';
   for(const k of ['tk','solved','right','combo','fails','booms','wn'])o[k]=Math.max(0,Math.floor(+o[k]||0));
   return o;
@@ -781,7 +795,17 @@ function chips(){
   const grades=[1,2,3].map(String).filter(g=>list.some(id=>U[id].sem[0]===g));
   $('ops').innerHTML=`<div class="rp"><div><button class="rp-grade" data-unit="all" aria-pressed="${all}">전체</button></div>${grades.map(g=>{const ids=list.filter(id=>U[id].sem[0]===g),on=ids.filter(i=>c.includes(i)).length;
     return `<div class="rp-row"><button class="rp-grade" data-unit="g${g}" aria-pressed="${on===ids.length}">${g}학년 <small>${on}/${ids.length}</small></button><div class="rp-units">${unitChips(ids,new Set(c),'data-unit')}</div></div>`}).join('')}</div>`;
+  $('rangeSum').textContent=none?'아직 고르지 않았어요':all?`${grades.map(g=>g+'학년').join('·')} 전체 (${c.length}개 단원)`:c.length<=2?c.map(id=>`${U[id].sem[0]}학년 ${U[id].name}`).join(', '):`${U[c[0]].sem[0]}학년 ${U[c[0]].name} 외 ${c.length-1}개 단원`;
   $('rangeNote').textContent=none?'고른 단원이 없어요. 풀고 싶은 단원을 눌러 주세요.':(c.length===1&&!all?`${U[c[0]].sem} ${U[c[0]].name} 문제만 나와요.`:`${all?'모든 단원':c.length+'개 단원'}에서 문제가 섞여 나와요.`)+' 여러 개를 눌러 고를 수 있어요.'+(mode==='fb'?(me&&myRange?` (선생님이 정해 준 나만의 범위 ${list.length}개 단원)`:` (선생님이 연 범위 ${list.length}개 단원)`):'');
+}
+function openRangePicker(first){
+  $('urErr').textContent=first?'처음이네요! 먼저 풀고 싶은 단원을 골라 주세요.':'';$('urErr').style.color=first?'var(--ember)':'';
+  $('urModal').hidden=false;chips();
+}
+function closeRangePicker(){
+  if(!chosen().length){$('urErr').style.color='';$('urErr').textContent='단원을 하나 이상 골라 주세요.';return}
+  if(!S.rangeSet){S.rangeSet=true;save()}
+  $('urModal').hidden=true;$('urErr').textContent='';focusAns();
 }
 function renderQ(){
   const u=U[cur.unit],q=$('q');
@@ -792,7 +816,7 @@ function renderQ(){
   if(cur.choices){ch.hidden=false;f.hidden=true;ch.innerHTML=cur.choices.map((c,i)=>`<button data-ch="${i}"><span class="unitlbl">${i+1}</span>${c}</button>`).join('')}
   else{ch.hidden=true;f.hidden=false;ch.innerHTML=''}
 }
-function focusAns(){if(!cur.choices&&!cur.none&&$('gate').hidden)$('ans').focus()}
+function focusAns(){if(!cur.choices&&!cur.none&&$('gate').hidden&&$('urModal').hidden)$('ans').focus()}
 const canMerge=(a,b)=>a&&b&&a.L===b.L&&a.L>=1;
 const wname=L=>`${gname(gOf(L))} +${L}`;
 let sel=[],busy=false;
@@ -916,10 +940,11 @@ function enterStudent(id,data){
   S=fromRaw(data);sel=[];joining=false;
   myRange=normR(data.range);applyRange();
   if(unsubMe)unsubMe();
-  unsubMe=FF.onSnapshot(FF.doc(fs,COL_ST,id),d=>{if(!d.exists()||!me)return;const rr=normR(d.data().range);if(JSON.stringify(rr)!==JSON.stringify(myRange)){myRange=rr;applyRange();$('rangeNote').textContent='선생님이 문제 범위를 바꿨어요. '+$('rangeNote').textContent}},()=>{});
+  unsubMe=FF.onSnapshot(FF.doc(fs,COL_ST,id),d=>{if(!d.exists()||!me)return;const rr=normR(d.data().range);if(JSON.stringify(rr)!==JSON.stringify(myRange)){myRange=rr;applyRange();$('fb').className='feedback';$('fb').textContent='선생님이 문제 범위를 바꿨어요.'}},()=>{});
   lastRankJ='';editingNick=false;
   $('gate').hidden=true;chips();cur=gen();render();renderWho();focusAns();subRank();
   if(S.nick){dirty=true;flush()}
+  if(!S.rangeSet)openRangePicker(true);
 }
 async function logout(){
   if(test){test=false;beforeTest=null}
@@ -930,7 +955,7 @@ async function onAuth(u){
   if(signingUp||mode!=='fb')return;
   if(!u){
     me=null;isTeacher=false;canManage=false;stopRoster();$('teacher').hidden=true;subRank();
-    if(unsubMe){unsubMe();unsubMe=null}myRange=null;applyRange();
+    if(unsubMe){unsubMe();unsubMe=null}myRange=null;applyRange();$('urModal').hidden=true;
     S=fresh();render();renderWho();showGate(gateMsg);gateMsg='';return;
   }
   const google=(u.providerData||[]).some(x=>x.providerId==='google.com');
@@ -1193,6 +1218,8 @@ document.addEventListener('click',e=>{
   if(rb&&canManage){const d=new Set(rangeDraft||enabled);togglePick(d,rb,'r');rangeDraft=UNITS.map(u=>u.id).filter(i=>d.has(i));renderRange();$('rMsg').textContent='저장하지 않은 변경이 있어요.'}
   if(e.target.id==='saveRange')saveRange();
   if(e.target.id==='logout')logout();
+  if(e.target.id==='openRange')openRangePicker(false);
+  if(e.target.id==='urDone')closeRangePicker();
   const jp=e.target.closest('[data-jump]');
   if(jp&&test&&!busy){const L=+jp.dataset.jump*STEP;morph(()=>{S.w={L};S.fails=0;S.best=Math.max(S.best,L);sel=[]},true,`${gname(gOf(L))} +${L}`)}
   if(e.target.id==='toJoin'){joining=true;showGate()}
@@ -1205,7 +1232,7 @@ document.addEventListener('click',e=>{
   if(e.target.id==='toTeacher'){$('teacher').scrollIntoView({behavior:'smooth'})}
 });
 document.addEventListener('keydown',e=>{
-  if($('gate').hidden&&cur.choices&&/^[1-4]$/.test(e.key)&&!e.target.closest('input')){const i=+e.key-1;if(cur.choices[i])answer(cur.choices[i]===cur.ans)}});
+  if($('gate').hidden&&$('urModal').hidden&&cur.choices&&/^[1-4]$/.test(e.key)&&!e.target.closest('input')){const i=+e.key-1;if(cur.choices[i])answer(cur.choices[i]===cur.ans)}});
 function answer(ok){
   if(cur.none)return;
   const fb=$('fb'),u=cur.unit,bu=Array.isArray(S.byUnit[u])?S.byUnit[u]:[0,0];
