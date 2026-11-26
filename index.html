@@ -556,7 +556,7 @@ legend{font-family:"Black Han Sans";font-size:18px;padding:0 6px}
   <h2>몇 학년 몇 반 몇 번이에요?</h2>
   <p class="note" style="margin-top:0">고른 학년까지의 문제를 풀 수 있어요. 잘못 고르면 선생님이 고쳐 줄 수 있어요.</p>
   <form class="signup" id="grForm"><div style="display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:10px"><div style="display:grid;gap:6px"><label for="grG">학년</label><select id="grG" required style="font:inherit;font-size:18px;min-height:52px;border-radius:12px;padding:0 10px"><option value="">고르기</option><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option><option value="4">4학년</option><option value="5">5학년</option><option value="6">6학년</option></select></div><div style="display:grid;gap:6px"><label for="grC">반</label><input id="grC" type="number" inputmode="numeric" min="1" max="20" placeholder="예: 2" required></div><div style="display:grid;gap:6px"><label for="grN">번호</label><input id="grN" type="number" inputmode="numeric" min="1" max="50" placeholder="예: 7" required></div></div>
-  <div class="err" id="grErr"></div><div class="actions"><button class="btn">확인</button></div></form>
+  <div class="err" id="grErr"></div><div class="actions"><button class="btn">확인</button><button type="button" class="ghost" id="grCancel" hidden>취소</button></div></form>
 </div></div>
 <div class="gate" id="urModal" hidden><div class="gbox urbox">
   <h2>어떤 문제를 풀까요?</h2>
@@ -1514,7 +1514,7 @@ function renderShelf(){
 const canTest=()=>isTeacher&&canManage;
 function renderWho(){
   const w=$('who'),tb=canTest()&&!test?'<button class="ghost testbtn" id="testOn">테스트 모드</button>':'';
-  if(mode==='fb'&&me)w.innerHTML=`<span>${myGrade?`${myGrade}-${me.cls||'?'}-${me.no||'?'} `:''}<b>${esc(me.name)}</b> 대장장이</span>${tb}<button class="ghost" id="logout">로그아웃</button>`;
+  if(mode==='fb'&&me)w.innerHTML=`<span>${myGrade?`${myGrade}-${me.cls||'?'}-${me.no||'?'} `:''}<b>${esc(me.name)}</b> 대장장이</span>${myGrade?'<button class="ghost" id="chgGrade">학년·반 변경</button>':''}${tb}<button class="ghost" id="logout">로그아웃</button>`;
   else if(mode==='fb'&&isTeacher)w.innerHTML=`<span><b>선생님</b> 로그인됨</span>${tb}<button class="ghost" id="toTeacher">학생 관리</button><button class="ghost" id="logout">로그아웃</button>`;
   else if(mode==='local')w.innerHTML=`<span>체험 모드 · 기록은 이 기기에만 저장돼요</span>${tb}${fbReady?'<button class="ghost" id="toLogin">로그인하기</button>':''}`;
   else w.innerHTML=test?'<span>선생님 테스트 중</span>':tb;
@@ -1566,6 +1566,14 @@ function showGate(msg){
   if(msg)$('liErr').textContent=msg;
   setTimeout(()=>$('liName')&&$('liName').focus(),0);
 }
+let grChange=false;
+const WEEK=7*864e5;
+function openGradeChange(){
+  const last=Date.parse(me&&me.gch||'')||0,next=last+WEEK;
+  if(last&&Date.now()<next){const d=new Date(next);$('fb').className='feedback bad';$('fb').textContent=`학년·반은 일주일에 한 번만 바꿀 수 있어요. ${d.getMonth()+1}월 ${d.getDate()}일 ${d.getHours()}시 이후에 바꿀 수 있어요. 급하면 선생님께 말씀드려요.`;return}
+  grChange=true;$('grN').value=me.no||'';$('grCancel').hidden=false;$('grErr').textContent='';
+  $('grModal').querySelector('h2').textContent='학년·반·번호 바꾸기';openGrade();
+}
 function openGrade(){if(myGrade)$('grG').value=myGrade;if(me&&me.cls)$('grC').value=me.cls;$('grModal').hidden=false;setTimeout(()=>$('grG')&&$('grG').focus(),0)}
 document.addEventListener('submit',async e=>{
   if(e.target.id!=='grForm')return;e.preventDefault();
@@ -1573,19 +1581,23 @@ document.addEventListener('submit',async e=>{
   if(!(g>=1&&g<=6)){$('grErr').textContent='학년을 골라 주세요.';return}
   if(!(c>=1&&c<=20)){$('grErr').textContent='반을 숫자로 써 주세요.';return}
   if(!(n>=1&&n<=50)){$('grErr').textContent='번호를 숫자로 써 주세요.';return}
-  try{await FF.setDoc(FF.doc(fs,COL_ST,me.id),{grade:g,cls:c,no:n,sid:sid(g,c,n)},{merge:true})}catch(x){$('grErr').textContent='저장하지 못했어요. 다시 눌러 주세요.';return}
-  myGrade=g;me.cls=c;me.no=n;$('grModal').hidden=true;
+  const body={grade:g,cls:c,no:n,sid:sid(g,c,n)};if(grChange){if(g===myGrade&&c===me.cls&&n===me.no){closeGr();return}body.gch=new Date().toISOString()}
+  try{await FF.setDoc(FF.doc(fs,COL_ST,me.id),body,{merge:true})}catch(x){$('grErr').textContent='저장하지 못했어요. 다시 눌러 주세요.';return}
+  const wasChange=grChange;myGrade=g;me.cls=c;me.no=n;if(body.gch)me.gch=body.gch;closeGr();
+  if(wasChange){applyRange();renderWho();$('fb').className='feedback ok';$('fb').textContent=`${g}학년 ${c}반 ${n}번으로 바꿨어요. 다음 변경은 일주일 뒤에 할 수 있어요.`;return}
   if(!S.rangeSet)S.units=UNITS.filter(u=>u.sem[0]===String(g)).map(u=>u.id);
   applyRange();renderWho();save();
   if(!S.rangeSet)openRangePicker(true);else maybeTut();
 });
+function closeGr(){$('grModal').hidden=true;$('grCancel').hidden=true;grChange=false;$('grModal').querySelector('h2').textContent='몇 학년 몇 반 몇 번이에요?'}
+document.addEventListener('click',e=>{if(e.target.id==='chgGrade'&&me)openGradeChange();if(e.target.id==='grCancel')closeGr()});
 function enterStudent(id,data){
   test=false;beforeTest=null;
   me={id,name:normName(data.name)||'학생'};
   S=fromRaw(data);sel=[];joining=false;$('combo').className='combo';
-  myRange=normR(data.range);myCare=data.care===true;myGrade=+data.grade||0;me.cls=+data.cls||0;me.no=+data.no||0;applyRange();
+  myRange=normR(data.range);myCare=data.care===true;myGrade=+data.grade||0;me.cls=+data.cls||0;me.no=+data.no||0;me.gch=data.gch||'';applyRange();
   if(unsubMe)unsubMe();
-  unsubMe=FF.onSnapshot(FF.doc(fs,COL_ST,id),d=>{if(!me)return;if(!d.exists()){if(!signingUp&&!(d.metadata&&d.metadata.fromCache)){dirty=false;clearTimeout(wTimer);gateMsg='선생님이 기록을 지웠어요. 다시 가입해 주세요.';logout()}return}myCare=d.data().care===true;{const dd=d.data(),ng=+dd.grade||0;if(ng&&(ng!==myGrade||+dd.cls!==me.cls||+dd.no!==me.no)){myGrade=ng;me.cls=+dd.cls||0;me.no=+dd.no||0;applyRange();renderWho()}}if(d.data().nick===''&&S.nick){S.nick='';editingNick=false;lastRankJ='';renderRank()}const rr=normR(d.data().range);if(JSON.stringify(rr)!==JSON.stringify(myRange)){myRange=rr;applyRange();$('fb').className='feedback';$('fb').textContent='선생님이 문제 범위를 바꿨어요.'}},()=>{});
+  unsubMe=FF.onSnapshot(FF.doc(fs,COL_ST,id),d=>{if(!me)return;if(!d.exists()){if(!signingUp&&!(d.metadata&&d.metadata.fromCache)){dirty=false;clearTimeout(wTimer);gateMsg='선생님이 기록을 지웠어요. 다시 가입해 주세요.';logout()}return}myCare=d.data().care===true;{const dd=d.data(),ng=+dd.grade||0;if(ng&&(ng!==myGrade||+dd.cls!==me.cls||+dd.no!==me.no)){myGrade=ng;me.cls=+dd.cls||0;me.no=+dd.no||0;applyRange();renderWho()}me.gch=dd.gch||''}if(d.data().nick===''&&S.nick){S.nick='';editingNick=false;lastRankJ='';renderRank()}const rr=normR(d.data().range);if(JSON.stringify(rr)!==JSON.stringify(myRange)){myRange=rr;applyRange();$('fb').className='feedback';$('fb').textContent='선생님이 문제 범위를 바꿨어요.'}},()=>{});
   lastRankJ='';editingNick=false;
   $('gate').hidden=true;chips();cur=gen();render();renderWho();focusAns();subRank();
   if(S.nick){dirty=true;flush()}
