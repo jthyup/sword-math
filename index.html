@@ -87,6 +87,7 @@ header p{margin:4px 0 0;color:#e2cdb6;text-shadow:0 2px 6px rgba(0,0,0,.8)}
 .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--ember),var(--ember2));border-radius:9px;transition:width .4s}
 .wingfx{transform-box:view-box;transform-origin:64px 70px;animation:wingbreath 3.2s ease-in-out infinite}
 @keyframes wingbreath{0%,100%{transform:translateY(0) scale(1,1)}50%{transform:translateY(-3px) scale(1.035,1.05)}}
+.tbl .tin{width:3.2em;min-height:0;height:30px;padding:2px 4px;font-size:14px;text-align:center;border-radius:8px;box-sizing:border-box}
 .goldpop{position:fixed;z-index:60;pointer-events:none;font:400 30px "Black Han Sans",sans-serif;color:#ffd66b;text-shadow:0 2px 0 #000}
 .goldbit{position:fixed;z-index:55;pointer-events:none;width:12px;height:12px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3b0,#f2b632 55%,#a86400)}
 .fragbit{position:fixed;z-index:56;pointer-events:none;width:10px;height:14px;background:linear-gradient(135deg,#e7f5ff,#74c0fc);clip-path:polygon(50% 0,100% 40%,60% 100%,0 60%);box-shadow:0 0 10px #74c0fc}
@@ -546,15 +547,15 @@ legend{font-family:"Black Han Sans";font-size:18px;padding:0 6px}
   </form>
   <p class="note" id="tMsg">학생은 로그인 화면에서 "처음 왔어요"로 가입하고, 다음부터 이름과 비밀번호 4자리로 들어와요.</p>
   <div class="tbl" style="margin-top:14px">
-    <table><thead><tr><th>학년·반</th><th>학생</th><th>랭킹 별명</th><th>문제 범위</th><th class="n">푼 문제</th><th class="n">정답률</th><th>현재 무기</th><th>최고 무기</th><th class="n">골드</th><th class="n">파괴</th><th>기초 지원 <span class="note" title="켜면 자기 학년보다 낮은 단원에서도 11콤보부터 강화권을 더 받아요" style="font-size:12px;cursor:help">ⓘ</span></th><th>약한 단원</th><th>마지막 접속</th><th></th></tr></thead><tbody id="roster"></tbody></table>
+    <table><thead><tr><th>학생 ID</th><th>학년·반·번호</th><th>학생</th><th>랭킹 별명</th><th>문제 범위</th><th class="n">푼 문제</th><th class="n">정답률</th><th>현재 무기</th><th>최고 무기</th><th class="n">골드</th><th class="n">파괴</th><th>기초 지원 <span class="note" title="켜면 자기 학년보다 낮은 단원에서도 11콤보부터 강화권을 더 받아요" style="font-size:12px;cursor:help">ⓘ</span></th><th>약한 단원</th><th>마지막 접속</th><th></th></tr></thead><tbody id="roster"></tbody></table>
   </div>
 </div>
 </section>
 
 <div class="gate" id="grModal" hidden><div class="gbox">
-  <h2>몇 학년 몇 반이에요?</h2>
+  <h2>몇 학년 몇 반 몇 번이에요?</h2>
   <p class="note" style="margin-top:0">고른 학년까지의 문제를 풀 수 있어요. 잘못 고르면 선생님이 고쳐 줄 수 있어요.</p>
-  <form class="signup" id="grForm"><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div style="display:grid;gap:6px"><label for="grG">학년</label><select id="grG" required style="font:inherit;font-size:18px;min-height:52px;border-radius:12px;padding:0 10px"><option value="">고르기</option><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option><option value="4">4학년</option><option value="5">5학년</option><option value="6">6학년</option></select></div><div style="display:grid;gap:6px"><label for="grC">반</label><input id="grC" type="number" inputmode="numeric" min="1" max="20" placeholder="예: 2" required></div></div>
+  <form class="signup" id="grForm"><div style="display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:10px"><div style="display:grid;gap:6px"><label for="grG">학년</label><select id="grG" required style="font:inherit;font-size:18px;min-height:52px;border-radius:12px;padding:0 10px"><option value="">고르기</option><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option><option value="4">4학년</option><option value="5">5학년</option><option value="6">6학년</option></select></div><div style="display:grid;gap:6px"><label for="grC">반</label><input id="grC" type="number" inputmode="numeric" min="1" max="20" placeholder="예: 2" required></div><div style="display:grid;gap:6px"><label for="grN">번호</label><input id="grN" type="number" inputmode="numeric" min="1" max="50" placeholder="예: 7" required></div></div>
   <div class="err" id="grErr"></div><div class="actions"><button class="btn">확인</button></div></form>
 </div></div>
 <div class="gate" id="urModal" hidden><div class="gbox urbox">
@@ -1196,6 +1197,7 @@ UNITS.push(...UNITS456);for(const u of UNITS456)U[u.id]=u;
 
 DEFAULT_UNITS.length=0;DEFAULT_UNITS.push(...UNITS.map(u=>u.id));enabled=DEFAULT_UNITS.slice();classUnits=DEFAULT_UNITS.slice();
 const SGR=['1','2','3','4','5','6'];
+const sid=(g,c,n)=>g&&c&&n?`${g}${String(c).padStart(2,'0')}${String(n).padStart(2,'0')}`:'';
 let myGrade=0;
 
 const normR=a=>Array.isArray(a)&&a.length?a.filter(x=>typeof x==='string'&&U[x]):null;
@@ -1512,7 +1514,7 @@ function renderShelf(){
 const canTest=()=>isTeacher&&canManage;
 function renderWho(){
   const w=$('who'),tb=canTest()&&!test?'<button class="ghost testbtn" id="testOn">테스트 모드</button>':'';
-  if(mode==='fb'&&me)w.innerHTML=`<span>${myGrade?`${myGrade}-${me.cls||'?'} `:''}<b>${esc(me.name)}</b> 대장장이</span>${tb}<button class="ghost" id="logout">로그아웃</button>`;
+  if(mode==='fb'&&me)w.innerHTML=`<span>${myGrade?`${myGrade}-${me.cls||'?'}-${me.no||'?'} `:''}<b>${esc(me.name)}</b> 대장장이</span>${tb}<button class="ghost" id="logout">로그아웃</button>`;
   else if(mode==='fb'&&isTeacher)w.innerHTML=`<span><b>선생님</b> 로그인됨</span>${tb}<button class="ghost" id="toTeacher">학생 관리</button><button class="ghost" id="logout">로그아웃</button>`;
   else if(mode==='local')w.innerHTML=`<span>체험 모드 · 기록은 이 기기에만 저장돼요</span>${tb}${fbReady?'<button class="ghost" id="toLogin">로그인하기</button>':''}`;
   else w.innerHTML=test?'<span>선생님 테스트 중</span>':tb;
@@ -1543,8 +1545,8 @@ function showGate(msg){
   if(joining){
     g.innerHTML=`<h2>처음 왔어요</h2><p class="note" style="margin:0">이름과 비밀번호를 정하면 바로 시작해요. 다음부터는 이 이름과 비밀번호로 들어와요.</p>
       <form class="signup" id="signupForm" autocomplete="off">
-        <label for="suName">이름 (번호와 별명도 좋아요)</label><input id="suName" maxlength="12" placeholder="예: 7번 김하늘" required>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div style="display:grid;gap:6px"><label for="suGrade">학년</label><select id="suGrade" required style="font:inherit;font-size:18px;min-height:52px;border-radius:12px;padding:0 10px"><option value="">고르기</option>${SGR.map(g=>`<option value="${g}">${g}학년</option>`).join('')}</select></div><div style="display:grid;gap:6px"><label for="suCls">반</label><input id="suCls" type="number" inputmode="numeric" min="1" max="20" placeholder="예: 2" required></div></div>
+        <label for="suName">이름</label><input id="suName" maxlength="12" placeholder="예: 김하늘" required>
+        <div style="display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:10px"><div style="display:grid;gap:6px"><label for="suGrade">학년</label><select id="suGrade" required style="font:inherit;font-size:18px;min-height:52px;border-radius:12px;padding:0 10px"><option value="">고르기</option>${SGR.map(g=>`<option value="${g}">${g}학년</option>`).join('')}</select></div><div style="display:grid;gap:6px"><label for="suCls">반</label><input id="suCls" type="number" inputmode="numeric" min="1" max="20" placeholder="예: 2" required></div><div style="display:grid;gap:6px"><label for="suNo">번호</label><input id="suNo" type="number" inputmode="numeric" min="1" max="50" placeholder="예: 7" required></div></div>
         <label for="suPin">비밀번호 숫자 4자리</label><input id="suPin" type="password" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" placeholder="••••" required>
         <label for="suPin2">비밀번호 한 번 더</label><input id="suPin2" type="password" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" placeholder="••••" required>
         <div class="err" id="suErr"></div>
@@ -1564,14 +1566,15 @@ function showGate(msg){
   if(msg)$('liErr').textContent=msg;
   setTimeout(()=>$('liName')&&$('liName').focus(),0);
 }
-function openGrade(){$('grModal').hidden=false;setTimeout(()=>$('grG')&&$('grG').focus(),0)}
+function openGrade(){if(myGrade)$('grG').value=myGrade;if(me&&me.cls)$('grC').value=me.cls;$('grModal').hidden=false;setTimeout(()=>$('grG')&&$('grG').focus(),0)}
 document.addEventListener('submit',async e=>{
   if(e.target.id!=='grForm')return;e.preventDefault();
-  const g=+$('grG').value,c=+$('grC').value;
+  const g=+$('grG').value,c=+$('grC').value,n=+$('grN').value;
   if(!(g>=1&&g<=6)){$('grErr').textContent='학년을 골라 주세요.';return}
   if(!(c>=1&&c<=20)){$('grErr').textContent='반을 숫자로 써 주세요.';return}
-  try{await FF.setDoc(FF.doc(fs,COL_ST,me.id),{grade:g,cls:c},{merge:true})}catch(x){$('grErr').textContent='저장하지 못했어요. 다시 눌러 주세요.';return}
-  myGrade=g;me.cls=c;$('grModal').hidden=true;
+  if(!(n>=1&&n<=50)){$('grErr').textContent='번호를 숫자로 써 주세요.';return}
+  try{await FF.setDoc(FF.doc(fs,COL_ST,me.id),{grade:g,cls:c,no:n,sid:sid(g,c,n)},{merge:true})}catch(x){$('grErr').textContent='저장하지 못했어요. 다시 눌러 주세요.';return}
+  myGrade=g;me.cls=c;me.no=n;$('grModal').hidden=true;
   if(!S.rangeSet)S.units=UNITS.filter(u=>u.sem[0]===String(g)).map(u=>u.id);
   applyRange();renderWho();save();
   if(!S.rangeSet)openRangePicker(true);else maybeTut();
@@ -1580,13 +1583,13 @@ function enterStudent(id,data){
   test=false;beforeTest=null;
   me={id,name:normName(data.name)||'학생'};
   S=fromRaw(data);sel=[];joining=false;$('combo').className='combo';
-  myRange=normR(data.range);myCare=data.care===true;myGrade=+data.grade||0;me.cls=+data.cls||0;applyRange();
+  myRange=normR(data.range);myCare=data.care===true;myGrade=+data.grade||0;me.cls=+data.cls||0;me.no=+data.no||0;applyRange();
   if(unsubMe)unsubMe();
-  unsubMe=FF.onSnapshot(FF.doc(fs,COL_ST,id),d=>{if(!me)return;if(!d.exists()){if(!signingUp&&!(d.metadata&&d.metadata.fromCache)){dirty=false;clearTimeout(wTimer);gateMsg='선생님이 기록을 지웠어요. 다시 가입해 주세요.';logout()}return}myCare=d.data().care===true;{const ng=+d.data().grade||0;if(ng&&ng!==myGrade){myGrade=ng;me.cls=+d.data().cls||0;applyRange();renderWho()}}if(d.data().nick===''&&S.nick){S.nick='';editingNick=false;lastRankJ='';renderRank()}const rr=normR(d.data().range);if(JSON.stringify(rr)!==JSON.stringify(myRange)){myRange=rr;applyRange();$('fb').className='feedback';$('fb').textContent='선생님이 문제 범위를 바꿨어요.'}},()=>{});
+  unsubMe=FF.onSnapshot(FF.doc(fs,COL_ST,id),d=>{if(!me)return;if(!d.exists()){if(!signingUp&&!(d.metadata&&d.metadata.fromCache)){dirty=false;clearTimeout(wTimer);gateMsg='선생님이 기록을 지웠어요. 다시 가입해 주세요.';logout()}return}myCare=d.data().care===true;{const dd=d.data(),ng=+dd.grade||0;if(ng&&(ng!==myGrade||+dd.cls!==me.cls||+dd.no!==me.no)){myGrade=ng;me.cls=+dd.cls||0;me.no=+dd.no||0;applyRange();renderWho()}}if(d.data().nick===''&&S.nick){S.nick='';editingNick=false;lastRankJ='';renderRank()}const rr=normR(d.data().range);if(JSON.stringify(rr)!==JSON.stringify(myRange)){myRange=rr;applyRange();$('fb').className='feedback';$('fb').textContent='선생님이 문제 범위를 바꿨어요.'}},()=>{});
   lastRankJ='';editingNick=false;
   $('gate').hidden=true;chips();cur=gen();render();renderWho();focusAns();subRank();
   if(S.nick){dirty=true;flush()}
-  if(!myGrade)openGrade();else if(!S.rangeSet)openRangePicker(true);
+  if(!myGrade||!me.no)openGrade();else if(!S.rangeSet)openRangePicker(true);
 }
 async function logout(){
   if(test){test=false;beforeTest=null}
@@ -1632,10 +1635,11 @@ document.addEventListener('submit',async e=>{
   if(e.target.id==='signupForm'){
     e.preventDefault();
     const name=normName($('suName').value),p1=$('suPin').value.trim(),p2=$('suPin2').value.trim(),err=$('suErr');
-    const gr=+$('suGrade').value,cl=+$('suCls').value;
+    const gr=+$('suGrade').value,cl=+$('suCls').value,no=+$('suNo').value;
     if(!name){err.textContent='이름을 써 주세요.';return}
     if(!(gr>=1&&gr<=6)){err.textContent='학년을 골라 주세요.';return}
     if(!(cl>=1&&cl<=20)){err.textContent='반을 숫자로 써 주세요.';return}
+    if(!(no>=1&&no<=50)){err.textContent='번호를 숫자로 써 주세요.';return}
     if(!/^\d{4}$/.test(p1)){err.textContent='비밀번호는 숫자 4자리예요.';return}
     if(p1!==p2){err.textContent='두 비밀번호가 달라요. 다시 확인해 주세요.';return}
     if(cfg.signup===false){err.textContent='지금은 가입할 수 없어요. 선생님께 말씀드려 주세요.';return}
@@ -1651,7 +1655,7 @@ document.addEventListener('submit',async e=>{
         const ex=await FF.getDoc(FF.doc(fs,COL_ST,cred.user.uid));
         if(ex.exists()){signingUp=false;enterStudent(cred.user.uid,ex.data());flash(`다시 왔군요, ${name}!`,'#ffd27a');return}
       }
-      const now=new Date().toISOString(),body={...fresh(),name,joined:now,self:true,last:now,grade:gr,cls:cl,units:UNITS.filter(u=>u.sem[0]===String(gr)).map(u=>u.id)};
+      const now=new Date().toISOString(),body={...fresh(),name,joined:now,self:true,last:now,grade:gr,cls:cl,no,sid:sid(gr,cl,no),units:UNITS.filter(u=>u.sem[0]===String(gr)).map(u=>u.id)};
       await FF.setDoc(FF.doc(fs,COL_ST,cred.user.uid),body);
       signingUp=false;enterStudent(cred.user.uid,body);flash(`환영해요, ${name}!`,'#ffd27a');
     }catch(x){
@@ -1688,21 +1692,23 @@ function stopRoster(){if(unsubRoster){unsubRoster();unsubRoster=null}students=[]
 function renderRoster(){
   if(!canManage)return;
   $('teacher').hidden=false;
-  const list=students.slice().sort((a,b)=>((+a.grade||9)-(+b.grade||9))||((+a.cls||99)-(+b.cls||99))||String(a.name).localeCompare(String(b.name),'ko'));
+  const list=students.slice().sort((a,b)=>((+a.grade||9)-(+b.grade||9))||((+a.cls||99)-(+b.cls||99))||((+a.no||99)-(+b.no||99))||String(a.name).localeCompare(String(b.name),'ko'));
   $('rosterCount').textContent=`${list.length}명`;
   $('roster').innerHTML=list.map(s=>{const st=fromRaw(s);
     const acc=s.solved?Math.round(s.right/s.solved*100)+'%':'-';
     const last=s.last?new Date(s.last).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}):'-';
     const fresh7=s.self&&s.joined&&Date.now()-Date.parse(s.joined)<7*864e5;
-    return `<tr><td style="white-space:nowrap"><select data-stg="${esc(s.id)}" aria-label="학년" style="font:inherit"><option value="">?</option>${SGR.map(g=>`<option value="${g}" ${String(s.grade)===g?'selected':''}>${g}</option>`).join('')}</select>-<input data-stc="${esc(s.id)}" type="number" min="1" max="20" value="${+s.cls||''}" aria-label="반" style="width:3.2em;font:inherit"></td><td>${esc(s.name)}${fresh7?'<span class="newtag">새로 가입</span>':''}</td><td>${s.nick?`${esc(s.nick)} <button class="linkbtn" data-clrnick="${esc(s.id)}">지우기</button>`:'-'}</td><td style="white-space:nowrap">${normR(s.range)?`<b>개별 ${normR(s.range).length}개</b>`:'반 공통'} <button class="linkbtn" data-srange="${esc(s.id)}">정하기</button></td><td class="n">${+s.solved||0}</td><td class="n">${acc}</td><td>${esc(wname(st.w.L))}</td><td>${esc(wname(st.best))}</td><td class="n">${st.gold.toLocaleString('ko-KR')}</td><td class="n">${+s.booms||0}</td><td style="white-space:nowrap"><label><input type="checkbox" data-care="${esc(s.id)}" ${s.care===true?'checked':''}> 켜기</label></td><td>${esc(weak(s))}</td><td>${esc(last)}</td>
+    const myId=sid(+s.grade,+s.cls,+s.no),dupId=myId&&list.filter(x=>sid(+x.grade,+x.cls,+x.no)===myId).length>1;
+    return `<tr><td style="white-space:nowrap;font-variant-numeric:tabular-nums">${myId?`<b${dupId?' style="color:#ff8787" title="같은 ID 학생이 있어요"':''}>${myId}</b>${dupId?' ⚠️':''}`:'<span class="note">미입력</span>'}</td><td style="white-space:nowrap"><select data-stg="${esc(s.id)}" aria-label="학년" class="tin" style="width:auto"><option value="">?</option>${SGR.map(g=>`<option value="${g}" ${String(s.grade)===g?'selected':''}>${g}</option>`).join('')}</select>-<input data-stc="${esc(s.id)}" type="number" min="1" max="20" value="${+s.cls||''}" aria-label="반" class="tin">-<input data-stn="${esc(s.id)}" type="number" min="1" max="50" value="${+s.no||''}" aria-label="번호" class="tin"></td><td>${esc(s.name)}${fresh7?'<span class="newtag">새로 가입</span>':''}</td><td>${s.nick?`${esc(s.nick)} <button class="linkbtn" data-clrnick="${esc(s.id)}">지우기</button>`:'-'}</td><td style="white-space:nowrap">${normR(s.range)?`<b>개별 ${normR(s.range).length}개</b>`:'반 공통'} <button class="linkbtn" data-srange="${esc(s.id)}">정하기</button></td><td class="n">${+s.solved||0}</td><td class="n">${acc}</td><td>${esc(wname(st.w.L))}</td><td>${esc(wname(st.best))}</td><td class="n">${st.gold.toLocaleString('ko-KR')}</td><td class="n">${+s.booms||0}</td><td style="white-space:nowrap"><label><input type="checkbox" data-care="${esc(s.id)}" ${s.care===true?'checked':''}> 켜기</label></td><td>${esc(weak(s))}</td><td>${esc(last)}</td>
     <td style="white-space:nowrap"><button class="ghost danger" data-del="${esc(s.id)}">기록 삭제</button></td></tr>`}).join('')
-    ||'<tr><td colspan="14" class="note">아직 학생이 없어요. 학생이 가입하면 여기에 바로 나타나요.</td></tr>';
+    ||'<tr><td colspan="15" class="note">아직 학생이 없어요. 학생이 가입하면 여기에 바로 나타나요.</td></tr>';
 }
 document.addEventListener('change',e=>{
-  const el=e.target.closest('[data-stg],[data-stc]');if(!el||!isTeacher)return;
-  const id=el.dataset.stg||el.dataset.stc,s=students.find(x=>x.id===id),v=+el.value;
-  const body=el.dataset.stg?{grade:v||0}:{cls:v||0};
-  FF.setDoc(FF.doc(fs,COL_ST,id),body,{merge:true}).then(()=>{$('tMsg').textContent=`${s?s.name:'학생'}: ${el.dataset.stg?`${v}학년`:`${v}반`}으로 바꿨어요.`}).catch(()=>{$('tMsg').textContent='저장하지 못했어요.'});
+  const el=e.target.closest('[data-stg],[data-stc],[data-stn]');if(!el||!isTeacher)return;
+  const id=el.dataset.stg||el.dataset.stc||el.dataset.stn,s=students.find(x=>x.id===id),v=+el.value;
+  const body=el.dataset.stg?{grade:v||0}:el.dataset.stc?{cls:v||0}:{no:v||0};
+  if(s){const nx={...s,...body};body.sid=sid(+nx.grade,+nx.cls,+nx.no)}
+  FF.setDoc(FF.doc(fs,COL_ST,id),body,{merge:true}).then(()=>{$('tMsg').textContent=`${s?s.name:'학생'}: ${el.dataset.stg?`${v}학년`:el.dataset.stc?`${v}반`:`${v}번`}으로 바꿨어요. 학생 ID ${body.sid||'(미완성)'}`}).catch(()=>{$('tMsg').textContent='저장하지 못했어요.'});
 });
 $('allowSignup').addEventListener('change',async e=>{
   const v=e.target.checked;
