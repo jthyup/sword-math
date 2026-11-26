@@ -387,7 +387,7 @@ legend{font-family:"Black Han Sans";font-size:18px;padding:0 6px}
 </style>
 </head>
 <body>
-<div class="testbar" id="testbar" hidden>테스트 모드 · 강화권 무제한 · 지금 하는 것은 저장되지 않아요 <label class="tcheck"><input type="checkbox" id="forceWin"> 무조건 강화 성공</label><button class="ghost" id="testOff">테스트 끝내기</button></div>
+<div class="testbar" id="testbar" hidden>테스트 모드 · 강화권 무제한 · 골드·조각 넉넉히 · 지금 하는 것은 저장되지 않아요 <label class="tcheck"><input type="checkbox" id="forceWin"> 무조건 강화 성공</label><button class="ghost" id="testOff">테스트 끝내기</button></div>
 <header class="band wrap">
   <div><h1>연산 대장간</h1><p>문제를 맞히면 강화권! 망치로 두드려 전설의 검을 만들어 보세요.</p></div>
   <div class="who" id="who"></div>
@@ -1172,6 +1172,7 @@ function startTest(){
   if(test||!canTest())return;
   clearTimeout(wTimer);if(dirty)flush();
   beforeTest=JSON.parse(JSON.stringify(S));test=true;sel=[];
+  S.gold=9999999;S.frag=99999;if(!S.bgs.includes('soul'))S.bgs.push('soul');S.soulFx=true;
   $('gate').hidden=true;render();renderWho();focusAns();
 }
 function endTest(){
