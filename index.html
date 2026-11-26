@@ -554,6 +554,7 @@ legend{font-family:"Black Han Sans";font-size:18px;padding:0 6px}
 </div>
 </section>
 
+<div class="gate" id="ntModal" hidden><div class="gbox" style="text-align:center;max-width:420px"><div style="font-size:44px;line-height:1">⏳</div><h2 id="ntTitle" style="margin:8px 0 6px"></h2><p id="ntText" style="margin:0 0 16px;line-height:1.6"></p><div class="actions" style="justify-content:center"><button class="btn" id="ntOk">확인</button></div></div></div>
 <div class="gate" id="grModal" hidden><div class="gbox">
   <h2>몇 학년 몇 반 몇 번이에요?</h2>
   <p class="note" style="margin-top:0">고른 학년까지의 문제를 풀 수 있어요. 잘못 고르면 선생님이 고쳐 줄 수 있어요.</p>
@@ -1579,7 +1580,7 @@ const WEEK=7*864e5;
 const tsMs=v=>!v?0:typeof v==='string'?(Date.parse(v)||0):v.toMillis?v.toMillis():v.seconds?v.seconds*1000:0;
 function openGradeChange(){
   const last=tsMs(me&&me.gch),next=last+WEEK;
-  if(last&&Date.now()<next){const d=new Date(next);$('fb').className='feedback bad';$('fb').textContent=`학년·반은 일주일에 한 번만 바꿀 수 있어요. ${d.getMonth()+1}월 ${d.getDate()}일 ${d.getHours()}시 이후에 바꿀 수 있어요. 급하면 선생님께 말씀드려요.`;return}
+  if(last&&Date.now()<next){const d=new Date(next),left=Math.ceil((next-Date.now())/864e5);showNotice('아직 바꿀 수 없어요',`학년·반·번호는 일주일에 한 번만 바꿀 수 있어요.<br><b>${d.getMonth()+1}월 ${d.getDate()}일 ${d.getHours()}시</b> 이후에 다시 바꿀 수 있어요 (${left}일 남음).<br>급하면 선생님께 말씀드려요.`);return}
   grChange=true;$('grN').value=me.no||'';$('grCancel').hidden=false;$('grErr').textContent='';
   $('grModal').querySelector('h2').textContent='학년·반·번호 바꾸기';openGrade();
 }
@@ -1598,6 +1599,8 @@ document.addEventListener('submit',async e=>{
   applyRange();renderWho();save();
   if(!S.rangeSet)openRangePicker(true);else maybeTut();
 });
+function showNotice(title,html){$('ntTitle').textContent=title;$('ntText').innerHTML=html;$('ntModal').hidden=false;setTimeout(()=>$('ntOk').focus(),0)}
+document.addEventListener('click',e=>{if(e.target.id==='ntOk'||e.target.id==='ntModal')$('ntModal').hidden=true});
 function closeGr(){$('grModal').hidden=true;$('grCancel').hidden=true;grChange=false;$('grModal').querySelector('h2').textContent='몇 학년 몇 반 몇 번이에요?'}
 document.addEventListener('click',e=>{if(e.target.id==='chgGrade'&&me)openGradeChange();if(e.target.id==='grCancel')closeGr()});
 function enterStudent(id,data){
@@ -1621,7 +1624,7 @@ async function onAuth(u){
   if(signingUp||mode!=='fb')return;
   if(!u){
     me=null;isTeacher=false;canManage=false;stopRoster();$('teacher').hidden=true;subRank();
-    if(unsubMe){unsubMe();unsubMe=null}myRange=null;myCare=false;myGrade=0;$('grModal').hidden=true;applyRange();$('urModal').hidden=true;
+    if(unsubMe){unsubMe();unsubMe=null}myRange=null;myCare=false;myGrade=0;$('grModal').hidden=true;$('ntModal').hidden=true;applyRange();$('urModal').hidden=true;
     S=fresh();render();renderWho();showGate(gateMsg);gateMsg='';return;
   }
   const google=(u.providerData||[]).some(x=>x.providerId==='google.com');
