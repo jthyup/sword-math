@@ -196,6 +196,47 @@ ul{margin:0;padding-left:1.2em}li{margin:4px 0}
 .gate{position:fixed;inset:0;z-index:20;background:rgba(18,13,10,.92);display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto}
 .gate[hidden]{display:none}
 .gbox{background:var(--panel);color:var(--ink);border-radius:22px;padding:24px;width:min(100%,560px);max-height:100%;overflow:auto}
+/* 로그인 화면: 어두운 대장간 + 타오르는 화로 */
+.gate.forge{background:#0b0807 url(img/login-bg.webp) center/cover no-repeat;display:block;padding:0}
+.gate.forge::before{content:"";position:fixed;inset:0;background:linear-gradient(90deg,rgba(8,6,5,.15) 0%,rgba(8,6,5,0) 40%,rgba(8,6,5,.55) 100%);pointer-events:none}
+.lg-glow{position:fixed;left:var(--fx,50%);top:var(--fy,60%);width:var(--gr,600px);height:var(--gr,600px);transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,rgba(255,170,70,.55) 0%,rgba(255,120,30,.25) 35%,rgba(255,90,20,0) 70%);mix-blend-mode:screen;pointer-events:none;animation:flicker 2.6s infinite}
+@keyframes flicker{0%,100%{opacity:.75}12%{opacity:.95}25%{opacity:.7}38%{opacity:1}52%{opacity:.78}66%{opacity:.92}80%{opacity:.72}}
+.lg-embers{position:fixed;left:var(--ex,50%);top:var(--ey,66%);width:0;height:0;pointer-events:none}
+.lg-embers i{position:absolute;left:0;top:0;width:var(--s);height:var(--s);border-radius:50%;background:#ffcf6b;box-shadow:0 0 8px 2px rgba(255,140,40,.9);opacity:0;animation:ember var(--d) linear var(--dl) infinite}
+@keyframes ember{0%{opacity:0;transform:translate(var(--x0),0) scale(1)}10%{opacity:1}100%{opacity:0;transform:translate(var(--x1),var(--h)) scale(.3)}}
+.lg-rack{position:fixed;top:5vh;display:flex;gap:clamp(6px,1.4vw,18px);padding:0 14px;pointer-events:none}
+.lg-rack::before{content:"";position:absolute;left:0;right:0;top:0;height:14px;border-radius:4px;background:linear-gradient(180deg,#6b4423,#3b2414);box-shadow:0 4px 10px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,210,150,.25)}
+.lg-rack.l{left:3vw}.lg-rack.r{right:3vw}
+.lg-sw{position:relative;width:clamp(44px,5.4vw,72px);height:clamp(110px,13vw,170px);margin-top:6px}
+.lg-sw::before{content:"";position:absolute;left:50%;top:0;width:2px;height:16px;background:#2a1b10;transform:translateX(-50%)}
+.lg-sw img{position:absolute;left:50%;top:14px;width:140%;transform:translateX(-50%) rotate(135deg);transform-origin:50% 50%;image-rendering:pixelated;filter:drop-shadow(0 6px 6px rgba(0,0,0,.7));animation:swglint 4s ease-in-out infinite;animation-delay:var(--dl)}
+@keyframes swglint{0%,85%,100%{filter:drop-shadow(0 6px 6px rgba(0,0,0,.7)) brightness(1)}92%{filter:drop-shadow(0 0 10px rgba(255,220,150,.9)) brightness(1.6)}}
+.lg-wrap{position:relative;min-height:100%;display:flex;flex-direction:column;align-items:flex-end;justify-content:center;gap:16px;padding:6vh 6vw}
+.lg-head{width:min(100%,440px);text-align:center}
+.lg-title{margin:0;font-family:"Black Han Sans",sans-serif;font-weight:400;font-size:clamp(44px,6vw,72px);line-height:1;background:linear-gradient(180deg,#fff3c4 0%,#ffb347 45%,#e8590c 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 18px rgba(255,140,40,.55)) drop-shadow(0 4px 0 rgba(0,0,0,.6))}
+.lg-sub{margin:8px 0 0;color:#f0dcc4;font-size:15px;text-shadow:0 2px 6px rgba(0,0,0,.9)}
+.forge .gbox{width:min(100%,440px);background:rgba(20,14,10,.8);color:#f3e7d8;border:1px solid rgba(255,170,90,.35);box-shadow:0 24px 60px rgba(0,0,0,.65),0 0 40px rgba(255,120,30,.12);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);max-height:none}
+.forge .gbox h2{color:#ffd9a0}
+.forge .gbox .note{color:#cdb9a6}
+.forge .gbox input{background:rgba(255,255,255,.07);color:#fff;border-color:rgba(255,190,120,.3)}
+.forge .gbox input::placeholder{color:rgba(255,230,200,.4)}
+.forge .gbox .ghost{color:#f3e7d8;border-color:rgba(255,190,120,.35)}
+.forge .gbox .btn{background:linear-gradient(180deg,#ff7a1a,#c2410c);box-shadow:0 4px 0 #7c2d12}
+.forge .gbox .err{color:#ffb0a0}
+.forge .gbox .actions[style]{border-top-color:rgba(255,190,120,.2)!important}
+/* 넓은 화면: 오른쪽 검 걸이는 로그인 상자 왼쪽 위에 */
+@media(min-aspect-ratio:11/10) and (min-width:701px){.lg-rack.r{right:calc(6vw + 470px)}}
+/* 세로 화면(휴대폰·세로 태블릿): 위에 화로, 아래에 로그인 상자 */
+@media(max-width:700px),(max-aspect-ratio:11/10){
+  .gate.forge{background-size:auto 52vh;background-position:center top}
+  .gate.forge::before{background:linear-gradient(180deg,rgba(8,6,5,0) 0%,rgba(8,6,5,0) 36vh,#0b0807 52vh,#0b0807 100%)}
+  .lg-wrap{align-items:center;justify-content:flex-start;padding:0 16px 28px;gap:12px}
+  .lg-head{margin-top:9vh}
+  .lg-rack{top:2vh;transform:scale(.62);transform-origin:top center}
+  .lg-rack.l{left:0;transform-origin:top left}.lg-rack.r{right:0;transform-origin:top right}
+  .lg-sw:nth-child(3){display:none}
+  .forge .gbox{margin-top:15vh}
+}
 .gbox h2{margin-bottom:6px}
 .names{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin:16px 0}
 .names button{font:inherit;font-size:17px;min-height:56px;border-radius:14px;border:2px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer;padding:4px 8px}
@@ -375,8 +416,15 @@ legend{font-family:"Black Han Sans";font-size:18px;padding:0 6px}
   <div class="actions"><button class="btn" id="urDone">이 범위로 풀기</button></div>
 </div></div>
 <div class="gate" id="srModal" hidden><div class="gbox srbox" id="srBox"></div></div>
-<div class="gate" id="gate" hidden>
-  <div class="gbox" id="gbox"></div>
+<div class="gate forge" id="gate" hidden>
+  <div class="lg-glow" id="lgGlow" aria-hidden="true"></div>
+  <div class="lg-embers" id="lgEmbers" aria-hidden="true"></div>
+  <div class="lg-rack l" id="rackL" aria-hidden="true"></div>
+  <div class="lg-rack r" id="rackR" aria-hidden="true"></div>
+  <div class="lg-wrap">
+    <div class="lg-head"><h1 class="lg-title">연산 대장간</h1><p class="lg-sub">문제를 풀어 강화권을 모으고, 전설의 검을 벼려 보세요</p></div>
+    <div class="gbox" id="gbox"></div>
+  </div>
 </div>
 
 <script>
@@ -1304,6 +1352,25 @@ function startLocal(){
   mode='local';enabled=UNITS.map(u=>u.id);try{const v=JSON.parse(localStorage.getItem(LKEY));if(v)S=fromRaw(v)}catch(e){}
   chips();cur=gen();render();renderWho();
 }
+/* 로그인 화면 장식: 화로 위치에 맞춰 불빛과 불티, 양쪽 벽에 검 걸기 */
+const BG={w:1800,h:970,fx:.51,fy:.6,ey:.66};
+function placeForge(){
+  const W=innerWidth,H=innerHeight,mob=matchMedia('(max-width:700px),(max-aspect-ratio:11/10)').matches;
+  let dw,dh,x0,y0;
+  if(mob){dh=H*.52;dw=dh*BG.w/BG.h;x0=(W-dw)/2;y0=0}
+  else{const sc=Math.max(W/BG.w,H/BG.h);dw=BG.w*sc;dh=BG.h*sc;x0=(W-dw)/2;y0=(H-dh)/2}
+  const g=$('gate').style;
+  g.setProperty('--fx',(x0+BG.fx*dw)+'px');g.setProperty('--fy',(y0+BG.fy*dh)+'px');
+  g.setProperty('--ex',(x0+BG.fx*dw)+'px');g.setProperty('--ey',(y0+BG.ey*dh)+'px');
+  g.setProperty('--gr',Math.round(dh*.75)+'px');
+  const hh=Math.round(dh*.55);
+  [...$('lgEmbers').children].forEach(e=>e.style.setProperty('--h',`-${hh*(.6+Math.random()*.5)|0}px`));
+}
+$('lgEmbers').innerHTML=Array.from({length:34},()=>{const s=2+Math.random()*3.5,x0=(Math.random()-.5)*80,x1=x0+(Math.random()-.5)*160;
+  return `<i style="--s:${s.toFixed(1)}px;--x0:${x0|0}px;--x1:${x1|0}px;--d:${(2.6+Math.random()*3).toFixed(2)}s;--dl:-${(Math.random()*5).toFixed(2)}s"></i>`}).join('');
+const rack=ids=>ids.map((g,i)=>`<div class="lg-sw" style="--dl:${(i*1.3+g*.17).toFixed(2)}s"><img src="${SPR[g]}" alt=""></div>`).join('');
+$('rackL').innerHTML=rack([9,10,11]);$('rackR').innerHTML=rack([17,18,19]);
+placeForge();addEventListener('resize',placeForge);
 async function startFirebase(){
   if(window.__fbMock){({FAPP,FA,FF}=window.__fbMock)}
   else{[FAPP,FA,FF]=await Promise.all([import(CDN+'firebase-app.js'),import(CDN+'firebase-auth.js'),import(CDN+'firebase-firestore.js')])}
