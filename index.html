@@ -887,7 +887,7 @@ function renderQ(){
   q.className='q'+(cur.long||cur.choices?' long':'');
   q.innerHTML=`<span class="unitlbl">${u.sem} ${u.name}${cur.hard?' · ★ 어려운 문제':''}</span><br>${cur.q}`;
   const ch=$('choices'),f=$('f');
-  if(cur.choices){ch.hidden=false;f.hidden=true;ch.innerHTML=cur.choices.map((c,i)=>`<button data-ch="${i}"><span class="unitlbl">${i+1}</span>${c}</button>`).join('')}
+  if(cur.choices){ch.hidden=false;f.hidden=true;ch.innerHTML=cur.choices.map((c,i)=>`<button data-ch="${i}">${c}</button>`).join('')}
   else{ch.hidden=true;f.hidden=false;ch.innerHTML=''}
 }
 function focusAns(){if(!cur.choices&&!cur.none&&$('gate').hidden&&$('urModal').hidden)$('ans').focus()}
