@@ -51,12 +51,26 @@ header p{margin:4px 0 0;color:#e2cdb6;text-shadow:0 2px 6px rgba(0,0,0,.8)}
 .oddkey{display:flex;justify-content:space-between;gap:6px;margin-top:6px;font-size:14px;flex-wrap:wrap}
 .oddkey b{font-family:"Black Han Sans";font-weight:400;font-size:18px;font-variant-numeric:tabular-nums}
 .oddkey .k-up b{color:#ffb347}.oddkey .k-boom b{color:#ff8787}
+.hamline{font-size:13px;text-align:center;color:#ffd98a;min-height:0}
+.hamgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.hamgrid[hidden]{display:none}
+.hit{background:#1d1511;border:2px solid transparent;border-radius:14px;padding:10px;color:#f3e7d8;display:flex;flex-direction:column;gap:5px;text-align:center}
+.hit img{width:92px;height:92px;margin:0 auto;display:block;filter:drop-shadow(0 4px 6px rgba(0,0,0,.6))}
+.hit .nm{font-weight:700;font-size:15px}
+.hit .st{font-size:13px;color:#9be7a5;font-weight:700}
+.hit .ef{font-size:12px;color:#d9c3b4;line-height:1.35;min-height:32px}
+.hit .ef b{color:#ffd98a}
+.hit .pr{font-size:14px;color:#ffd98a}
+.hit .bt{margin-top:auto;font:inherit;font-size:14px;font-weight:700;border-radius:10px;padding:7px;border:0;cursor:pointer;background:linear-gradient(180deg,#ff9a3c,#e2571b);color:#fff}
+.hit .bt.use{background:transparent;border:1.5px solid #6b5247;color:#e9d5c4}
+.hit .bt:disabled{background:#3a2e29;color:#9c8678;cursor:default;border:0}
+.hit.on{border-color:#ffb347;box-shadow:0 0 14px rgba(255,160,60,.35)}
 .pity{font-size:13px;opacity:.85;text-align:center;margin-top:4px;min-height:20px}
 .next{margin-top:8px;font-size:14px;opacity:.85;text-align:center}
 .bar{height:6px;width:min(80%,320px);background:rgba(255,255,255,.12);border-radius:9px;overflow:hidden;margin:5px auto 0}
 .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--ember),var(--ember2));border-radius:9px;transition:width .4s}
 .sparks{position:absolute;inset:0;pointer-events:none;z-index:3}
-.sparks span{position:absolute;left:50%;top:50%;width:6px;height:6px;border-radius:50%;background:#ffd27a;box-shadow:0 0 8px #ff9b2f;animation:fly .7s ease-out forwards}
+.sparks span{position:absolute;left:50%;top:50%;width:6px;height:6px;border-radius:50%;background:var(--spk,#ffd27a);box-shadow:0 0 8px var(--spk,#ff9b2f);animation:fly .7s ease-out forwards}
 @keyframes fly{to{transform:translate(var(--x),var(--y));opacity:0}}
 .hit{animation:hit .35s}@keyframes hit{30%{transform:rotate(-4deg) translateY(4px)}60%{transform:rotate(3deg)}}
 .anvilwrap{position:relative;width:100%;display:flex;justify-content:center;z-index:4}
@@ -103,7 +117,7 @@ body.testing .codexnote{display:inline}
 .tiers .lock svg{filter:brightness(0);opacity:.45}.tiers .lock{color:#8a7a6e}
 .rules>.card:first-child{grid-column:1/-1}
 .tiers svg{height:84px}
-.hammerdeco{position:absolute;left:58%;top:12%;width:34%;z-index:3;pointer-events:none}
+.hammerdeco{position:absolute;left:55%;top:6%;width:42%;z-index:3;pointer-events:none}
 .actrow{position:absolute;z-index:5;top:18px;left:50%;transform:translateX(-50%);display:flex;gap:8px;align-items:stretch}
 .actrow>button{width:100px}
 .actrow .hlabel,.actrow .sellbtn{font-size:19px;padding-left:6px;padding-right:6px}
@@ -395,6 +409,7 @@ legend{font-family:"Black Han Sans";font-size:18px;padding:0 6px}
       <div class="oddbar" id="oddbar"><span class="o-up"></span><span class="o-keep"></span><span class="o-boom"></span></div>
       <div class="oddkey"><span class="k-up">강화 <b id="pUp">100%</b></span><span class="k-keep">유지 <b id="pKeep">0%</b></span><span class="k-boom">파괴 <b id="pBoom">0%</b></span></div>
       <div class="pity" id="pity"></div>
+      <div class="hamline" id="hamLine"></div>
     </div>
     <div class="next" id="next">+5부터 합칠 수 있어요</div>
     <div class="bar"><i id="nextBar" style="width:0"></i></div>
@@ -434,9 +449,10 @@ legend{font-family:"Black Han Sans";font-size:18px;padding:0 6px}
 </section>
 <section class="card shelfcard shopcard" data-panel="shop">
   <div class="shelfhead"><h2>상점</h2><span class="goldpill">가진 골드 <b id="shopGold">0</b></span></div>
-  <div class="chips shopcat"><button class="chip" aria-pressed="true">강화대 배경</button><button class="chip" aria-pressed="false" disabled>효과 (준비 중)</button></div>
+  <div class="chips shopcat"><button class="chip" data-stab="bg" aria-pressed="true">강화대 배경</button><button class="chip" data-stab="ham" aria-pressed="false">망치</button></div>
   <div class="shoppv" id="shopPv"><span id="shopPvName"></span></div>
   <div class="shopgrid" id="shopGrid"></div>
+  <div class="hamgrid" id="hamGrid" hidden></div>
   <p class="note" id="shopMsg">보관함의 무기를 팔면 골드를 받아요. 산 배경은 언제든 바꿔 쓸 수 있고, 그림을 누르면 위에서 크게 볼 수 있어요.</p>
 </section>
 <section class="card shelfcard" data-panel="codex">
@@ -461,6 +477,7 @@ legend{font-family:"Black Han Sans";font-size:18px;padding:0 6px}
       <li>필요 없는 무기는 팔아서 골드를 받아요 (강화 단계가 높을수록 비싸요: +10 → 1,000골드, +20 → 4,000골드)</li>
       <li>정답 1개 → 강화권 1장 (★ 어려운 문제는 2장)</li>
       <li>5연속 정답마다 → 보너스 강화권 1장</li>
+      <li>상점에서 산 망치를 들면 강화 확률이 오르고(+0.5%p ~ +5%p), 좋은 망치에는 특별한 효과가 있어요</li>
       <li>11~20콤보: 정답마다 강화권 1장 더, 21콤보부터: 2장 더 (3학년 단원에서 받아요)</li>
       <li>오답 → 정답을 보여 주고 연속 기록 초기화</li>
     </ul>
@@ -564,6 +581,20 @@ function baseRate(L){
 }
 const PITY_STEP=3,PITY_MAX=15;
 
+const HAM=[
+  {id:'wood',  name:'나무 망치',     price:0,     up:0,   spark:'#ffd27a'},
+  {id:'stone', name:'돌망치',        price:500,   up:.5,  spark:'#ffd27a'},
+  {id:'iron',  name:'쇠 망치',       price:1000,  up:1,   spark:'#ffd27a'},
+  {id:'steel', name:'강철 망치',     price:2000,  up:1.5, spark:'#e6f0ff'},
+  {id:'dwarf', name:'드워프 망치',   price:4000,  up:2,   spark:'#ffc46b', eff:'단단함', desc:'파괴 확률 20% 감소', boomCut:.2},
+  {id:'gold',  name:'황금 망치',     price:6000,  up:2.5, spark:'#ffe066', eff:'부자', desc:'무기 판매 골드 +20%', sellBonus:.2},
+  {id:'rune',  name:'룬 망치',       price:9000,  up:3,   spark:'#66e0ff', eff:'룬의 끈기', desc:'실패할 때 쌓이는 보정 +3%p → +4%p', pity:4},
+  {id:'sky',   name:'천상의 망치',   price:13000, up:3.5, spark:'#fff3c4', eff:'축복', desc:'10% 확률로 강화권을 쓰지 않음', free:.1},
+  {id:'void',  name:'공허 망치',     price:18000, up:4,   spark:'#c77dff', eff:'공허의 보호막', desc:'파괴 확률 40% 감소', boomCut:.4},
+  {id:'dragon',name:'용군주의 망치', price:25000, up:5,   spark:'#7ee8ff', eff:'용의 일격', desc:'성공할 때 5% 확률로 +2강', double:.05}];
+const curHam=()=>HAM.find(h=>h.id===S.ham)||HAM[0];
+const sellGold=L=>Math.floor(sellPrice(L)*(1+(curHam().sellBonus||0)));
+let shopTab='bg';
 const SHOP_BG=[
   {id:'lava',name:'용암 동굴',price:3000},
   {id:'candle',name:'촛불 지하 복도',price:5000},
@@ -571,7 +602,7 @@ const SHOP_BG=[
   {id:'ice',name:'얼음 수정 동굴',price:12000}];
 let lastGold=null,previewBg=null,sellArm=false,sellArmT=0;
 const sellPrice=L=>L<1?5:L*L*10;
-const def={w:{L:0},inv:[],best:0,tk:0,gold:0,bgs:[],bg:'',solved:0,right:0,combo:0,fails:0,booms:0,units:[],byUnit:{},nick:'',wk:'',wn:0,rangeSet:false};
+const def={w:{L:0},inv:[],best:0,tk:0,gold:0,bgs:[],bg:'',hams:[],ham:'',solved:0,right:0,combo:0,fails:0,booms:0,units:[],byUnit:{},nick:'',wk:'',wn:0,rangeSet:false};
 const fresh=()=>JSON.parse(JSON.stringify(def));
 let S=fresh();
 const $=id=>document.getElementById(id);
@@ -693,6 +724,7 @@ function fromRaw(raw){
   if(raw.units===undefined&&typeof raw.unit==='string'&&raw.unit!=='mix')o.units=[raw.unit];
   o.rangeSet=o.rangeSet===true;
   o.bgs=Array.isArray(o.bgs)?o.bgs.filter(x=>SHOP_BG.some(b=>b.id===x)):[];o.bg=o.bgs.includes(o.bg)?o.bg:'';
+  o.hams=Array.isArray(o.hams)?o.hams.filter(x=>HAM.some(h=>h.id===x&&h.price>0)):[];o.ham=o.hams.includes(o.ham)?o.ham:'';
   o.nick=typeof o.nick==='string'?o.nick.slice(0,8):'';o.wk=typeof o.wk==='string'?o.wk:'';
   for(const k of ['tk','gold','solved','right','combo','fails','booms','wn'])o[k]=Math.max(0,Math.floor(+o[k]||0));
   return o;
@@ -700,9 +732,12 @@ function fromRaw(raw){
 const r1=v=>+(+v).toFixed(1);
 function oddsOf(l,fails){
   const b=baseRate(l);let up=b.up,keep=b.keep,boom=b.boom;
-  const bonus=Math.min(PITY_MAX,fails*PITY_STEP);
-  if(up<100&&bonus){const add=Math.min(bonus,100-up);up+=add;const fromKeep=Math.min(add,keep);keep-=fromKeep;boom-=add-fromKeep}
-  return {up:r1(up),keep:r1(keep),boom:r1(boom),bonus:Math.min(bonus,100-b.up)};
+  const h=typeof S!=='undefined'?curHam():HAM[0];
+  if(h.boomCut&&boom){const cut=boom*h.boomCut;boom-=cut;keep+=cut}
+  const bonus=Math.min(PITY_MAX,fails*(h.pity||PITY_STEP));
+  const add0=Math.min(100-up,bonus+(h.up||0));
+  if(up<100&&add0>0){up+=add0;const fromKeep=Math.min(add0,keep);keep-=fromKeep;boom-=add0-fromKeep}
+  return {up:r1(up),keep:r1(keep),boom:r1(Math.max(0,boom)),bonus:Math.min(bonus,100-b.up),ham:Math.min(h.up||0,Math.max(0,100-b.up))};
 }
 
 /* ---------- 문제: 3학년 교육과정 단원 ---------- */
@@ -1028,6 +1063,12 @@ function renderShop(){
   const card=(id,name,price,th)=>{const own=!id||S.bgs.includes(id),on=cur===id;
     const btn=on?'<button class="bt" disabled>사용 중</button>':own?`<button class="bt use" data-usebg="${id}">사용하기</button>`:S.gold>=price?`<button class="bt" data-buybg="${id}">사기</button>`:`<button class="bt" disabled>${fmt(price-S.gold)} 골드 부족</button>`;
     return `<div class="item${on?' on':''}"><button class="th${id?'':' def'}" data-pvbg="${id}" ${id?`style="background-image:url(img/bg-${id}-s.webp)"`:''} aria-label="${name} 미리 보기">${on?'<span class="badge">사용 중</span>':own?'<span class="badge">보유</span>':''}</button><div class="bd"><span class="nm">${name}</span><span class="pr">${price?fmt(price)+' 골드':'기본 제공'}</span>${btn}</div></div>`};
+  document.querySelectorAll('[data-stab]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.stab===shopTab));
+  const isBg=shopTab==='bg';$('shopGrid').hidden=!isBg;$('shopPv').hidden=!isBg;$('hamGrid').hidden=isBg;
+  const curH=curHam().id;
+  $('hamGrid').innerHTML=HAM.map(h=>{const own=!h.price||S.hams.includes(h.id),on=curH===h.id;
+    const btn=on?'<button class="bt" disabled>사용 중</button>':own?`<button class="bt use" data-useham="${h.id}">사용하기</button>`:S.gold>=h.price?`<button class="bt" data-buyham="${h.id}">사기</button>`:`<button class="bt" disabled>${fmt(h.price-S.gold)} 골드 부족</button>`;
+    return `<div class="hit${on?' on':''}"><img src="img/hm-${h.id}.webp" alt="" loading="lazy"><span class="nm">${h.name}</span><span class="st">${h.up?`강화 확률 +${h.up}%p`:'기본 망치'}</span><span class="ef">${h.eff?`<b>${h.eff}</b> · ${h.desc}`:''}</span><span class="pr">${h.price?fmt(h.price)+' 골드':'기본 제공'}</span>${btn}</div>`}).join('');
   $('shopGrid').innerHTML=card('','기본 대장간',0)+SHOP_BG.map(b=>card(b.id,b.name,b.price)).join('');
   const pid=previewBg===null?S.bg:previewBg,pv=$('shopPv'),pit=SHOP_BG.find(b=>b.id===pid);
   pv.classList.toggle('def',!pid);pv.style.backgroundImage=pid?`url(img/bg-${pid}.webp)`:'';
@@ -1049,7 +1090,10 @@ function render(){
   $('nextBar').style.width=(k/STEP*100)+'%';
   $('tk').textContent=test?'∞':S.tk;
   $('hammer').disabled=busy||(!test&&S.tk<1);
-  {const sb=$('sellNow'),pr=sellPrice(L);sb.disabled=busy||L<1;sb.classList.toggle('arm',sellArm&&L>=1);
+  {const h=curHam(),hf=$('hammerFx');if(hf.dataset.h!==h.id){hf.dataset.h=h.id;hf.setAttribute('viewBox','0 0 110 110');hf.innerHTML=`<image href="img/hm-${h.id}.webp" x="-6" y="-8" width="122" height="122"/>`}
+   $('sparks').style.setProperty('--spk',h.spark);
+   $('hamLine').textContent=h.up||h.eff?`${h.name}${o.ham?` · 강화 +${o.ham}%p`:''}${h.eff?` · ${h.eff}: ${h.desc}`:''}`:''}
+  {const sb=$('sellNow'),pr=sellGold(L);sb.disabled=busy||L<1;sb.classList.toggle('arm',sellArm&&L>=1);
    $('sellTxt').textContent=sellArm&&L>=1?'한 번 더!':'판매';$('sellSub').textContent=L<1?'+1부터 가능':(sellArm?'누르면 판매':`+${pr.toLocaleString('ko-KR')}골드`)}
   $('sSolved').textContent=S.solved;{const gb=document.querySelector('.goldbar');if(lastGold!==null&&S.gold>lastGold)replay(gb,'bump');lastGold=S.gold}$('sGold').textContent=S.gold.toLocaleString('ko-KR');$('shopGold').textContent=S.gold.toLocaleString('ko-KR');
   $('sAcc').textContent=S.solved?Math.round(S.right/S.solved*100)+'%':'0%';
@@ -1069,7 +1113,7 @@ function renderShelf(){
     return `<button class="slot" data-slot="${i}" aria-pressed="${sel.includes(i)}">${pairOf(i)?'<span class="tag">짝</span>':''}<svg viewBox="0 0 128 128">${swordSVG(gOf(x.L),x.L%STEP,'s'+i,x.L)}</svg><b>+${x.L}</b>${esc(gname(gOf(x.L)))}</button>`}).join('');
   const A=$('invActions'),M=$('invMsg'),mi=L>=1?inv.findIndex(x=>x.L===L):-1;
   if(sel.length===1){const i=sel[0],x=inv[i],same=x.L===L&&L>=1;
-    A.innerHTML=(same?`<button class="btn sm merge" data-mw="${i}">작업대 무기와 합치기 → +${L+1}</button>`:'')+`<button class="btn sm" id="swapW">꺼내서 강화하기</button><button class="ghost" id="sellW">팔기 (골드 +${sellPrice(x.L).toLocaleString('ko-KR')})</button>`;
+    A.innerHTML=(same?`<button class="btn sm merge" data-mw="${i}">작업대 무기와 합치기 → +${L+1}</button>`:'')+`<button class="btn sm" id="swapW">꺼내서 강화하기</button><button class="ghost" id="sellW">팔기 (골드 +${sellGold(x.L).toLocaleString('ko-KR')})</button>`;
     M.textContent=`${wname(x.L)}을(를) 골랐어요. 꺼내면 지금 작업대의 무기가 이 칸에 들어가요.`+(same?' 작업대 무기와 단계가 같아서 바로 합칠 수 있어요.':' 같은 단계 무기를 하나 더 고르면 합칠 수 있어요.');
   }else if(sel.length===2){const [a,b]=sel.map(i=>inv[i]);
     if(canMerge(a,b)){A.innerHTML=`<button class="btn sm merge" id="mergeW">합치기 → +${a.L+1} (100%)</button>`;M.textContent='같은 단계 두 자루를 합치면 다음 단계로 확실하게 강화돼요. 합친 무기는 작업대에 올라가요.'}
@@ -1458,17 +1502,20 @@ $('f').addEventListener('submit',e=>{
 });
 $('hammer').addEventListener('click',async()=>{
   const w=S.w;if(busy||(!test&&S.tk<1))return;
-  sellArm=false;busy=true;$('hammer').disabled=true;$('sellNow').disabled=true;if(!test){S.tk--;$('tk').textContent=S.tk}
+  const hm=curHam(),freeHit=!test&&hm.free&&Math.random()<hm.free;
+  sellArm=false;busy=true;$('hammer').disabled=true;$('sellNow').disabled=true;if(!test&&!freeHit){S.tk--;$('tk').textContent=S.tk}
   const o=test&&forceWin?{up:100,keep:0,boom:0}:oddsOf(w.L,S.fails),sw=$('sword'),roll=Math.random()*100;
   if(!RM){replay($('hammerFx'),'swing');await wait(285);replay($('bang'),'pop');replay($('stage'),'shake')}
   sw.classList.remove('broken');replay(sw,'hit');
   if(roll<o.up){
-    const nl=w.L+1;S.fails=0;
+    const dbl=hm.double&&Math.random()<hm.double,nl=w.L+(dbl?2:1);S.fails=0;
+    if(dbl)setTimeout(()=>flash(`용의 일격! +2강 → +${nl}`,'#7ee8ff'),900);
     if(gOf(nl)>gOf(w.L)){sparks(26);await morph(()=>{S.w.L=nl;S.best=Math.max(S.best,nl)},true,`변신! ${gname(gOf(nl))}`);busy=false;render();return}
     w.L=nl;S.best=Math.max(S.best,nl);sparks(26);flash(`강화 성공! +${nl}`,'#ffd27a');
   }
   else if(roll<o.up+o.keep){S.fails++;sparks(6);flash('실패… 단계 유지','#c9cfd6')}
   else{S.booms++;S.fails=0;const was=w.L;w.L=0;sw.classList.add('broken');setTimeout(()=>sw.classList.remove('broken'),1200);flash(`파괴! +${was} → 나무 검 +0`,'#ff8787')}
+  if(freeHit)$('fb').className='feedback ok',$('fb').textContent='축복! 이번 망치질은 강화권을 쓰지 않았어요.';
   render();save();
   if(!RM)await wait(240);
   busy=false;render();
@@ -1476,7 +1523,7 @@ $('hammer').addEventListener('click',async()=>{
 $('sellNow').addEventListener('click',()=>{
   const L=S.w.L;if(busy||L<1)return;
   if(!sellArm){sellArm=true;clearTimeout(sellArmT);sellArmT=setTimeout(()=>{sellArm=false;render()},3000);render();return}
-  sellArm=false;clearTimeout(sellArmT);const got=sellPrice(L),nm=wname(L);
+  sellArm=false;clearTimeout(sellArmT);const got=sellGold(L),nm=wname(L);
   morph(()=>{S.gold+=got;S.w={L:0};S.fails=0;sel=[]},false,`판매! +${got.toLocaleString('ko-KR')}골드`)
     .then(()=>{$('invMsg').textContent=`${nm}을(를) 팔아서 ${got.toLocaleString('ko-KR')}골드를 받았어요. 새 나무 검으로 시작해요.`});
 });
@@ -1502,6 +1549,15 @@ document.addEventListener('click',e=>{
   if(pv){previewBg=pv.dataset.pvbg;renderShop();return}
   const tb=e.target.closest('[data-tab]');
   if(tb){setTab(tb.dataset.tab);if(!tb.closest('#tabs'))$('tabs').scrollIntoView({behavior:'smooth',block:'start'});return}
+  const stb=e.target.closest('[data-stab]');
+  if(stb){shopTab=stb.dataset.stab;renderShop();$('shopMsg').textContent=shopTab==='ham'?'망치를 바꾸면 강화 확률이 오르고 특별한 효과가 생겨요. 비싼 망치일수록 강해요.':'보관함의 무기를 팔면 골드를 받아요. 산 배경은 언제든 바꿔 쓸 수 있고, 그림을 누르면 위에서 크게 볼 수 있어요.';return}
+  const uh=e.target.closest('[data-useham]');
+  if(uh){S.ham=uh.dataset.useham==='wood'?'':uh.dataset.useham;render();save();$('shopMsg').textContent=`'${curHam().name}'(으)로 바꿨어요.`;return}
+  const bh=e.target.closest('[data-buyham]');
+  if(bh){const it=HAM.find(h=>h.id===bh.dataset.buyham);if(!it||S.hams.includes(it.id)||S.gold<it.price)return;
+    if(!bh.dataset.ok){bh.dataset.ok=1;bh.textContent='정말 살까요? 한 번 더';return}
+    S.gold-=it.price;S.hams.push(it.id);S.ham=it.id;render();save();
+    $('shopMsg').textContent=`'${it.name}'을(를) 샀어요! 바로 손에 들었어요.`;return}
   const ub=e.target.closest('[data-usebg]');
   if(ub){previewBg=null;S.bg=ub.dataset.usebg;render();save();$('shopMsg').textContent=S.bg?`강화대 배경을 '${SHOP_BG.find(b=>b.id===S.bg).name}'(으)로 바꿨어요.`:'기본 대장간으로 돌아왔어요.';return}
   const bb=e.target.closest('[data-buybg]');
@@ -1511,7 +1567,7 @@ document.addEventListener('click',e=>{
     $('shopMsg').textContent=`'${it.name}'을(를) 샀어요! 강화대 배경으로 바로 바꿨어요.`;return}
   if(id==='sellW'&&sel.length===1){const b=e.target;
     if(!b.dataset.ok){b.dataset.ok=1;b.textContent='정말 팔까요? 한 번 더 누르기';return}
-    const i=sel[0],x=S.inv[i],got=sellPrice(x.L);S.inv.splice(i,1);S.gold+=got;sel=[];render();save();
+    const i=sel[0],x=S.inv[i],got=sellGold(x.L);S.inv.splice(i,1);S.gold+=got;sel=[];render();save();
     $('invMsg').textContent=`${wname(x.L)}을(를) 팔아서 ${got.toLocaleString('ko-KR')}골드를 받았어요.`}
   if(id==='mergeW'&&sel.length===2){
     const [i,j]=sel,a=S.inv[i],b=S.inv[j];if(!canMerge(a,b))return;
