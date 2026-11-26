@@ -41,6 +41,47 @@ service cloud.firestore {
         && request.resource.data.uid == request.auth.uid;
     }
 
+    // 학년·반·번호: 그대로이거나, 처음 정하거나, 마지막 변경 뒤 7일이 지났을 때만 (변경 시각은 서버 시각)
+    function sameClass() {
+      return request.resource.data.get('grade', 0) == resource.data.get('grade', 0)
+        && request.resource.data.get('cls', 0) == resource.data.get('cls', 0)
+        && request.resource.data.get('no', 0) == resource.data.get('no', 0)
+        && request.resource.data.get('sid', '') == resource.data.get('sid', '')
+        && request.resource.data.get('gch', null) == resource.data.get('gch', null);
+    }
+    function firstClass() {
+      return resource.data.get('no', 0) == 0
+        && request.resource.data.get('gch', null) == resource.data.get('gch', null);
+    }
+    function weeklyClass() {
+      return request.resource.data.get('gch', null) == request.time
+        && (!(resource.data.get('gch', null) is timestamp)
+            || request.time > resource.data.gch + duration.value(7, 'd'));
+    }
+    function classOK() {
+      return sameClass() || firstClass() || weeklyClass();
+    }
+
+    // 랭킹 별명: 처음 정할 때와 선생님이 지운 뒤에는 무료, 그 밖에는 변경권 1장을 써야 해요.
+    function nickOK() {
+      return request.resource.data.get('nick', '') == resource.data.get('nick', '')
+        || resource.data.get('nick', '') == ''
+        || request.resource.data.get('nickTk', 0) == resource.data.get('nickTk', 0) - 1;
+    }
+    // 변경권은 3,000골드를 내야만 늘어나요 (최대 1장).
+    function nickTkOK() {
+      return request.resource.data.get('nickTk', 0) <= resource.data.get('nickTk', 0)
+        || (request.resource.data.get('nickTk', 0) == resource.data.get('nickTk', 0) + 1
+            && request.resource.data.get('nickTk', 0) <= 1
+            && request.resource.data.get('gold', 0) <= resource.data.get('gold', 0) - 3000);
+    }
+
+    // 랭킹판에 올리는 별명과 최고 강화는 자기 학생 기록과 같아야 해요.
+    function rankMatches() {
+      return request.resource.data.nick == get(/databases/$(database)/documents/sm_students/$(request.auth.uid)).data.get('nick', '')
+        && request.resource.data.best <= get(/databases/$(database)/documents/sm_students/$(request.auth.uid)).data.get('best', 0);
+    }
+
     function validStudent() {
       return request.resource.data.name is string
         && request.resource.data.name.size() > 0
@@ -59,19 +100,23 @@ service cloud.firestore {
       allow create: if isTeacher()
         || (signedIn() && request.auth.uid == uid && signupOpen() && validStudent()
             && request.resource.data.get('care', false) == false
-            && request.resource.data.get('range', null) == null);
-      // 학생은 자기 기록을 고칠 수 있지만, 선생님이 정한 '기초 지원'과 '문제 범위'는 못 바꿔요.
+            && request.resource.data.get('range', null) == null
+            && request.resource.data.get('gch', null) == null
+            && request.resource.data.get('nickTk', 0) == 0);
+      // 학생은 자기 기록을 고칠 수 있지만, 선생님이 정한 '기초 지원'·'문제 범위'는 못 바꾸고,
+      // 학년·반·번호(일주일 1번), 별명(변경권 필요)도 규칙대로만 바꿀 수 있어요.
       allow update: if isTeacher()
         || (signedIn() && request.auth.uid == uid && validStudent()
             && request.resource.data.get('care', false) == resource.data.get('care', false)
-            && request.resource.data.get('range', null) == resource.data.get('range', null));
+            && request.resource.data.get('range', null) == resource.data.get('range', null)
+            && classOK() && nickOK() && nickTkOK());
       allow delete: if isTeacher();
     }
 
     // 랭킹판: 별명, 최고 강화, 이번 주 맞힌 문제 수만 담아요. (정답률 등은 선생님만)
     match /sm_rank/{uid} {
       allow read: if isTeacher() || (signedIn() && rankOpen());
-      allow create, update: if signedIn() && request.auth.uid == uid && validRank();
+      allow create, update: if signedIn() && request.auth.uid == uid && validRank() && rankMatches();
       allow delete: if isTeacher() || (signedIn() && request.auth.uid == uid);
     }
   }
