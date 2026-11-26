@@ -70,17 +70,17 @@ header p{margin:4px 0 0;color:#e2cdb6;text-shadow:0 2px 6px rgba(0,0,0,.8)}
 .hamline{font-size:13px;text-align:center;color:#ffd98a;min-height:0}
 .hamgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
 .hamgrid[hidden]{display:none}
-.hit{background:#1d1511;border:2px solid transparent;border-radius:14px;padding:10px;color:#f3e7d8;display:flex;flex-direction:column;gap:5px;text-align:center}
-.hit img{width:92px;height:92px;margin:0 auto;display:block;filter:drop-shadow(0 4px 6px rgba(0,0,0,.6))}
-.hit .nm{font-weight:700;font-size:15px}
-.hit .st{font-size:13px;color:#9be7a5;font-weight:700}
-.hit .ef{font-size:12px;color:#d9c3b4;line-height:1.35;min-height:32px}
-.hit .ef b{color:#ffd98a}
-.hit .pr{font-size:14px;color:#ffd98a}
-.hit .bt{margin-top:auto;font:inherit;font-size:14px;font-weight:700;border-radius:10px;padding:7px;border:0;cursor:pointer;background:linear-gradient(180deg,#ff9a3c,#e2571b);color:#fff}
-.hit .bt.use{background:transparent;border:1.5px solid #6b5247;color:#e9d5c4}
-.hit .bt:disabled{background:#3a2e29;color:#9c8678;cursor:default;border:0}
-.hit.on{border-color:#ffb347;box-shadow:0 0 14px rgba(255,160,60,.35)}
+.hcard{background:#1d1511;border:2px solid transparent;border-radius:14px;padding:10px;color:#f3e7d8;display:flex;flex-direction:column;gap:5px;text-align:center}
+.hcard img{width:92px;height:92px;margin:0 auto;display:block;filter:drop-shadow(0 4px 6px rgba(0,0,0,.6))}
+.hcard .nm{font-weight:700;font-size:15px}
+.hcard .st{font-size:13px;color:#9be7a5;font-weight:700}
+.hcard .ef{font-size:12px;color:#d9c3b4;line-height:1.35;min-height:32px}
+.hcard .ef b{color:#ffd98a}
+.hcard .pr{font-size:14px;color:#ffd98a}
+.hcard .bt{margin-top:auto;font:inherit;font-size:14px;font-weight:700;border-radius:10px;padding:7px;border:0;cursor:pointer;background:linear-gradient(180deg,#ff9a3c,#e2571b);color:#fff}
+.hcard .bt.use{background:transparent;border:1.5px solid #6b5247;color:#e9d5c4}
+.hcard .bt:disabled{background:#3a2e29;color:#9c8678;cursor:default;border:0}
+.hcard.on{border-color:#ffb347;box-shadow:0 0 14px rgba(255,160,60,.35)}
 .pity{font-size:13px;opacity:.85;text-align:center;margin-top:4px;min-height:20px}
 .next{margin-top:8px;font-size:14px;opacity:.85;text-align:center}
 .bar{height:6px;width:min(80%,320px);background:rgba(255,255,255,.12);border-radius:9px;overflow:hidden;margin:5px auto 0}
@@ -1101,7 +1101,7 @@ function renderShop(){
   const curH=curHam().id;
   $('hamGrid').innerHTML=HAM.map(h=>{const own=!h.price||S.hams.includes(h.id),on=curH===h.id;
     const btn=on?'<button class="bt" disabled>사용 중</button>':own?`<button class="bt use" data-useham="${h.id}">사용하기</button>`:S.gold>=h.price?`<button class="bt" data-buyham="${h.id}">사기</button>`:`<button class="bt" disabled>${fmt(h.price-S.gold)} 골드 부족</button>`;
-    return `<div class="hit${on?' on':''}"><img src="img/hm-${h.id}.webp" alt="" loading="lazy"><span class="nm">${h.name}</span><span class="st">${h.up?`강화 확률 +${h.up}%p`:'기본 망치'}</span><span class="ef">${h.eff?`<b>${h.eff}</b> · ${h.desc}`:''}</span><span class="pr">${h.price?fmt(h.price)+' 골드':'기본 제공'}</span>${btn}</div>`}).join('');
+    return `<div class="hcard${on?' on':''}"><img src="img/hm-${h.id}.webp" alt="" loading="lazy"><span class="nm">${h.name}</span><span class="st">${h.up?`강화 확률 +${h.up}%p`:'기본 망치'}</span><span class="ef">${h.eff?`<b>${h.eff}</b> · ${h.desc}`:''}</span><span class="pr">${h.price?fmt(h.price)+' 골드':'기본 제공'}</span>${btn}</div>`}).join('');
   $('shopGrid').innerHTML=card('','기본 대장간',0)+SHOP_BG.map(b=>card(b.id,b.name,b.price)).join('');
   const pid=previewBg===null?S.bg:previewBg,pv=$('shopPv'),pit=SHOP_BG.find(b=>b.id===pid);
   pv.classList.toggle('def',!pid);pv.style.backgroundImage=pid?`url(img/bg-${pid}.webp)`:'';
