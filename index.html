@@ -133,6 +133,18 @@ body.testing .codexnote{display:inline}
 @keyframes halo{0%,100%{opacity:.45;transform:scale(.96)}50%{opacity:.9;transform:scale(1.04)}}
 @keyframes twinkle{0%,100%{opacity:0;transform:scale(.3)}50%{opacity:1;transform:scale(1)}}
 .shelfcard{max-width:1180px;margin:20px auto 0}
+.ranklist{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.ranklist li{display:grid;grid-template-columns:44px 46px minmax(0,1fr) auto;align-items:center;gap:10px;padding:6px 12px;border-radius:14px;background:var(--bg)}
+.ranklist li.me{outline:2px solid var(--ember);background:light-dark(#fff1e0,#3a2412)}
+.ranklist .rk{font-family:"Black Han Sans";font-size:24px;text-align:center;color:var(--mute)}
+.ranklist li.r1 .rk{color:#e8a200}.ranklist li.r2 .rk{color:#9aa4ae}.ranklist li.r3 .rk{color:#c07a3a}
+.ranklist svg{width:46px;height:46px;background:#1d1511;border-radius:10px}
+.ranklist .nk{font-weight:700;font-size:17px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ranklist .val{font-variant-numeric:tabular-nums;white-space:nowrap;text-align:right}
+.ranklist .val b{font-family:"Black Han Sans";font-weight:400;font-size:20px;color:var(--ember)}
+.nickform{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.nickform input{max-width:240px}
+.linkbtn{font:inherit;font-size:14px;background:none;border:0;color:var(--mute);text-decoration:underline;cursor:pointer;min-height:40px}
 .shelfhead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
 .shelfhead h2{margin:0}
 .shelf{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
@@ -257,6 +269,11 @@ legend{font-family:"Black Han Sans";font-size:18px;padding:0 6px}
     </div>
   </div>
 </section>
+<section class="card shelfcard rankcard" id="rankCard" hidden>
+  <div class="shelfhead"><h2>랭킹</h2><div class="chips"><button class="chip" data-rtab="best" aria-pressed="true">최고 무기</button><button class="chip" data-rtab="week" aria-pressed="false">이번 주 맞힌 문제</button></div></div>
+  <div id="rankBody"></div>
+  <p class="note" id="rankMe"></p>
+</section>
 <section class="card shelfcard">
   <div class="shelfhead"><h2>보관함 <span class="note" id="invCount" style="font-family:'Gowun Dodum';font-size:15px"></span></h2><button class="btn sm" id="keepNew">작업대 무기 보관하고 새로 시작</button></div>
   <div class="shelf" id="shelf"></div>
@@ -303,6 +320,7 @@ legend{font-family:"Black Han Sans";font-size:18px;padding:0 6px}
   <div class="row"><button class="btn sm" id="saveRange">출제 범위 저장</button><span class="note" id="rMsg" style="margin:0"></span></div>
   <h3>학생 관리 <span class="note" id="rosterCount" style="font-family:'Gowun Dodum';font-size:15px"></span></h3>
   <label class="ck"><input type="checkbox" id="allowSignup" checked> 학생이 스스로 가입할 수 있어요</label>
+  <label class="ck"><input type="checkbox" id="allowRank" checked> 학생에게 랭킹을 보여 줘요</label>
   <p class="note" style="margin:0 0 10px">학생이 가입하면 아래 표에 바로 나타나요. 선생님이 직접 추가할 수도 있어요. 학생이 비밀번호를 잊으면 기록을 지우고 이름에 번호를 붙여 다시 가입하게 해 주세요.</p>
   <form id="addForm" autocomplete="off">
     <input id="newName" placeholder="학생 이름 또는 번호+별명" maxlength="12" aria-label="학생 이름" required>
@@ -311,7 +329,7 @@ legend{font-family:"Black Han Sans";font-size:18px;padding:0 6px}
   </form>
   <p class="note" id="tMsg">학생은 로그인 화면에서 "처음 왔어요"로 가입하고, 다음부터 이름과 비밀번호 4자리로 들어와요.</p>
   <div class="tbl" style="margin-top:14px">
-    <table><thead><tr><th>학생</th><th class="n">푼 문제</th><th class="n">정답률</th><th>현재 무기</th><th>최고 무기</th><th class="n">파괴</th><th>약한 단원</th><th>마지막 접속</th><th></th></tr></thead><tbody id="roster"></tbody></table>
+    <table><thead><tr><th>학생</th><th>랭킹 별명</th><th class="n">푼 문제</th><th class="n">정답률</th><th>현재 무기</th><th>최고 무기</th><th class="n">파괴</th><th>약한 단원</th><th>마지막 접속</th><th></th></tr></thead><tbody id="roster"></tbody></table>
   </div>
 </div>
 </section>
@@ -355,7 +373,7 @@ function baseRate(L){
 }
 const PITY_STEP=3,PITY_MAX=15;
 
-const def={w:{L:0},inv:[],best:0,tk:0,solved:0,right:0,combo:0,fails:0,booms:0,units:[],byUnit:{}};
+const def={w:{L:0},inv:[],best:0,tk:0,solved:0,right:0,combo:0,fails:0,booms:0,units:[],byUnit:{},nick:'',wk:'',wn:0};
 const fresh=()=>JSON.parse(JSON.stringify(def));
 let S=fresh();
 const $=id=>document.getElementById(id);
@@ -375,9 +393,9 @@ const FB_CONFIG={
 };
 const TEACHER_EMAIL='donnie05124@gmail.com';
 const FBV='10.14.1',CDN=`https://www.gstatic.com/firebasejs/${FBV}/`;
-const COL_ST='sm_students',COL_SET='sm_settings'; // 이 게임의 데이터는 sm_ 로 시작하는 곳에만 저장
+const COL_ST='sm_students',COL_SET='sm_settings',COL_RANK='sm_rank'; // 이 게임의 데이터는 sm_ 로 시작하는 곳에만 저장
 let FAPP=null,FA=null,FF=null,fbApp=null,auth=null,fs=null,fbApp2=null,unsubRoster=null,fbReady=false,signingUp=false;
-let gateMsg='',me=null,mode='loading',students=[],canManage=false,isTeacher=false,cfg={signup:true},joining=false;
+let lastRankJ='',gateMsg='',me=null,mode='loading',students=[],canManage=false,isTeacher=false,cfg={signup:true,ranking:true},joining=false;
 let writing=false,dirty=false,wTimer=null;
 const LKEY='forge-v2';
 function saveLocal(){try{localStorage.setItem(LKEY,JSON.stringify(S))}catch(e){}}
@@ -392,7 +410,13 @@ async function flush(){
   if(writing||!dirty||!me)return;
   writing=true;dirty=false;
   const body={...S,name:me.name,last:new Date().toISOString()};
-  try{await FF.setDoc(FF.doc(fs,COL_ST,me.id),body,{merge:true})}
+  try{
+    await FF.setDoc(FF.doc(fs,COL_ST,me.id),body,{merge:true});
+    if(S.nick){
+      const wk=weekKey(),rb={uid:me.id,nick:S.nick,best:S.best,wk,['wn_'+wk]:S.wk===wk?S.wn:0},j=JSON.stringify(rb);
+      if(j!==lastRankJ){await FF.setDoc(FF.doc(fs,COL_RANK,me.id),rb);lastRankJ=j}
+    }
+  }
   catch(e){$('fb').className='feedback bad';$('fb').textContent='기록 저장에 실패했어요. 잠시 뒤 다시 저장할게요.';dirty=true}
   writing=false;if(dirty)wTimer=setTimeout(flush,1500);
 }
@@ -472,7 +496,8 @@ function fromRaw(raw){
   if(!o.byUnit||typeof o.byUnit!=='object'||Array.isArray(o.byUnit))o.byUnit={};
   o.units=Array.isArray(o.units)?o.units.filter(x=>typeof x==='string'):[];
   if(raw.units===undefined&&typeof raw.unit==='string'&&raw.unit!=='mix')o.units=[raw.unit];
-  for(const k of ['tk','solved','right','combo','fails','booms'])o[k]=Math.max(0,Math.floor(+o[k]||0));
+  o.nick=typeof o.nick==='string'?o.nick.slice(0,8):'';o.wk=typeof o.wk==='string'?o.wk:'';
+  for(const k of ['tk','solved','right','combo','fails','booms','wn'])o[k]=Math.max(0,Math.floor(+o[k]||0));
   return o;
 }
 const r1=v=>+(+v).toFixed(1);
@@ -725,7 +750,9 @@ function enterStudent(id,data){
   test=false;beforeTest=null;
   me={id,name:normName(data.name)||'학생'};
   S=fromRaw(data);sel=[];joining=false;
-  $('gate').hidden=true;chips();cur=gen();render();renderWho();focusAns();
+  lastRankJ='';editingNick=false;
+  $('gate').hidden=true;chips();cur=gen();render();renderWho();focusAns();subRank();
+  if(S.nick){dirty=true;flush()}
 }
 async function logout(){
   if(test){test=false;beforeTest=null}
@@ -735,14 +762,14 @@ async function logout(){
 async function onAuth(u){
   if(signingUp||mode!=='fb')return;
   if(!u){
-    me=null;isTeacher=false;canManage=false;stopRoster();$('teacher').hidden=true;
+    me=null;isTeacher=false;canManage=false;stopRoster();$('teacher').hidden=true;subRank();
     S=fresh();render();renderWho();showGate(gateMsg);gateMsg='';return;
   }
   const google=(u.providerData||[]).some(x=>x.providerId==='google.com');
   if(google){
     if(u.email===TEACHER_EMAIL){
       isTeacher=true;canManage=true;me=null;S=fresh();$('gate').hidden=true;
-      startRoster();renderRange();render();renderWho();
+      startRoster();renderRange();render();renderWho();subRank();$('allowRank').checked=cfg.ranking!==false;
       $('allowSignup').checked=cfg.signup!==false;
       setTimeout(()=>$('teacher').scrollIntoView({behavior:'smooth'}),300);
       return;
@@ -804,7 +831,7 @@ function renderRange(){
   if(!canManage)return;const sel=new Set(rangeDraft||enabled);
   $('range').innerHTML=['3-1','3-2'].map(sem=>`<fieldset><legend>${sem}학기</legend>${UNITS.filter(u=>u.sem===sem).map(u=>`<label class="ck"><input type="checkbox" data-rid="${u.id}" ${sel.has(u.id)?'checked':''}> ${u.name}</label>`).join('')}<button class="ghost" data-sem="${sem}">${sem} 전체 선택/해제</button></fieldset>`).join('');
 }
-async function saveSettings(over){return FF.setDoc(FF.doc(fs,COL_SET,'class'),{units:enabled,signup:cfg.signup!==false,...over})}
+async function saveSettings(over){return FF.setDoc(FF.doc(fs,COL_SET,'class'),{units:enabled,signup:cfg.signup!==false,ranking:cfg.ranking!==false,...over})}
 async function saveRange(){
   const units=rangeDraft||enabled;
   if(!units.length){$('rMsg').textContent='단원을 하나 이상 골라 주세요.';return}
@@ -829,9 +856,9 @@ function renderRoster(){
     const acc=s.solved?Math.round(s.right/s.solved*100)+'%':'-';
     const last=s.last?new Date(s.last).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}):'-';
     const fresh7=s.self&&s.joined&&Date.now()-Date.parse(s.joined)<7*864e5;
-    return `<tr><td>${esc(s.name)}${fresh7?'<span class="newtag">새로 가입</span>':''}</td><td class="n">${+s.solved||0}</td><td class="n">${acc}</td><td>${esc(wname(st.w.L))}</td><td>${esc(wname(st.best))}</td><td class="n">${+s.booms||0}</td><td>${esc(weak(s))}</td><td>${esc(last)}</td>
+    return `<tr><td>${esc(s.name)}${fresh7?'<span class="newtag">새로 가입</span>':''}</td><td>${s.nick?`${esc(s.nick)} <button class="linkbtn" data-clrnick="${esc(s.id)}">지우기</button>`:'-'}</td><td class="n">${+s.solved||0}</td><td class="n">${acc}</td><td>${esc(wname(st.w.L))}</td><td>${esc(wname(st.best))}</td><td class="n">${+s.booms||0}</td><td>${esc(weak(s))}</td><td>${esc(last)}</td>
     <td style="white-space:nowrap"><button class="ghost danger" data-del="${esc(s.id)}">기록 삭제</button></td></tr>`}).join('')
-    ||'<tr><td colspan="9" class="note">아직 학생이 없어요. 학생이 가입하면 여기에 바로 나타나요.</td></tr>';
+    ||'<tr><td colspan="10" class="note">아직 학생이 없어요. 학생이 가입하면 여기에 바로 나타나요.</td></tr>';
 }
 $('allowSignup').addEventListener('change',async e=>{
   const v=e.target.checked;
@@ -859,6 +886,76 @@ document.addEventListener('click',async e=>{
     try{await FF.deleteDoc(FF.doc(fs,COL_ST,del.dataset.del));$('tMsg').textContent='기록을 지웠어요. 그 학생이 같은 이름과 예전 비밀번호로 다시 가입하면 새 기록으로 시작해요.'}
     catch(err){$('tMsg').textContent='삭제하지 못했어요.'}
   }
+});
+
+/* ---------- 랭킹 ---------- */
+let rtab='best',unsubRank=null,rankRows=[],editingNick=false,myRankT=null;
+// 한국 시간 월요일 0시 기준 주 이름 (예: w20261123)
+function weekKey(d=new Date()){
+  const k=new Date(d.getTime()+9*3600e3),day=(k.getUTCDay()+6)%7;
+  return 'w'+new Date(Date.UTC(k.getUTCFullYear(),k.getUTCMonth(),k.getUTCDate()-day)).toISOString().slice(0,10).replace(/-/g,'');
+}
+const rankVisible=()=>mode==='fb'&&fbReady&&(isTeacher||(!!me&&cfg.ranking!==false));
+function subRank(){
+  if(unsubRank){unsubRank();unsubRank=null}
+  rankRows=[];
+  if(!rankVisible()||(me&&!S.nick)){renderRank();return}
+  const col=FF.collection(fs,COL_RANK),f='wn_'+weekKey();
+  const q=rtab==='best'?FF.query(col,FF.orderBy('best','desc'),FF.limit(10)):FF.query(col,FF.where(f,'>',0),FF.orderBy(f,'desc'),FF.limit(10));
+  unsubRank=FF.onSnapshot(q,snap=>{rankRows=snap.docs.map(d=>({id:d.id,...d.data()}));renderRank();clearTimeout(myRankT);myRankT=setTimeout(myRank,400)},()=>{rankRows=null;renderRank()});
+}
+async function myRank(){
+  const out=$('rankMe');
+  if(!me||!S.nick){out.textContent=isTeacher?'선생님 화면이에요. 학생에게는 자기 순위도 함께 보여요.':'';return}
+  const wk=weekKey(),f='wn_'+wk,val=rtab==='best'?S.best:(S.wk===wk?S.wn:0);
+  if(rtab==='week'&&!val){out.textContent='이번 주에 아직 맞힌 문제가 없어요. 문제를 맞히면 랭킹에 올라가요!';return}
+  try{
+    const c=await FF.getCountFromServer(FF.query(FF.collection(fs,COL_RANK),FF.where(rtab==='best'?'best':f,'>',val)));
+    const r=c.data().count+1;
+    out.textContent=rtab==='best'?`내 순위: ${r}등 · ${wname(S.best)}`:`내 순위: ${r}등 · 이번 주 ${val}문제`;
+  }catch(e){out.textContent=''}
+}
+function renderRank(){
+  const card=$('rankCard');card.hidden=!rankVisible();if(card.hidden){$('rankMe').textContent='';return}
+  document.querySelectorAll('[data-rtab]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.rtab===rtab));
+  const B=$('rankBody');
+  const off=isTeacher&&cfg.ranking===false?'<p class="note" style="margin-top:0">지금은 학생에게 랭킹이 숨겨져 있어요. 선생님만 보고 있어요.</p>':'';
+  if(me&&(!S.nick||editingNick)){
+    B.innerHTML=`<form class="nickform" id="nickForm"><label for="nickIn"><b>랭킹에 쓸 별명</b> (최대 8글자)</label><input id="nickIn" maxlength="8" value="${esc(S.nick)}" placeholder="예: 번개대장장이" required><button class="btn sm">${S.nick?'바꾸기':'정하고 랭킹 보기'}</button>${S.nick?'<button type="button" class="linkbtn" id="nickCancel">그대로 두기</button>':''}</form>
+      <p class="note" id="nickErr">별명은 친구들에게 보여요. 진짜 이름 대신 재미있는 별명을 지어 보세요.</p>`;
+    return;
+  }
+  if(rankRows===null){B.innerHTML=off+'<p class="note">랭킹을 불러오지 못했어요. 잠시 뒤 다시 열어 주세요.</p>';return}
+  if(!rankRows.length){B.innerHTML=off+`<p class="note">${rtab==='best'?'아직 랭킹에 오른 친구가 없어요.':'이번 주에 문제를 맞힌 친구가 아직 없어요. 첫 번째가 되어 보세요!'}</p>`;return}
+  const f='wn_'+weekKey(),val=r=>Math.max(0,Math.floor(+(rtab==='best'?r.best:r[f])||0));
+  // 같은 기록이면 같은 등수
+  B.innerHTML=off+`<ol class="ranklist">${rankRows.map((r,i)=>{const b=Math.max(0,Math.floor(+r.best||0)),mine=me&&r.id===me.id,rk=rankRows.filter(x=>val(x)>val(r)).length+1;
+    return `<li class="${mine?'me':''} r${rk}"><span class="rk">${rk}</span><svg viewBox="0 0 128 128" aria-hidden="true">${swordSVG(gOf(b),b%STEP,'r'+i,b)}</svg><span class="nk">${esc(r.nick||'?')}${mine?' (나)':''}</span><span class="val">${rtab==='best'?`${esc(gname(gOf(b)))} <b>+${b}</b>`:`<b>${Math.max(0,Math.floor(+r[f]||0))}</b>문제`}</span></li>`}).join('')}</ol>`
+    +(me?'<button class="linkbtn" id="nickEdit">내 별명 바꾸기</button>':'');
+}
+document.addEventListener('click',async e=>{
+  const t=e.target.closest('[data-rtab]');
+  if(t&&t.dataset.rtab!==rtab){rtab=t.dataset.rtab;subRank()}
+  if(e.target.id==='nickEdit'){editingNick=true;renderRank();$('nickIn').focus()}
+  if(e.target.id==='nickCancel'){editingNick=false;renderRank()}
+  const cn=e.target.closest('[data-clrnick]');
+  if(cn&&isTeacher){
+    try{await FF.setDoc(FF.doc(fs,COL_ST,cn.dataset.clrnick),{nick:''},{merge:true});await FF.deleteDoc(FF.doc(fs,COL_RANK,cn.dataset.clrnick));$('tMsg').textContent='별명을 지웠어요. 그 학생은 다음에 들어올 때 별명을 새로 정해요.'}
+    catch(x){$('tMsg').textContent='별명을 지우지 못했어요.'}
+  }
+});
+document.addEventListener('submit',e=>{
+  if(e.target.id!=='nickForm')return;e.preventDefault();
+  const n=normName($('nickIn').value);
+  if(!n){$('nickErr').textContent='별명을 써 주세요.';return}
+  if(n.length>8){$('nickErr').textContent='별명은 8글자까지예요.';return}
+  S.nick=n;editingNick=false;lastRankJ='';dirty=true;clearTimeout(wTimer);flush().then(()=>subRank());
+  renderRank();
+});
+$('allowRank').addEventListener('change',async e=>{
+  const v=e.target.checked;
+  try{await saveSettings({ranking:v});$('tMsg').textContent=v?'학생에게 랭킹을 보여 줘요.':'학생에게 랭킹을 숨겼어요. 선생님 화면에서는 계속 보여요.'}
+  catch(x){e.target.checked=!v;$('tMsg').textContent='설정을 저장하지 못했어요.'}
 });
 
 /* ---------- 게임 조작 ---------- */
@@ -896,6 +993,7 @@ document.addEventListener('change',e=>{const c=e.target.closest('[data-rid]');if
 function answer(ok){
   const fb=$('fb'),u=cur.unit,bu=Array.isArray(S.byUnit[u])?S.byUnit[u]:[0,0];
   S.solved++;S.byUnit[u]=[bu[0]+(ok?1:0),bu[1]+1];
+  {const wk=weekKey();if(S.wk!==wk){S.wk=wk;S.wn=0}if(ok)S.wn++}
   if(ok){
     S.right++;S.combo++;let g=cur.hard?2:1;const notes=[];
     if(S.combo%5===0){g++;notes.push(`${S.combo}연속 보너스!`)}
@@ -975,7 +1073,8 @@ async function startFirebase(){
   fbReady=true;mode='fb';
   FF.onSnapshot(FF.doc(fs,COL_SET,'class'),d=>{
     const dd=d.exists()?d.data():{},v=dd.units,u=Array.isArray(v)?v.filter(x=>U[x]):[];
-    const wasSignup=cfg.signup;cfg={signup:dd.signup!==false};$('allowSignup').checked=cfg.signup;
+    const wasSignup=cfg.signup,wasRank=cfg.ranking;cfg={signup:dd.signup!==false,ranking:dd.ranking!==false};$('allowSignup').checked=cfg.signup;$('allowRank').checked=cfg.ranking;
+    if(wasRank!==cfg.ranking)subRank();
     if(wasSignup!==cfg.signup&&!me&&!isTeacher&&!$('gate').hidden&&!joining&&mode==='fb')showGate();
     enabled=u.length?u:UNITS.map(x=>x.id);
     chips();renderRange();if(!enabled.includes(cur.unit)){cur=gen();render()}

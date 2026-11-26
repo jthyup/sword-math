@@ -2,7 +2,8 @@ rules_version = '2';
 
 // 연산 대장간 Firestore 보안 규칙
 // - 학생: 자기 기록(sm_students/{자기 uid})만 읽고 쓸 수 있어요.
-// - 선생님(아래 구글 계정): 모든 학생 기록을 보고, 지우고, 출제 범위·가입 허용을 바꿀 수 있어요.
+// - 선생님(아래 구글 계정): 모든 학생 기록을 보고, 지우고, 출제 범위·가입 허용·랭킹 공개를 바꿀 수 있어요.
+// - 랭킹판(sm_rank): 로그인한 학생끼리 별명·최고 강화·주간 문제 수만 볼 수 있어요.
 // - 그 밖의 모든 경로는 막혀 있어요.
 // Firebase 콘솔 > Firestore Database > 규칙 탭에 이 내용을 통째로 붙여 넣고 [게시]를 누르세요.
 
@@ -26,6 +27,20 @@ service cloud.firestore {
         || get(/databases/$(database)/documents/sm_settings/class).data.get('signup', true) == true;
     }
 
+    // 선생님이 '학생에게 랭킹 보이기'를 끄면 학생은 랭킹판을 읽을 수 없어요.
+    function rankOpen() {
+      return !exists(/databases/$(database)/documents/sm_settings/class)
+        || get(/databases/$(database)/documents/sm_settings/class).data.get('ranking', true) == true;
+    }
+
+    function validRank() {
+      return request.resource.data.nick is string
+        && request.resource.data.nick.size() > 0
+        && request.resource.data.nick.size() <= 8
+        && request.resource.data.best is int
+        && request.resource.data.uid == request.auth.uid;
+    }
+
     function validStudent() {
       return request.resource.data.name is string
         && request.resource.data.name.size() > 0
@@ -46,6 +61,13 @@ service cloud.firestore {
       allow update: if isTeacher()
         || (signedIn() && request.auth.uid == uid && validStudent());
       allow delete: if isTeacher();
+    }
+
+    // 랭킹판: 별명, 최고 강화, 이번 주 맞힌 문제 수만 담아요. (정답률 등은 선생님만)
+    match /sm_rank/{uid} {
+      allow read: if isTeacher() || (signedIn() && rankOpen());
+      allow create, update: if signedIn() && request.auth.uid == uid && validRank();
+      allow delete: if isTeacher() || (signedIn() && request.auth.uid == uid);
     }
   }
 }
