@@ -1308,7 +1308,7 @@ document.addEventListener('click',e=>{
   if(e.target.id==='toTeacher'){$('teacher').scrollIntoView({behavior:'smooth'})}
 });
 document.addEventListener('keydown',e=>{
-  if($('gate').hidden&&$('urModal').hidden&&cur.choices&&/^[1-4]$/.test(e.key)&&!e.target.closest('input')){const i=+e.key-1;if(cur.choices[i])answer(cur.choices[i]===cur.ans)}});
+  if($('gate').hidden&&$('urModal').hidden&&cur.choices&&/^[1-4]$/.test(e.key)&&!e.target.closest('input')){e.preventDefault();const i=+e.key-1;if(cur.choices[i])answer(cur.choices[i]===cur.ans)}});
 function answer(ok){
   if(cur.none)return;
   const fb=$('fb'),u=cur.unit,bu=Array.isArray(S.byUnit[u])?S.byUnit[u]:[0,0];
