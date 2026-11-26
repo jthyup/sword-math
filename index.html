@@ -709,7 +709,7 @@ const SPR=["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAA
 // 검 크기·위치: 무대(big)는 크게, 보관함·도감(small)은 칸에 맞게. HILT = 손잡이(코등이) 높이
 const SW_BIG={s:.92,cy:52},SW_SMALL={s:.72,cy:64},HILT_BIG=104,HILT_SMALL=96;
 const WT=[[100,10],[90,9],[80,8],[70,7],[60,6],[50,5],[45,4],[40,3],[35,2],[30,1]];
-const WSZ={1:[440,262],2:[440,319],3:[440,394],4:[440,396],5:[440,401],6:[440,403],7:[440,320],8:[436,440],9:[440,428],10:[405,440]};
+const WSZ={1:[440,260],2:[412,311],3:[440,429],4:[440,421],5:[410,440],6:[440,407],7:[440,318],8:[436,440],9:[428,440],10:[405,440]};
 function fxSVG(L,uid,anim){
   if(L<30)return {back:'',front:''};
   const n=WT.find(x=>L>=x[0])[1],[iw,ih]=WSZ[n],W=200,H=W*ih/iw,cy=62;
