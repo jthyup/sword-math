@@ -482,12 +482,13 @@ legend{font-family:"Black Han Sans";font-size:18px;padding:0 6px}
 </section>
 <section class="card shelfcard shopcard" data-panel="shop">
   <div class="shelfhead"><h2>상점</h2><span class="goldpill">가진 골드 <b id="shopGold">0</b></span></div>
-  <div class="chips shopcat"><button class="chip" data-stab="bg" aria-pressed="true">강화대 배경</button><button class="chip" data-stab="ham" aria-pressed="false">망치</button><button class="chip" data-stab="sword" aria-pressed="false">검</button><button class="chip" data-stab="frag" aria-pressed="false">검 조각·복구</button></div>
+  <div class="chips shopcat"><button class="chip" data-stab="bg" aria-pressed="true">강화대 배경</button><button class="chip" data-stab="ham" aria-pressed="false">망치</button><button class="chip" data-stab="sword" aria-pressed="false">검</button><button class="chip" data-stab="frag" aria-pressed="false">검 조각·복구</button><button class="chip" data-stab="etc" aria-pressed="false">기타</button></div>
   <div class="shoppv" id="shopPv"><span id="shopPvName"></span></div>
   <div class="shopgrid" id="shopGrid"></div>
   <div class="hamgrid" id="hamGrid" hidden></div>
   <div class="hamgrid" id="swGrid" hidden></div>
   <div class="fragbox" id="fragBox" hidden></div>
+  <div class="fragbox" id="etcBox" hidden></div>
   <p class="note" id="shopMsg">보관함의 무기를 팔면 골드를 받아요. 산 배경은 언제든 바꿔 쓸 수 있고, 그림을 누르면 위에서 크게 볼 수 있어요.</p>
 </section>
 <section class="card shelfcard" data-panel="codex">
@@ -515,6 +516,7 @@ legend{font-family:"Black Han Sans";font-size:18px;padding:0 6px}
       <li>5연속 정답마다 → 보너스 강화권 1장</li>
       <li>검이 부서지면 강화 단계만큼 검 조각을 받아요 (+23 → 조각 23개). 조각은 상점에서 강화권·골드·강화 주문서로 바꿀 수 있고, 많이 모으면 업적 보상을 받아요</li>
       <li>상점에서 +10·+15·+20 검을 골드로 사서 바로 시작할 수도 있어요</li>
+      <li>랭킹 별명은 처음 한 번은 무료로 정하고, 바꿀 때는 상점의 별명 변경권(3,000골드)이 필요해요</li>
       <li>직전에 부서진 검은 상점에서 골드를 내고 한 번 되살릴 수 있어요</li>
       <li>상점에서 산 망치를 들면 강화 확률이 오르고(+0.5%p ~ +5%p), 좋은 망치에는 특별한 효과가 있어요</li>
       <li>11~20콤보: 정답마다 강화권 1장 더, 21콤보부터: 2장 더 (3학년 단원에서 받아요)</li>
@@ -640,6 +642,7 @@ const ACH=[
   {id:'frag1',name:'조각 수집가 I', need:100, reward:'강화대 배경 「영혼의 빛 동굴」', has:s=>s.bgs.includes('soul'), give:s=>{if(!s.bgs.includes('soul'))s.bgs.push('soul')}},
   {id:'frag2',name:'조각 수집가 II',need:300, reward:'망치 불꽃 「혼불」 (푸른 영혼의 불꽃)', has:s=>s.soulFx, give:s=>{s.soulFx=true}}];
 const restorePrice=L=>100000;
+const NICK_PRICE=3000;
 const SHOP_SW=[10,15,20],swPrice=L=>L*L*20;
 function checkAch(){const got=[];for(const a of ACH)if(S.fragTotal>=a.need&&!a.has(S)){a.give(S);got.push(a)}return got}
 const sellGold=L=>Math.floor(sellPrice(L)*(1+(curHam().sellBonus||0)));
@@ -652,7 +655,7 @@ const SHOP_BG=[
   {id:'soul',name:'영혼의 빛 동굴',price:0,ach:'조각 수집가 I'}];
 let lastGold=null,previewBg=null,sellArm=false,sellArmT=0;
 const sellPrice=L=>L<1?5:L*L*10;
-const def={w:{L:0},inv:[],best:0,tk:0,gold:0,bgs:[],bg:'',hams:[],ham:'',tutDone:false,frag:0,fragTotal:0,scroll:0,lastBroken:null,soulFx:false,soulOn:false,solved:0,right:0,combo:0,fails:0,booms:0,units:[],byUnit:{},nick:'',wk:'',wn:0,rangeSet:false};
+const def={w:{L:0},inv:[],best:0,tk:0,gold:0,bgs:[],bg:'',hams:[],ham:'',tutDone:false,nickTk:0,frag:0,fragTotal:0,scroll:0,lastBroken:null,soulFx:false,soulOn:false,solved:0,right:0,combo:0,fails:0,booms:0,units:[],byUnit:{},nick:'',wk:'',wn:0,rangeSet:false};
 const fresh=()=>JSON.parse(JSON.stringify(def));
 let S=fresh();
 const $=id=>document.getElementById(id);
@@ -771,7 +774,7 @@ function fromRaw(raw){
   o.bgs=Array.isArray(o.bgs)?o.bgs.filter(x=>SHOP_BG.some(b=>b.id===x)):[];o.bg=o.bgs.includes(o.bg)?o.bg:'';
   o.hams=Array.isArray(o.hams)?o.hams.filter(x=>HAM.some(h=>h.id===x&&h.price>0)):[];o.ham=o.hams.includes(o.ham)?o.ham:'';
   o.nick=typeof o.nick==='string'?o.nick.slice(0,8):'';o.wk=typeof o.wk==='string'?o.wk:'';
-  for(const k of ['tk','gold','frag','fragTotal','scroll','solved','right','combo','fails','booms','wn'])o[k]=Math.max(0,Math.floor(+o[k]||0));
+  for(const k of ['tk','gold','nickTk','frag','fragTotal','scroll','solved','right','combo','fails','booms','wn'])o[k]=Math.max(0,Math.floor(+o[k]||0));
   return o;
 }
 const r1=v=>+(+v).toFixed(1);
@@ -1245,7 +1248,8 @@ function renderShop(){
     const btn=on?'<button class="bt" disabled>사용 중</button>':own?`<button class="bt use" data-usebg="${id}">사용하기</button>`:ach?`<button class="bt" disabled>업적 보상</button>`:S.gold>=price?`<button class="bt" data-buybg="${id}">사기</button>`:`<button class="bt" disabled>${fmt(price-S.gold)} 골드 부족</button>`;
     return `<div class="item${on?' on':''}"><button class="th${id?'':' def'}" data-pvbg="${id}" ${id?`style="background-image:url(img/bg-${id}-s.webp)"`:''} aria-label="${name} 미리 보기">${on?'<span class="badge">사용 중</span>':own?'<span class="badge">보유</span>':''}</button><div class="bd"><span class="nm">${name}</span><span class="pr">${ach?'업적: '+ach:price?fmt(price)+' 골드':'기본 제공'}</span>${btn}</div></div>`};
   document.querySelectorAll('[data-stab]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.stab===shopTab));
-  const isBg=shopTab==='bg';$('shopGrid').hidden=!isBg;$('shopPv').hidden=!isBg;$('hamGrid').hidden=shopTab!=='ham';$('fragBox').hidden=shopTab!=='frag';$('swGrid').hidden=shopTab!=='sword';
+  const isBg=shopTab==='bg';$('shopGrid').hidden=!isBg;$('shopPv').hidden=!isBg;$('hamGrid').hidden=shopTab!=='ham';$('fragBox').hidden=shopTab!=='frag';$('swGrid').hidden=shopTab!=='sword';$('etcBox').hidden=shopTab!=='etc';
+  $('etcBox').innerHTML=`<div class="fgrid"><div class="fcard"><div><b>🏷️ 랭킹 별명 변경권</b><span>랭킹 별명을 한 번 바꿀 수 있어요. 1장까지 가질 수 있어요 (가진 변경권 ${S.nickTk}/1)</span><span class="pr" style="margin-top:4px">${fmt(NICK_PRICE)} 골드</span></div>${S.nickTk>=1?'<button class="bt" disabled>이미 있어요</button>':S.gold>=NICK_PRICE?'<button class="bt" data-buynick="1">사기</button>':`<button class="bt" disabled>${fmt(NICK_PRICE-S.gold)} 골드 부족</button>`}</div></div>`;
   $('swGrid').innerHTML=SHOP_SW.map(L=>{const pr=swPrice(L);return `<div class="hcard"><svg viewBox="0 0 128 128" style="width:92px;height:92px;margin:0 auto;display:block">${swordSVG(gOf(L),0,'shop'+L,L)}</svg><span class="nm">${esc(gname(gOf(L)))} +${L}</span><span class="st">+${L}부터 시작</span><span class="ef">작업대에 바로 올라가요. 지금 검은 보관함으로 옮겨요.</span><span class="pr">${fmt(pr)} 골드</span>${S.gold>=pr?`<button class="bt" data-buysw="${L}">사기</button>`:`<button class="bt" disabled>${fmt(pr-S.gold)} 골드 부족</button>`}</div>`}).join('');
   {const lb=S.lastBroken,rp=lb?restorePrice(lb.L):0;
    const rest=lb?`<div class="fcard rest"><div><b>직전에 부서진 검 복구</b><span>${esc(wname(lb.L))} · 골드와 함께 이 검에서 받은 조각 ${lb.frag}개도 다시 내요</span></div><div class="fr"><span class="pr">${fmt(rp)} 골드</span>${S.gold<rp?`<button class="bt" disabled>${fmt(rp-S.gold)} 골드 부족</button>`:S.frag<lb.frag?'<button class="bt" disabled>조각이 모자라요</button>':'<button class="bt" data-restore="1">복구하기</button>'}</div></div>`
@@ -1374,7 +1378,7 @@ function enterStudent(id,data){
   S=fromRaw(data);sel=[];joining=false;$('combo').className='combo';
   myRange=normR(data.range);myCare=data.care===true;applyRange();
   if(unsubMe)unsubMe();
-  unsubMe=FF.onSnapshot(FF.doc(fs,COL_ST,id),d=>{if(!d.exists()||!me)return;myCare=d.data().care===true;const rr=normR(d.data().range);if(JSON.stringify(rr)!==JSON.stringify(myRange)){myRange=rr;applyRange();$('fb').className='feedback';$('fb').textContent='선생님이 문제 범위를 바꿨어요.'}},()=>{});
+  unsubMe=FF.onSnapshot(FF.doc(fs,COL_ST,id),d=>{if(!d.exists()||!me)return;myCare=d.data().care===true;if(d.data().nick===''&&S.nick){S.nick='';editingNick=false;lastRankJ='';renderRank()}const rr=normR(d.data().range);if(JSON.stringify(rr)!==JSON.stringify(myRange)){myRange=rr;applyRange();$('fb').className='feedback';$('fb').textContent='선생님이 문제 범위를 바꿨어요.'}},()=>{});
   lastRankJ='';editingNick=false;
   $('gate').hidden=true;chips();cur=gen();render();renderWho();focusAns();subRank();
   if(S.nick){dirty=true;flush()}
@@ -1607,12 +1611,13 @@ function renderRank(){
   // 같은 기록이면 같은 등수
   B.innerHTML=off+`<ol class="ranklist">${rankRows.map((r,i)=>{const b=Math.max(0,Math.floor(+r.best||0)),mine=me&&r.id===me.id,rk=rankRows.filter(x=>val(x)>val(r)).length+1;
     return `<li class="${mine?'me':''} r${rk}"><span class="rk">${rk}</span><svg viewBox="0 0 128 128" aria-hidden="true">${swordSVG(gOf(b),b%STEP,'r'+i,b)}</svg><span class="nk">${esc(r.nick||'?')}${mine?' (나)':''}</span><span class="val">${rtab==='best'?`${esc(gname(gOf(b)))} <b>+${b}</b>`:`<b>${Math.max(0,Math.floor(+r[f]||0))}</b>문제`}</span></li>`}).join('')}</ol>`
-    +(me?'<button class="linkbtn" id="nickEdit">내 별명 바꾸기</button>':'');
+    +(me?(S.nickTk>0?'<button class="linkbtn" id="nickEdit">내 별명 바꾸기 (변경권 1장 사용)</button>':'<button class="linkbtn" id="nickShop">별명을 바꾸려면 변경권이 필요해요 (상점 → 기타)</button>'):'');
 }
 document.addEventListener('click',async e=>{
   const t=e.target.closest('[data-rtab]');
   if(t&&t.dataset.rtab!==rtab){rtab=t.dataset.rtab;subRank()}
-  if(e.target.id==='nickEdit'){editingNick=true;renderRank();$('nickIn').focus()}
+  if(e.target.id==='nickEdit'&&S.nickTk>0){editingNick=true;renderRank();$('nickIn').focus()}
+  if(e.target.id==='nickShop'){setTab('shop');shopTab='etc';renderShop()}
   if(e.target.id==='nickCancel'){editingNick=false;renderRank()}
   const ck=e.target.closest('[data-care]');
   if(ck&&isTeacher){const v=ck.checked,id=ck.dataset.care,s=students.find(x=>x.id===id);
@@ -1628,6 +1633,7 @@ document.addEventListener('submit',e=>{
   const n=normName($('nickIn').value);
   if(!n){$('nickErr').textContent='별명을 써 주세요.';return}
   if(n.length>8){$('nickErr').textContent='별명은 8글자까지예요.';return}
+  if(S.nick&&n!==S.nick){if(S.nickTk<1){$('nickErr').textContent='별명을 바꾸려면 상점에서 변경권을 사야 해요.';return}S.nickTk--}
   S.nick=n;editingNick=false;lastRankJ='';dirty=true;clearTimeout(wTimer);flush().then(()=>subRank());
   renderRank();
 });
@@ -1757,6 +1763,9 @@ document.addEventListener('click',e=>{
     if(!rs.dataset.ok){rs.dataset.ok=1;rs.textContent='정말 복구? 한 번 더';return}
     S.gold-=pr;S.frag-=lb.frag;const moved=S.w.L>0;if(moved)S.inv.push({...S.w});S.w={L:lb.L};S.fails=0;S.lastBroken=null;sel=[];
     render();save();$('shopMsg').textContent=`${wname(lb.L)}을(를) 되살렸어요!${moved?' 원래 작업대 무기는 보관함으로 옮겼어요.':''} 강화 탭에서 확인해 보세요.`;return}
+  const bn=e.target.closest('[data-buynick]');
+  if(bn){if(S.nickTk>=1||S.gold<NICK_PRICE)return;if(!bn.dataset.ok){bn.dataset.ok=1;bn.textContent='정말 살까요? 한 번 더';return}
+    S.gold-=NICK_PRICE;S.nickTk=1;render();save();$('shopMsg').textContent='랭킹 별명 변경권을 샀어요! 랭킹 탭의 \'내 별명 바꾸기\'에서 쓸 수 있어요.';return}
   const bsw=e.target.closest('[data-buysw]');
   if(bsw){const L=+bsw.dataset.buysw,pr=swPrice(L);if(busy||!SHOP_SW.includes(L)||S.gold<pr)return;
     if(S.w.L>0&&S.inv.length>=INV_MAX){$('shopMsg').textContent='보관함이 가득 차서 지금 검을 옮길 자리가 없어요. 보관함을 한 칸 비워 주세요.';return}
@@ -1764,7 +1773,7 @@ document.addEventListener('click',e=>{
     S.gold-=pr;const moved=S.w.L>0;if(moved)S.inv.push({...S.w});S.w={L};S.fails=0;S.best=Math.max(S.best,L);sel=[];render();save();
     $('shopMsg').textContent=`${wname(L)}을(를) 샀어요! 작업대에 올렸어요.${moved?' 원래 검은 보관함으로 옮겼어요.':''}`;return}
   const stb=e.target.closest('[data-stab]');
-  if(stb){shopTab=stb.dataset.stab;renderShop();$('shopMsg').textContent=shopTab==='sword'?'검이 깨져서 처음부터 하기 힘들 때, 골드로 +10·+15·+20 검을 사서 다시 시작할 수 있어요.':shopTab==='frag'?'검이 부서지면 그 강화 단계만큼 검 조각을 받아요. 조각은 강화권·골드·주문서로 바꾸거나 업적을 채우는 데 써요.':shopTab==='ham'?'망치를 바꾸면 강화 확률이 오르고 특별한 효과가 생겨요. 비싼 망치일수록 강해요.':'보관함의 무기를 팔면 골드를 받아요. 산 배경은 언제든 바꿔 쓸 수 있고, 그림을 누르면 위에서 크게 볼 수 있어요.';return}
+  if(stb){shopTab=stb.dataset.stab;renderShop();$('shopMsg').textContent=shopTab==='etc'?'처음 정하는 랭킹 별명은 무료예요. 그 뒤로 바꾸려면 변경권이 필요해요.':shopTab==='sword'?'검이 깨져서 처음부터 하기 힘들 때, 골드로 +10·+15·+20 검을 사서 다시 시작할 수 있어요.':shopTab==='frag'?'검이 부서지면 그 강화 단계만큼 검 조각을 받아요. 조각은 강화권·골드·주문서로 바꾸거나 업적을 채우는 데 써요.':shopTab==='ham'?'망치를 바꾸면 강화 확률이 오르고 특별한 효과가 생겨요. 비싼 망치일수록 강해요.':'보관함의 무기를 팔면 골드를 받아요. 산 배경은 언제든 바꿔 쓸 수 있고, 그림을 누르면 위에서 크게 볼 수 있어요.';return}
   const uh=e.target.closest('[data-useham]');
   if(uh){S.ham=uh.dataset.useham==='wood'?'':uh.dataset.useham;render();save();$('shopMsg').textContent=`'${curHam().name}'(으)로 바꿨어요.`;return}
   const bh=e.target.closest('[data-buyham]');
