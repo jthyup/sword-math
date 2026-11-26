@@ -619,7 +619,7 @@ const FRAG_SHOP=[
 const ACH=[
   {id:'frag1',name:'조각 수집가 I', need:100, reward:'강화대 배경 「영혼의 빛 동굴」', has:s=>s.bgs.includes('soul'), give:s=>{if(!s.bgs.includes('soul'))s.bgs.push('soul')}},
   {id:'frag2',name:'조각 수집가 II',need:300, reward:'망치 불꽃 「혼불」 (푸른 영혼의 불꽃)', has:s=>s.soulFx, give:s=>{s.soulFx=true}}];
-const restorePrice=L=>Math.max(3000,L*L*20);
+const restorePrice=L=>100000;
 function checkAch(){const got=[];for(const a of ACH)if(S.fragTotal>=a.need&&!a.has(S)){a.give(S);got.push(a)}return got}
 const sellGold=L=>Math.floor(sellPrice(L)*(1+(curHam().sellBonus||0)));
 let shopTab='bg';
