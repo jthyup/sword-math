@@ -735,11 +735,14 @@ function applyRange(){
 // 학생이 고른 단원(비어 있으면 선생님이 연 범위 전체)
 function chosen(){
   const list=(enabled.length?enabled:UNITS.map(u=>u.id)).filter(id=>U[id]);
+  if((S.units||[]).includes('-'))return []; // '-' = 아무 단원도 고르지 않음
   const c=(S.units||[]).filter(id=>list.includes(id));
   return c.length?c:list;
 }
 function gen(){
-  const id=pick(chosen());
+  const pool=chosen();
+  if(!pool.length)return {none:true,unit:null,q:'위에서 풀고 싶은 단원을 골라 주세요.',ans:null};
+  const id=pick(pool);
   const p=GEN[id]();p.unit=id;return p;
 }
 let cur=gen();
@@ -747,19 +750,20 @@ let cur=gen();
 /* ---------- 화면 ---------- */
 function chips(){
   const list=enabled.filter(id=>U[id]);
-  const c=chosen(),all=c.length===list.length;
+  const c=chosen(),all=c.length===list.length,none=!c.length;
   $('ops').innerHTML=`<button class="chip" data-unit="all" aria-pressed="${all}">전체</button>`+list.map(id=>`<button class="chip" data-unit="${id}" aria-pressed="${c.includes(id)}"><span class="unitlbl">${U[id].sem}</span>${U[id].name}</button>`).join('');
-  $('rangeNote').textContent=(c.length===1&&!all?`${U[c[0]].sem} ${U[c[0]].name} 문제만 나와요.`:`${all?'모든 단원':c.length+'개 단원'}에서 문제가 섞여 나와요.`)+' 여러 개를 눌러 고를 수 있어요.'+(mode==='fb'?(me&&myRange?` (선생님이 정해 준 나만의 범위 ${list.length}개 단원)`:` (선생님이 연 범위 ${list.length}개 단원)`):'');
+  $('rangeNote').textContent=none?'고른 단원이 없어요. 풀고 싶은 단원을 눌러 주세요.':(c.length===1&&!all?`${U[c[0]].sem} ${U[c[0]].name} 문제만 나와요.`:`${all?'모든 단원':c.length+'개 단원'}에서 문제가 섞여 나와요.`)+' 여러 개를 눌러 고를 수 있어요.'+(mode==='fb'?(me&&myRange?` (선생님이 정해 준 나만의 범위 ${list.length}개 단원)`:` (선생님이 연 범위 ${list.length}개 단원)`):'');
 }
 function renderQ(){
   const u=U[cur.unit],q=$('q');
+  if(cur.none){q.className='q long';q.textContent=cur.q;$('f').hidden=true;$('choices').hidden=true;$('choices').innerHTML='';return}
   q.className='q'+(cur.long||cur.choices?' long':'');
   q.innerHTML=`<span class="unitlbl">${u.sem} ${u.name}${cur.hard?' · ★ 어려운 문제':''}</span><br>${cur.q}`;
   const ch=$('choices'),f=$('f');
   if(cur.choices){ch.hidden=false;f.hidden=true;ch.innerHTML=cur.choices.map((c,i)=>`<button data-ch="${i}"><span class="unitlbl">${i+1}</span>${c}</button>`).join('')}
   else{ch.hidden=true;f.hidden=false;ch.innerHTML=''}
 }
-function focusAns(){if(!cur.choices&&$('gate').hidden)$('ans').focus()}
+function focusAns(){if(!cur.choices&&!cur.none&&$('gate').hidden)$('ans').focus()}
 const canMerge=(a,b)=>a&&b&&a.L===b.L&&a.L>=1;
 const wname=L=>`${gname(gOf(L))} +${L}`;
 let sel=[],busy=false;
@@ -1131,10 +1135,10 @@ document.addEventListener('click',e=>{
   if(un){
     const list=(enabled.length?enabled:UNITS.map(u=>u.id)).filter(id=>U[id]),c=chosen(),id=un.dataset.unit;
     let next;
-    if(id==='all')next=[];
-    else if(c.includes(id)){next=c.filter(x=>x!==id);if(!next.length){$('rangeNote').textContent='단원을 하나 이상 골라야 해요.';return}}
+    if(id==='all')next=c.length===list.length?['-']:[]; // 전체를 한 번 더 누르면 모두 해제
+    else if(c.includes(id)){next=c.filter(x=>x!==id);if(!next.length)next=['-']}
     else next=[...c,id];
-    S.units=next.length===list.length?[]:next;
+    S.units=next.length===list.length&&!next.includes('-')?[]:next;
     chips();if(!chosen().includes(cur.unit)){cur=gen()}render();save();focusAns()}
   if(ch&&cur.choices)answer(cur.choices[+ch.dataset.ch]===cur.ans);
   if(sem){const ids=UNITS.filter(u=>u.sem===sem.dataset.sem).map(u=>u.id),d=new Set(rangeDraft||enabled),all=ids.every(i=>d.has(i));ids.forEach(i=>all?d.delete(i):d.add(i));rangeDraft=UNITS.map(u=>u.id).filter(i=>d.has(i));renderRange();$('rMsg').textContent='저장하지 않은 변경이 있어요.'}
@@ -1155,6 +1159,7 @@ document.addEventListener('keydown',e=>{
   if($('gate').hidden&&cur.choices&&/^[1-4]$/.test(e.key)&&!e.target.closest('input')){const i=+e.key-1;if(cur.choices[i])answer(cur.choices[i]===cur.ans)}});
 document.addEventListener('change',e=>{const c=e.target.closest('[data-rid]');if(!c)return;rangeDraft=[...document.querySelectorAll('[data-rid]')].filter(x=>x.checked).map(x=>x.dataset.rid);$('rMsg').textContent='저장하지 않은 변경이 있어요.'});
 function answer(ok){
+  if(cur.none)return;
   const fb=$('fb'),u=cur.unit,bu=Array.isArray(S.byUnit[u])?S.byUnit[u]:[0,0];
   S.solved++;S.byUnit[u]=[bu[0]+(ok?1:0),bu[1]+1];
   {const wk=weekKey();if(S.wk!==wk){S.wk=wk;S.wn=0}if(ok)S.wn++}
@@ -1167,7 +1172,7 @@ function answer(ok){
   cur=gen();$('ans').value='';render();save();focusAns();
 }
 $('f').addEventListener('submit',e=>{
-  e.preventDefault();const v=$('ans').value.trim();if(v===''||cur.choices)return;
+  e.preventDefault();const v=$('ans').value.trim();if(v===''||cur.choices||cur.none)return;
   answer(Number(v.replace(/,/g,''))===Number(cur.ans));
 });
 $('hammer').addEventListener('click',async()=>{
