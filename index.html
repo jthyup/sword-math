@@ -274,6 +274,8 @@ h3{font-family:"Black Han Sans";font-weight:400;font-size:22px;margin:24px 0 6px
 .choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .choices button{font:inherit;font-size:20px;font-weight:700;min-height:64px;border-radius:14px;border:2px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer;padding:6px 10px}
 .choices button:hover{border-color:var(--steel)}
+.choices button{position:relative;padding:6px 44px}
+.choices .key{position:absolute;left:10px;top:50%;transform:translateY(-50%);display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;font-size:13px;font-weight:700;border-radius:6px;background:rgba(255,255,255,.08);color:#d9c3b4;border:1px solid rgba(255,255,255,.25);border-bottom-width:3px;pointer-events:none}
 .pict{display:grid;gap:4px;margin:12px auto 0;max-width:420px;font-size:16px;font-weight:400;text-align:left}
 .pict div{display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--line);padding:4px 0;flex-wrap:wrap;min-height:34px}
 .pict span{width:3em;flex:none}
@@ -887,7 +889,7 @@ function renderQ(){
   q.className='q'+(cur.long||cur.choices?' long':'');
   q.innerHTML=`<span class="unitlbl">${u.sem} ${u.name}${cur.hard?' · ★ 어려운 문제':''}</span><br>${cur.q}`;
   const ch=$('choices'),f=$('f');
-  if(cur.choices){ch.hidden=false;f.hidden=true;ch.innerHTML=cur.choices.map((c,i)=>`<button data-ch="${i}">${c}</button>`).join('')}
+  if(cur.choices){ch.hidden=false;f.hidden=true;ch.innerHTML=cur.choices.map((c,i)=>`<button data-ch="${i}"><span class="key" aria-hidden="true">${i+1}</span>${c}</button>`).join('')}
   else{ch.hidden=true;f.hidden=false;ch.innerHTML=''}
 }
 function focusAns(){if(!cur.choices&&!cur.none&&$('gate').hidden&&$('urModal').hidden)$('ans').focus()}
