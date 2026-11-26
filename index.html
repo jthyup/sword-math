@@ -93,6 +93,10 @@ header p{margin:4px 0 0;color:#e2cdb6;text-shadow:0 2px 6px rgba(0,0,0,.8)}
 .goldpop{position:fixed;z-index:60;pointer-events:none;font:400 30px "Black Han Sans",sans-serif;color:#ffd66b;text-shadow:0 2px 0 #000}
 .goldbit{position:fixed;z-index:55;pointer-events:none;width:12px;height:12px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3b0,#f2b632 55%,#a86400)}
 .fragbit{position:fixed;z-index:56;pointer-events:none;width:10px;height:14px;background:linear-gradient(135deg,#e7f5ff,#74c0fc);clip-path:polygon(50% 0,100% 40%,60% 100%,0 60%);box-shadow:0 0 10px #74c0fc}
+.collectblock{position:fixed;inset:0;z-index:58;background:rgba(0,0,0,.001)}
+.collectbtn{position:fixed;transform:translate(-50%,-50%);z-index:60;font:400 22px "Black Han Sans",sans-serif;padding:10px 22px;border-radius:14px;border:0;color:#fff;background:linear-gradient(180deg,#74c0fc,#1c7ed6);box-shadow:0 4px 0 #0b3d66,0 0 22px rgba(116,192,252,.7);cursor:pointer}
+.collectbtn small{display:block;font-family:"Gowun Dodum",sans-serif;font-weight:700;font-size:12px;opacity:.9}
+.collectbtn:active{box-shadow:0 1px 0 #0b3d66}
 .fragpop{position:fixed;z-index:60;pointer-events:none;font:400 22px "Black Han Sans",sans-serif;color:#a5d8ff;text-shadow:0 2px 0 #000}
 .tabs .sndbtn{margin-left:auto;align-self:center;font:inherit;font-size:14px;font-weight:700;padding:7px 12px;border-radius:999px;border:1.5px solid rgba(255,190,120,.3);margin-bottom:6px;background:rgba(20,13,10,.6);color:#cdb9a6;cursor:pointer;white-space:nowrap}
 .tabs .sndbtn[aria-pressed=true]{color:#ffd98a;border-color:#ffb347}
@@ -1342,39 +1346,67 @@ function boomCrack(){
     sw.animate([{filter:'drop-shadow(0 10px 18px rgba(0,0,0,.6))'},{filter:'drop-shadow(0 0 16px #ff3b3b) brightness(1.3)'}],{duration:280});
     setTimeout(()=>{
       cr.remove();
+      const st=$('stage'),SR=st.getBoundingClientRect();
       const fl=document.createElement('div');Object.assign(fl.style,{position:'fixed',inset:0,background:`radial-gradient(circle at ${r.left+r.width/2}px ${r.top+r.height/2}px,rgba(255,240,240,.9),rgba(255,60,60,.35) 30%,rgba(0,0,0,0) 60%)`,zIndex:45,pointerEvents:'none'});
       document.body.appendChild(fl);fl.animate([{opacity:1},{opacity:0}],{duration:400,fill:'forwards'}).onfinish=()=>fl.remove();
-      $('stage').animate([{transform:'translate(0,0)'},{transform:'translate(-8px,4px)'},{transform:'translate(7px,-5px)'},{transform:'translate(-5px,2px)'},{transform:'translate(0,0)'}],{duration:300});
-      const C=4,Rw=7,jt=()=>(Math.random()-.5)*8;
+      st.animate([{transform:'translate(0,0)'},{transform:'translate(-8px,4px)'},{transform:'translate(7px,-5px)'},{transform:'translate(-5px,2px)'},{transform:'translate(0,0)'}],{duration:300});
+      const anv=document.querySelector('.anvil').getBoundingClientRect(),floorY=anv.top+anv.height*.2;
+      const C=4,Rw=7,jt=()=>(Math.random()-.5)*8;pieces=[];
       for(let i=0;i<C;i++)for(let j=0;j<Rw;j++){
         const p=sw.cloneNode(true);p.removeAttribute('id');p.classList.remove('hit','reveal','charging','broken');
         const x0=i/C*100,x1=(i+1)/C*100,y0=j/Rw*100,y1=(j+1)/Rw*100;
-        Object.assign(p.style,{position:'fixed',left:r.left+'px',top:r.top+'px',width:r.width+'px',height:r.height+'px',zIndex:42,pointerEvents:'none',margin:0,
-          clipPath:`polygon(${x0+jt()}% ${y0+jt()}%,${x1+jt()}% ${y0+jt()}%,${x1+jt()}% ${y1+jt()}%,${x0+jt()}% ${y1+jt()}%)`,filter:'brightness(1.2)'});
+        Object.assign(p.style,{position:'fixed',left:r.left+'px',top:r.top+'px',width:r.width+'px',height:r.height+'px',zIndex:42,pointerEvents:'none',margin:0,visibility:'visible',
+          clipPath:`polygon(${x0+jt()}% ${y0+jt()}%,${x1+jt()}% ${y0+jt()}%,${x1+jt()}% ${y1+jt()}%,${x0+jt()}% ${y1+jt()}%)`});
         document.body.appendChild(p);
-        const cx=(x0+x1)/200-.5,cy=(y0+y1)/200-.5,vx=cx*520+(Math.random()-.5)*160,vy=cy*300-180-Math.random()*120,rot=(Math.random()-.5)*720;
-        p.animate([{transform:'translate(0,0) rotate(0)',opacity:1},{transform:`translate(${vx*.6}px,${vy*.6}px) rotate(${rot*.6}deg)`,opacity:1,offset:.45},{transform:`translate(${vx}px,${vy+420}px) rotate(${rot}deg)`,opacity:0}],{duration:650+Math.random()*200,easing:'cubic-bezier(.2,.6,.5,1)',fill:'forwards'}).onfinish=()=>p.remove();
+        const cx=(x0+x1)/200-.5,pieceY=r.top+r.height*(y0+y1)/200,ex=cx*Math.min(380,SR.width*.75)+(Math.random()-.5)*110,ey=floorY+Math.random()*30-pieceY,rot=(Math.random()-.5)*540;
+        p.animate([{transform:'translate(0,0) rotate(0)'},{transform:`translate(${ex*.5}px,${-110-Math.random()*80}px) rotate(${rot*.5}deg)`,offset:.4},{transform:`translate(${ex}px,${ey}px) rotate(${rot}deg)`,offset:.85},{transform:`translate(${ex}px,${ey-8}px) rotate(${rot}deg)`,offset:.93},{transform:`translate(${ex}px,${ey}px) rotate(${rot}deg)`}],{duration:900,easing:'cubic-bezier(.2,.6,.4,1)',fill:'forwards'});
+        p.animate([{filter:'brightness(1.3) drop-shadow(0 0 6px #ff6b6b)'},{filter:'brightness(.75) saturate(.6) drop-shadow(0 2px 2px rgba(0,0,0,.6))'}],{duration:900,fill:'forwards'});
+        pieces.push({p,ex,ey,rot});
       }
-      sw.style.visibility='hidden';boomSrc=r;done();
+      sw.style.visibility='hidden';done();
     },280);
   });
 }
-let boomSrc=null;
-function boomShards(n){
-  const sw=$('sword'),r=boomSrc||sw.getBoundingClientRect(),fe=$('sFrag'),fr=fe.getBoundingClientRect();
-  setTimeout(()=>{
-    for(let k=0;k<7;k++){const s=document.createElement('div');s.className='fragbit';Object.assign(s.style,{left:(r.left+r.width/2)+'px',top:(r.top+r.height/2)+'px'});document.body.appendChild(s);
-      const dx=fr.left+fr.width/2-(r.left+r.width/2),dy=fr.top+fr.height/2-(r.top+r.height/2),bend=(k-3)*40;
-      s.animate([{transform:'translate(0,0) rotate(0)',opacity:1},{transform:`translate(${dx*.4+bend}px,${dy*.4-120}px) rotate(300deg)`,offset:.5},{transform:`translate(${dx}px,${dy}px) rotate(720deg) scale(.5)`,opacity:.9}],{duration:520,delay:k*30,easing:'ease-in',fill:'forwards'}).onfinish=()=>s.remove()}
-    setTimeout(()=>{fe.parentElement.animate([{transform:'scale(1)'},{transform:'scale(1.35)'},{transform:'scale(1)'}],{duration:400});
-      if(n){const pop=document.createElement('div');pop.className='fragpop';pop.textContent=`+${n} 조각`;Object.assign(pop.style,{left:(fr.right+8)+'px',top:(fr.top-8)+'px'});document.body.appendChild(pop);
-        pop.animate([{transform:'translateY(0)',opacity:1},{transform:'translateY(-30px)',opacity:0}],{duration:900,fill:'forwards'}).onfinish=()=>pop.remove()}},650);
-  },120);
-  setTimeout(()=>{sw.style.visibility='';sw.animate([{opacity:0,transform:'scale(.6)'},{opacity:1,transform:'scale(1)'}],{duration:350})},700);
+let pieces=[],collecting=false,fragHold=0;
+/* 조각이 바닥에 떨어진 뒤 '조각 회수하기'를 누를 때까지 아무것도 못 해요 */
+function boomCollect(n){
+  return new Promise(done=>{
+    collecting=true;document.body.style.overflow='hidden';
+    const block=document.createElement('div');block.className='collectblock';document.body.appendChild(block);
+    setTimeout(()=>{
+      const SR=$('stage').getBoundingClientRect(),b=document.createElement('button');b.className='collectbtn';
+      b.innerHTML=`🧲 조각 회수하기<small>검 조각 +${n}</small>`;Object.assign(b.style,{left:(SR.left+SR.width/2)+'px',top:(SR.top+SR.height*.42)+'px'});
+      document.body.appendChild(b);b.animate([{transform:'translate(-50%,-50%) scale(.5)',opacity:0},{transform:'translate(-50%,-50%) scale(1.08)',opacity:1},{transform:'translate(-50%,-50%) scale(1)'}],{duration:350});b.focus();
+      b.addEventListener('click',()=>{
+        b.disabled=true;sfxWhoosh();
+        b.animate([{opacity:1},{opacity:0,transform:'translate(-50%,-50%) scale(.6)'}],{duration:200,fill:'forwards'}).onfinish=()=>b.remove();
+        const fe=$('sFrag'),fr=fe.getBoundingClientRect();
+        pieces.forEach(({p,ex,ey,rot},k)=>{const q=p.getBoundingClientRect(),dx=fr.left+fr.width/2-(q.left+q.width/2),dy=fr.top+fr.height/2-(q.top+q.height/2);
+          p.animate([{transform:`translate(${ex}px,${ey}px) rotate(${rot}deg) scale(1)`,filter:'brightness(1)'},{transform:`translate(${ex+dx*.35}px,${ey+dy*.35-90}px) rotate(${rot+360}deg) scale(.55)`,filter:'brightness(1.6) drop-shadow(0 0 10px #74c0fc)',offset:.5},{transform:`translate(${ex+dx}px,${ey+dy}px) rotate(${rot+900}deg) scale(.04)`,filter:'brightness(2) drop-shadow(0 0 12px #a5d8ff)'}],{duration:800,delay:k*22,easing:'cubic-bezier(.45,0,.6,1)',fill:'forwards'}).onfinish=()=>p.remove()});
+        setTimeout(()=>{
+          fragHold=0;fe.textContent=S.frag.toLocaleString('ko-KR');fe.parentElement.animate([{transform:'scale(1)'},{transform:'scale(1.4)'},{transform:'scale(1)'}],{duration:400});
+          if(n){const pop=document.createElement('div');pop.className='fragpop';pop.textContent=`+${n} 조각`;Object.assign(pop.style,{left:(fr.right+8)+'px',top:(fr.top-8)+'px'});document.body.appendChild(pop);
+            pop.animate([{transform:'translateY(0)',opacity:1},{transform:'translateY(-30px)',opacity:0}],{duration:900,fill:'forwards'}).onfinish=()=>pop.remove()}
+          const sw=$('sword');sw.style.visibility='';sw.animate([{opacity:0,transform:'scale(.6)'},{opacity:1,transform:'scale(1)'}],{duration:350});
+          pieces=[];block.remove();document.body.style.overflow='';collecting=false;done();
+        },1350);
+      },{once:true});
+    },950);
+  });
 }
+document.addEventListener('keydown',e=>{if(collecting&&!(e.target&&e.target.classList&&e.target.classList.contains('collectbtn')&&(e.key==='Enter'||e.key===' '))){e.preventDefault();e.stopImmediatePropagation()}},true);
 /* 효과음: 파일 없이 브라우저에서 만들어요. 기본은 꺼짐 */
 let sndOn=false;try{sndOn=localStorage.getItem('forge-snd')==='1'}catch(e){}
 let AC=null;
+function sfxWhoosh(){
+  if(!sndOn)return;
+  try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume()}catch(e){return}
+  const t0=AC.currentTime,n=Math.floor(AC.sampleRate*.9),buf=AC.createBuffer(1,n,AC.sampleRate),d=buf.getChannelData(0);for(let i=0;i<n;i++)d[i]=Math.random()*2-1;
+  const src=AC.createBufferSource();src.buffer=buf;const bp=AC.createBiquadFilter();bp.type='bandpass';bp.Q.value=3;bp.frequency.setValueAtTime(400,t0);bp.frequency.exponentialRampToValueAtTime(3200,t0+.75);
+  const g=AC.createGain();g.gain.setValueAtTime(.001,t0);g.gain.exponentialRampToValueAtTime(.5,t0+.25);g.gain.exponentialRampToValueAtTime(.001,t0+.85);
+  src.connect(bp).connect(g).connect(AC.destination);src.start(t0);src.stop(t0+.9);
+  [1318,1760].forEach((f,i)=>{const o=AC.createOscillator(),og=AC.createGain();o.frequency.value=f;const s=t0+.8+i*.08;og.gain.setValueAtTime(.0001,s);og.gain.exponentialRampToValueAtTime(.18,s+.01);og.gain.exponentialRampToValueAtTime(.0001,s+.3);o.connect(og).connect(AC.destination);o.start(s);o.stop(s+.32)});
+}
 function sfxBoom(){
   if(!sndOn)return;
   try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume()}catch(e){return}
@@ -1489,7 +1521,7 @@ function render(){
    $('hamLine').textContent=[h.up||h.eff?`${h.name}${o.ham?` · 강화 +${o.ham}%p`:''}${h.eff?` · ${h.eff}: ${h.desc}`:''}`:'',o.scroll?`강화 주문서 사용 중 +10%p (남은 ${S.scroll}장)`:''].filter(Boolean).join(' / ')}
   {const sb=$('sellNow'),pr=sellGold(L);sb.disabled=busy||L<1;sb.classList.toggle('arm',sellArm&&L>=1);
    $('sellTxt').textContent=sellArm&&L>=1?'한 번 더!':'판매';$('sellSub').textContent=L<1?'+1부터 가능':(sellArm?'누르면 판매':`+${pr.toLocaleString('ko-KR')}골드`)}
-  $('sSolved').textContent=S.solved;{const gb=document.querySelector('.goldbar');if(lastGold!==null&&S.gold>lastGold)replay(gb,'bump');lastGold=S.gold}$('sGold').textContent=S.gold.toLocaleString('ko-KR');$('sFrag').textContent=S.frag.toLocaleString('ko-KR');$('shopGold').textContent=S.gold.toLocaleString('ko-KR');
+  $('sSolved').textContent=S.solved;{const gb=document.querySelector('.goldbar');if(lastGold!==null&&S.gold>lastGold)replay(gb,'bump');lastGold=S.gold}$('sGold').textContent=S.gold.toLocaleString('ko-KR');$('sFrag').textContent=Math.max(0,S.frag-fragHold).toLocaleString('ko-KR');$('shopGold').textContent=S.gold.toLocaleString('ko-KR');
   $('sAcc').textContent=S.solved?Math.round(S.right/S.solved*100)+'%':'0%';
   $('sCombo').textContent=S.combo;$('sBest').textContent=wname(S.best);$('sBoom').textContent=S.booms;
   renderQ();renderShelf();renderShop();fitAct();maybeTut();
@@ -1976,13 +2008,13 @@ $('hammer').addEventListener('click',async()=>{
   }
   else if(roll<o.up+o.keep){S.fails++;sparks(6);flash('실패… 단계 유지','#c9cfd6')}
   else{S.booms++;S.fails=0;const was=w.L;sfxBoom();
-    if(RM){sw.classList.add('broken');setTimeout(()=>sw.classList.remove('broken'),1200)}else{await boomCrack();boomFx=true}
+    if(RM){sw.classList.add('broken');setTimeout(()=>sw.classList.remove('broken'),1200)}else{await boomCrack();boomFx=true;fragHold=was}
     w.L=0;flash(`파괴! +${was} → 나무 검 +0`,'#ff8787');
     S.frag+=was;S.fragTotal+=was;S.lastBroken={L:was,frag:was};const got=checkAch();
     $('fb').className='feedback';$('fb').textContent=`검 조각 ${was}개를 얻었어요. 상점 '검 조각·복구'에서 바꾸거나 이 검을 되살릴 수 있어요.`+(got.length?` 🏆 업적 달성: ${got.map(a=>a.name).join(', ')}!`:'')}
   if(freeHit)$('fb').className='feedback ok',$('fb').textContent='축복! 이번 망치질은 강화권을 쓰지 않았어요.';
   render();save();
-  if(boomFx){boomFx=false;boomShards(S.lastBroken?S.lastBroken.frag:0);await wait(950)}
+  if(boomFx){boomFx=false;await boomCollect(S.lastBroken?S.lastBroken.frag:0)}
   else if(!RM)await wait(240);
   busy=false;render();
 });
