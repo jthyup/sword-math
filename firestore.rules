@@ -1,0 +1,51 @@
+rules_version = '2';
+
+// 연산 대장간 Firestore 보안 규칙
+// - 학생: 자기 기록(sm_students/{자기 uid})만 읽고 쓸 수 있어요.
+// - 선생님(아래 구글 계정): 모든 학생 기록을 보고, 지우고, 출제 범위·가입 허용을 바꿀 수 있어요.
+// - 그 밖의 모든 경로는 막혀 있어요.
+// Firebase 콘솔 > Firestore Database > 규칙 탭에 이 내용을 통째로 붙여 넣고 [게시]를 누르세요.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isTeacher() {
+      return signedIn()
+        && request.auth.token.email == 'donnie05124@gmail.com'
+        && request.auth.token.email_verified == true
+        && request.auth.token.firebase.sign_in_provider == 'google.com';
+    }
+
+    // 선생님이 '학생 스스로 가입'을 끄면 새 기록을 만들 수 없어요.
+    function signupOpen() {
+      return !exists(/databases/$(database)/documents/sm_settings/class)
+        || get(/databases/$(database)/documents/sm_settings/class).data.get('signup', true) == true;
+    }
+
+    function validStudent() {
+      return request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 20;
+    }
+
+    // 출제 범위, 가입 허용: 누구나 읽고, 선생님만 바꿔요.
+    match /sm_settings/{docId} {
+      allow read: if true;
+      allow write: if isTeacher();
+    }
+
+    // 학생 기록
+    match /sm_students/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || isTeacher());
+      allow create: if isTeacher()
+        || (signedIn() && request.auth.uid == uid && signupOpen() && validStudent());
+      allow update: if isTeacher()
+        || (signedIn() && request.auth.uid == uid && validStudent());
+      allow delete: if isTeacher();
+    }
+  }
+}

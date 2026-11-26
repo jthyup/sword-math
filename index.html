@@ -301,15 +301,15 @@ legend{font-family:"Black Han Sans";font-size:18px;padding:0 6px}
   <p class="note" style="margin-top:0">체크한 단원에서만 문제가 나와요. 진도에 맞춰 바꿔 주세요.</p>
   <div class="range" id="range"></div>
   <div class="row"><button class="btn sm" id="saveRange">출제 범위 저장</button><span class="note" id="rMsg" style="margin:0"></span></div>
-  <h3>학생 관리</h3>
+  <h3>학생 관리 <span class="note" id="rosterCount" style="font-family:'Gowun Dodum';font-size:15px"></span></h3>
   <label class="ck"><input type="checkbox" id="allowSignup" checked> 학생이 스스로 가입할 수 있어요</label>
-  <p class="note" style="margin:0 0 10px">학생이 가입하면 아래 표에 바로 나타나요. 선생님이 직접 추가할 수도 있어요.</p>
+  <p class="note" style="margin:0 0 10px">학생이 가입하면 아래 표에 바로 나타나요. 선생님이 직접 추가할 수도 있어요. 학생이 비밀번호를 잊으면 기록을 지우고 이름에 번호를 붙여 다시 가입하게 해 주세요.</p>
   <form id="addForm" autocomplete="off">
     <input id="newName" placeholder="학생 이름 또는 번호+별명" maxlength="12" aria-label="학생 이름" required>
     <input id="newPin" placeholder="비밀번호 4자리" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" aria-label="비밀번호 4자리" required style="max-width:180px">
     <button class="btn sm">학생 추가</button>
   </form>
-  <p class="note" id="tMsg">학생은 로그인 화면에서 "처음 왔어요"로 가입하거나, 자기 이름을 누르고 비밀번호 4자리를 넣어 시작해요.</p>
+  <p class="note" id="tMsg">학생은 로그인 화면에서 "처음 왔어요"로 가입하고, 다음부터 이름과 비밀번호 4자리로 들어와요.</p>
   <div class="tbl" style="margin-top:14px">
     <table><thead><tr><th>학생</th><th class="n">푼 문제</th><th class="n">정답률</th><th>현재 무기</th><th>최고 무기</th><th class="n">파괴</th><th>약한 단원</th><th>마지막 접속</th><th></th></tr></thead><tbody id="roster"></tbody></table>
   </div>
@@ -363,8 +363,21 @@ const r=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const hash=s=>{let h=5381;for(const c of s)h=((h<<5)+h+c.charCodeAt(0))|0;return 'h'+(h>>>0).toString(36)};
 
-/* ---------- 저장: db(로그인) 또는 이 기기(체험) ---------- */
-let db=null,user=null,me=null,mode='loading',students=[],canManage=false,cfg={signup:true},joining=false;
+/* ---------- 저장: Firebase(로그인) 또는 이 기기(체험) ---------- */
+// Firebase 웹 설정값은 공개돼도 되는 값이에요. 데이터 보호는 firestore.rules(보안 규칙)가 맡아요.
+const FB_CONFIG={
+  apiKey:"AIzaSyDdsmE5RzfpBKjFyY18LSOf4Ce6mSKff5U",
+  authDomain:"project-eraser-71be8.firebaseapp.com",
+  projectId:"project-eraser-71be8",
+  storageBucket:"project-eraser-71be8.firebasestorage.app",
+  messagingSenderId:"467181171682",
+  appId:"1:467181171682:web:6cf8b7309a3135627b7fbb"
+};
+const TEACHER_EMAIL='donnie05124@gmail.com';
+const FBV='10.14.1',CDN=`https://www.gstatic.com/firebasejs/${FBV}/`;
+const COL_ST='sm_students',COL_SET='sm_settings'; // 이 게임의 데이터는 sm_ 로 시작하는 곳에만 저장
+let FAPP=null,FA=null,FF=null,fbApp=null,auth=null,fs=null,fbApp2=null,unsubRoster=null,fbReady=false,signingUp=false;
+let gateMsg='',me=null,mode='loading',students=[],canManage=false,isTeacher=false,cfg={signup:true},joining=false;
 let writing=false,dirty=false,wTimer=null;
 const LKEY='forge-v2';
 function saveLocal(){try{localStorage.setItem(LKEY,JSON.stringify(S))}catch(e){}}
@@ -372,16 +385,34 @@ let test=false,beforeTest=null,forceWin=false;
 function save(){
   if(test)return;
   if(mode==='local'){saveLocal();return}
-  if(mode!=='db'||!me)return;
+  if(mode!=='fb'||!me)return;
   dirty=true;clearTimeout(wTimer);wTimer=setTimeout(flush,700);
 }
 async function flush(){
   if(writing||!dirty||!me)return;
   writing=true;dirty=false;
-  const body={...S,last:new Date().toISOString()};
-  try{await db.collection('students').doc(me.id).update(body)}
+  const body={...S,name:me.name,last:new Date().toISOString()};
+  try{await FF.setDoc(FF.doc(fs,COL_ST,me.id),body,{merge:true})}
   catch(e){$('fb').className='feedback bad';$('fb').textContent='기록 저장에 실패했어요. 잠시 뒤 다시 저장할게요.';dirty=true}
   writing=false;if(dirty)wTimer=setTimeout(flush,1500);
+}
+// 학생 로그인: 이름 → 로그인용 내부 주소(실제 메일 아님), 비밀번호 4자리 → 로그인 비밀번호
+const normName=s=>String(s||'').trim().replace(/\s+/g,' ');
+async function idEmail(name){
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('swordmath:'+normName(name).toLowerCase()));
+  return 's'+[...new Uint8Array(buf)].slice(0,12).map(b=>b.toString(16).padStart(2,'0')).join('')+'@sword-math.app';
+}
+const pinPw=p=>`sword-${p}-math`;
+function authMsg(x){
+  const c=(x&&x.code)||'';
+  if(/invalid-credential|wrong-password|user-not-found|invalid-login/.test(c))return '이름이나 비밀번호가 달라요. 다시 확인해 볼까요?';
+  if(c.includes('too-many-requests'))return '여러 번 틀려서 잠시 막혔어요. 조금 뒤에 다시 해 보세요.';
+  if(c.includes('network'))return '인터넷 연결을 확인해 주세요.';
+  if(/popup-closed|cancelled-popup/.test(c))return '';
+  if(c.includes('popup-blocked'))return '팝업이 막혔어요. 브라우저에서 팝업을 허용해 주세요.';
+  if(c.includes('unauthorized-domain'))return '이 주소에서는 로그인이 막혀 있어요. Firebase 승인된 도메인을 확인해 주세요.';
+  if(c.includes('operation-not-allowed'))return 'Firebase에서 이 로그인 방법이 꺼져 있어요.';
+  return '잠시 문제가 생겼어요. 다시 해 보세요.'+(c?` (${c})`:'');
 }
 
 /* ---------- 검 그림 ---------- */
@@ -562,7 +593,7 @@ function chips(){
   const list=enabled.filter(id=>U[id]);
   const c=chosen(),all=c.length===list.length;
   $('ops').innerHTML=`<button class="chip" data-unit="all" aria-pressed="${all}">전체</button>`+list.map(id=>`<button class="chip" data-unit="${id}" aria-pressed="${c.includes(id)}"><span class="unitlbl">${U[id].sem}</span>${U[id].name}</button>`).join('');
-  $('rangeNote').textContent=(c.length===1&&!all?`${U[c[0]].sem} ${U[c[0]].name} 문제만 나와요.`:`${all?'모든 단원':c.length+'개 단원'}에서 문제가 섞여 나와요.`)+' 여러 개를 눌러 고를 수 있어요.'+(mode==='db'?` (선생님이 연 범위 ${list.length}개 단원)`:'');
+  $('rangeNote').textContent=(c.length===1&&!all?`${U[c[0]].sem} ${U[c[0]].name} 문제만 나와요.`:`${all?'모든 단원':c.length+'개 단원'}에서 문제가 섞여 나와요.`)+' 여러 개를 눌러 고를 수 있어요.'+(mode==='fb'?` (선생님이 연 범위 ${list.length}개 단원)`:'');
 }
 function renderQ(){
   const u=U[cur.unit],q=$('q');
@@ -640,8 +671,9 @@ function renderShelf(){
 const canTest=()=>mode==='local'||canManage;
 function renderWho(){
   const w=$('who'),tb=canTest()&&!test?'<button class="ghost testbtn" id="testOn">테스트 모드</button>':'';
-  if(mode==='db'&&me)w.innerHTML=`<span><b>${esc(me.name)}</b> 대장장이</span>${tb}<button class="ghost" id="logout">로그아웃</button>`;
-  else if(mode==='local')w.innerHTML=`<span>체험 모드 · 기록은 이 기기에만 저장돼요</span>${tb}`;
+  if(mode==='fb'&&me)w.innerHTML=`<span><b>${esc(me.name)}</b> 대장장이</span>${tb}<button class="ghost" id="logout">로그아웃</button>`;
+  else if(mode==='fb'&&isTeacher)w.innerHTML=`<span><b>선생님</b> 로그인됨</span>${tb}<button class="ghost" id="toTeacher">학생 관리</button><button class="ghost" id="logout">로그아웃</button>`;
+  else if(mode==='local')w.innerHTML=`<span>체험 모드 · 기록은 이 기기에만 저장돼요</span>${tb}${fbReady?'<button class="ghost" id="toLogin">로그인하기</button>':''}`;
   else w.innerHTML=test?'<span>선생님 테스트 중</span>':tb;
   $('testbar').hidden=!test;
 }
@@ -655,7 +687,7 @@ function endTest(){
   if(!test||busy)return;
   test=false;forceWin=false;$('forceWin').checked=false;S=fromRaw(beforeTest);beforeTest=null;sel=[];
   render();renderWho();
-  if(mode==='db'&&!me)showGate();
+  if(mode==='fb'&&!me&&!isTeacher)showGate();
 }
 function flash(text,color){const m=$('msg');m.textContent=text;m.style.color=color;m.classList.remove('show');void m.offsetWidth;m.classList.add('show')}
 function sparks(n){const box=$('sparks');box.innerHTML=Array.from({length:n},()=>`<span style="--x:${r(-160,160)}px;--y:${r(-200,40)}px"></span>`).join('');setTimeout(()=>box.innerHTML='',800)}
@@ -664,11 +696,10 @@ $('rateTbl').innerHTML=[0,5,10,15,20,30,40].map((a,i,arr)=>{
   return `<tr><td>${b===null?`+${a} 이상`:`+${a} ~ +${b}`}</td><td class="n">${x.up===y.up?x.up:`${x.up}→${y.up}`}%</td><td class="n">${x.boom}%</td></tr>`}).join('');
 
 /* ---------- 로그인 화면 ---------- */
-let pin='',picked=null;
-function showGate(){
+function showGate(msg){
   const g=$('gbox');$('gate').hidden=false;
   if(joining){
-    g.innerHTML=`<h2>처음 왔어요</h2><p class="note" style="margin:0">이름과 비밀번호를 정하면 바로 시작해요.</p>
+    g.innerHTML=`<h2>처음 왔어요</h2><p class="note" style="margin:0">이름과 비밀번호를 정하면 바로 시작해요. 다음부터는 이 이름과 비밀번호로 들어와요.</p>
       <form class="signup" id="signupForm" autocomplete="off">
         <label for="suName">이름 (번호와 별명도 좋아요)</label><input id="suName" maxlength="12" placeholder="예: 7번 김하늘" required>
         <label for="suPin">비밀번호 숫자 4자리</label><input id="suPin" type="password" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" placeholder="••••" required>
@@ -679,37 +710,93 @@ function showGate(){
     setTimeout(()=>$('suName')&&$('suName').focus(),0);
     return;
   }
-  if(!picked){
-    const list=students.slice().sort((a,b)=>String(a.name).localeCompare(String(b.name),'ko'));
-    g.innerHTML=`<h2>누가 대장간에 왔나요?</h2><p class="note" style="margin:0">내 이름을 눌러 주세요.</p>
-      <div class="names">${list.map(s=>`<button data-sid="${esc(s.id)}">${esc(s.name)}</button>`).join('')||''}</div>
-      ${cfg.signup!==false?'<div class="actions" style="margin-bottom:10px"><button class="btn sm" id="toJoin">처음 왔어요 · 가입하기</button></div>':''}
-      ${list.length?'':`<p class="note">${canManage?'아직 등록된 학생이 없어요. 아래 "선생님 관리"에서 학생을 추가해 주세요.':'아직 가입한 학생이 없어요. "처음 왔어요"를 눌러 가입해 보세요.'}</p>`}
-      ${canManage?'<div class="actions"><button class="ghost" id="toTeacher">선생님 관리로 가기</button><button class="ghost testbtn" id="testOn">테스트 모드로 해 보기</button></div>':''}`;
-  }else{
-    g.innerHTML=`<h2>${esc(picked.name)}</h2><p class="note" style="margin:0">비밀번호 4자리를 눌러 주세요.</p>
-      <div class="dots">${[0,1,2,3].map(i=>`<i class="${i<pin.length?'on':''}"></i>`).join('')}</div>
-      <div class="err" id="pinErr"></div>
-      <div class="pinpad">${[1,2,3,4,5,6,7,8,9].map(n=>`<button data-k="${n}">${n}</button>`).join('')}<button data-k="back" aria-label="지우기">←</button><button data-k="0">0</button><button data-k="cancel" style="font-size:18px">다른 이름</button></div>`;
-  }
+  g.innerHTML=`<h2>대장간에 들어가기</h2><p class="note" style="margin:0">가입할 때 정한 이름과 비밀번호를 넣어 주세요.</p>
+    <form class="signup" id="loginForm" autocomplete="off">
+      <label for="liName">이름</label><input id="liName" maxlength="12" placeholder="예: 7번 김하늘" required>
+      <label for="liPin">비밀번호 숫자 4자리</label><input id="liPin" type="password" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" placeholder="••••" required>
+      <div class="err" id="liErr"></div>
+      <div class="actions"><button class="btn">들어가기</button>${cfg.signup!==false?'<button type="button" class="ghost" id="toJoin">처음 왔어요 · 가입하기</button>':''}</div>
+    </form>
+    <div class="actions" style="margin-top:16px;border-top:1px solid var(--line);padding-top:12px"><button class="ghost" id="teacherLogin">선생님 로그인 (구글)</button><button class="ghost" id="tryLocal">로그인 없이 체험하기</button></div>`;
+  if(msg)$('liErr').textContent=msg;
+  setTimeout(()=>$('liName')&&$('liName').focus(),0);
 }
-function pinKey(k){
-  if(k==='cancel'){picked=null;pin='';showGate();return}
-  if(k==='back'){pin=pin.slice(0,-1);showGate();return}
-  if(pin.length>=4)return;
-  pin+=k;showGate();
-  if(pin.length===4){
-    if(hash(pin)===picked.pin){login(picked)}
-    else{pin='';showGate();$('pinErr').textContent='비밀번호가 달라요. 다시 눌러 볼까요?'}
-  }
-}
-function login(s){
+function enterStudent(id,data){
   test=false;beforeTest=null;
-  me={id:s.id,name:s.name};
-  S=fromRaw(s);sel=[];
-  picked=null;pin='';$('gate').hidden=true;chips();cur=gen();render();renderWho();focusAns();
+  me={id,name:normName(data.name)||'학생'};
+  S=fromRaw(data);sel=[];joining=false;
+  $('gate').hidden=true;chips();cur=gen();render();renderWho();focusAns();
 }
-function logout(){if(test){test=false;beforeTest=null}clearTimeout(wTimer);if(dirty)flush();me=null;S=fresh();render();renderWho();showGate()}
+async function logout(){
+  if(test){test=false;beforeTest=null}
+  clearTimeout(wTimer);if(dirty)await flush();
+  try{await FA.signOut(auth)}catch(e){}
+}
+async function onAuth(u){
+  if(signingUp||mode!=='fb')return;
+  if(!u){
+    me=null;isTeacher=false;canManage=false;stopRoster();$('teacher').hidden=true;
+    S=fresh();render();renderWho();showGate(gateMsg);gateMsg='';return;
+  }
+  const google=(u.providerData||[]).some(x=>x.providerId==='google.com');
+  if(google){
+    if(u.email===TEACHER_EMAIL){
+      isTeacher=true;canManage=true;me=null;S=fresh();$('gate').hidden=true;
+      startRoster();renderRange();render();renderWho();
+      $('allowSignup').checked=cfg.signup!==false;
+      setTimeout(()=>$('teacher').scrollIntoView({behavior:'smooth'}),300);
+      return;
+    }
+    gateMsg='선생님 계정이 아니에요. 학생은 이름과 비밀번호로 들어와요.';
+    try{await FA.signOut(auth)}catch(e){}
+    return;
+  }
+  try{
+    const snap=await FF.getDoc(FF.doc(fs,COL_ST,u.uid));
+    if(!snap.exists()){gateMsg='기록을 찾을 수 없어요. 선생님께 말씀드리거나 다시 가입해 주세요.';try{await FA.signOut(auth)}catch(e){}return}
+    enterStudent(u.uid,snap.data());
+  }catch(e){showGate('기록을 불러오지 못했어요. 인터넷 연결을 확인해 주세요.')}
+}
+document.addEventListener('submit',async e=>{
+  if(e.target.id==='loginForm'){
+    e.preventDefault();
+    const name=normName($('liName').value),p=$('liPin').value.trim(),err=$('liErr');
+    if(!name){err.textContent='이름을 써 주세요.';return}
+    if(!/^\d{4}$/.test(p)){err.textContent='비밀번호는 숫자 4자리예요.';return}
+    const btn=e.target.querySelector('.btn');btn.disabled=true;err.textContent='들어가는 중…';
+    try{await FA.signInWithEmailAndPassword(auth,await idEmail(name),pinPw(p))}
+    catch(x){btn.disabled=false;err.textContent=authMsg(x)}
+  }
+  if(e.target.id==='signupForm'){
+    e.preventDefault();
+    const name=normName($('suName').value),p1=$('suPin').value.trim(),p2=$('suPin2').value.trim(),err=$('suErr');
+    if(!name){err.textContent='이름을 써 주세요.';return}
+    if(!/^\d{4}$/.test(p1)){err.textContent='비밀번호는 숫자 4자리예요.';return}
+    if(p1!==p2){err.textContent='두 비밀번호가 달라요. 다시 확인해 주세요.';return}
+    if(cfg.signup===false){err.textContent='지금은 가입할 수 없어요. 선생님께 말씀드려 주세요.';return}
+    const btn=e.target.querySelector('.btn');btn.disabled=true;err.textContent='가입하는 중…';
+    signingUp=true;let cred=null;
+    try{
+      const email=await idEmail(name);
+      try{cred=await FA.createUserWithEmailAndPassword(auth,email,pinPw(p1))}
+      catch(x){
+        if(!String(x&&x.code).includes('email-already-in-use'))throw x;
+        // 같은 이름이 이미 있음: 선생님이 기록을 지운 학생이 같은 비밀번호로 다시 가입하는 경우만 허용
+        try{cred=await FA.signInWithEmailAndPassword(auth,email,pinPw(p1))}catch(y){throw {code:'dup'}}
+        const ex=await FF.getDoc(FF.doc(fs,COL_ST,cred.user.uid));
+        if(ex.exists()){signingUp=false;enterStudent(cred.user.uid,ex.data());flash(`다시 왔군요, ${name}!`,'#ffd27a');return}
+      }
+      const now=new Date().toISOString(),body={...fresh(),name,joined:now,self:true,last:now};
+      await FF.setDoc(FF.doc(fs,COL_ST,cred.user.uid),body);
+      signingUp=false;enterStudent(cred.user.uid,body);flash(`환영해요, ${name}!`,'#ffd27a');
+    }catch(x){
+      signingUp=false;btn.disabled=false;
+      if(x&&x.code==='dup'){err.textContent='같은 이름이 이미 있어요. 번호나 별명을 붙여 볼까요?';return}
+      if(cred&&String(x&&x.code).includes('permission')){try{await cred.user.delete()}catch(y){}err.textContent='지금은 가입할 수 없어요. 선생님께 말씀드려 주세요.';try{await FA.signOut(auth)}catch(y){}return}
+      err.textContent=authMsg(x);
+    }
+  }
+});
 
 /* ---------- 선생님 관리 ---------- */
 let rangeDraft=null;
@@ -717,75 +804,66 @@ function renderRange(){
   if(!canManage)return;const sel=new Set(rangeDraft||enabled);
   $('range').innerHTML=['3-1','3-2'].map(sem=>`<fieldset><legend>${sem}학기</legend>${UNITS.filter(u=>u.sem===sem).map(u=>`<label class="ck"><input type="checkbox" data-rid="${u.id}" ${sel.has(u.id)?'checked':''}> ${u.name}</label>`).join('')}<button class="ghost" data-sem="${sem}">${sem} 전체 선택/해제</button></fieldset>`).join('');
 }
+async function saveSettings(over){return FF.setDoc(FF.doc(fs,COL_SET,'class'),{units:enabled,signup:cfg.signup!==false,...over})}
 async function saveRange(){
   const units=rangeDraft||enabled;
   if(!units.length){$('rMsg').textContent='단원을 하나 이상 골라 주세요.';return}
   $('saveRange').disabled=true;
-  try{await db.doc('settings/class').set({units,signup:cfg.signup!==false});rangeDraft=null;$('rMsg').textContent=`저장했어요. 이제 ${units.length}개 단원에서 문제가 나와요.`}
-  catch(e){$('rMsg').textContent='저장하지 못했어요. 이 페이지의 편집 권한이 있는지 확인해 주세요.'}
+  try{await saveSettings({units});rangeDraft=null;$('rMsg').textContent=`저장했어요. 이제 ${units.length}개 단원에서 문제가 나와요.`}
+  catch(e){$('rMsg').textContent='저장하지 못했어요. 선생님 계정으로 로그인했는지, 보안 규칙을 넣었는지 확인해 주세요.'}
   $('saveRange').disabled=false;
 }
 const weak=s=>{let w=null;const bu=s.byUnit&&typeof s.byUnit==='object'?s.byUnit:{};for(const id in bu){const v=bu[id];if(!U[id]||!Array.isArray(v)||+v[1]<5)continue;const a=v[0]/v[1];if(!w||a<w[1])w=[id,a]}return w?`${U[w[0]].sem} ${U[w[0]].name} ${Math.round(w[1]*100)}%`:'-'};
+function startRoster(){
+  stopRoster();
+  unsubRoster=FF.onSnapshot(FF.collection(fs,COL_ST),snap=>{students=snap.docs.map(d=>({id:d.id,...d.data()}));renderRoster()},
+    ()=>{$('tMsg').textContent='학생 기록을 불러오지 못했어요. Firestore 보안 규칙을 넣었는지 확인해 주세요.'});
+}
+function stopRoster(){if(unsubRoster){unsubRoster();unsubRoster=null}students=[]}
 function renderRoster(){
   if(!canManage)return;
   $('teacher').hidden=false;
   const list=students.slice().sort((a,b)=>String(a.name).localeCompare(String(b.name),'ko'));
+  $('rosterCount').textContent=`${list.length}명`;
   $('roster').innerHTML=list.map(s=>{const st=fromRaw(s);
     const acc=s.solved?Math.round(s.right/s.solved*100)+'%':'-';
     const last=s.last?new Date(s.last).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}):'-';
     const fresh7=s.self&&s.joined&&Date.now()-Date.parse(s.joined)<7*864e5;
     return `<tr><td>${esc(s.name)}${fresh7?'<span class="newtag">새로 가입</span>':''}</td><td class="n">${+s.solved||0}</td><td class="n">${acc}</td><td>${esc(wname(st.w.L))}</td><td>${esc(wname(st.best))}</td><td class="n">${+s.booms||0}</td><td>${esc(weak(s))}</td><td>${esc(last)}</td>
-    <td style="white-space:nowrap"><button class="ghost" data-repin="${esc(s.id)}">비밀번호 변경</button> <button class="ghost danger" data-del="${esc(s.id)}">삭제</button></td></tr>`}).join('')
-    ||'<tr><td colspan="9" class="note">등록된 학생이 없어요. 위에서 추가해 주세요.</td></tr>';
+    <td style="white-space:nowrap"><button class="ghost danger" data-del="${esc(s.id)}">기록 삭제</button></td></tr>`}).join('')
+    ||'<tr><td colspan="9" class="note">아직 학생이 없어요. 학생이 가입하면 여기에 바로 나타나요.</td></tr>';
 }
-document.addEventListener('submit',async e=>{
-  if(e.target.id!=='signupForm')return;e.preventDefault();
-  const name=$('suName').value.trim().replace(/\s+/g,' '),p1=$('suPin').value.trim(),p2=$('suPin2').value.trim(),err=$('suErr');
-  if(!name){err.textContent='이름을 써 주세요.';return}
-  if(students.some(s=>String(s.name).trim().toLowerCase()===name.toLowerCase())){err.textContent='같은 이름이 이미 있어요. 번호나 별명을 붙여 볼까요?';return}
-  if(!/^\d{4}$/.test(p1)){err.textContent='비밀번호는 숫자 4자리예요.';return}
-  if(p1!==p2){err.textContent='두 비밀번호가 달라요. 다시 확인해 주세요.';return}
-  if(cfg.signup===false){err.textContent='지금은 가입할 수 없어요. 선생님께 말씀드려 주세요.';return}
-  const btn=e.target.querySelector('.btn');btn.disabled=true;err.textContent='';
-  try{
-    const body={...fresh(),name,pin:hash(p1),joined:new Date().toISOString(),self:true,last:new Date().toISOString()};
-    const ref=await db.collection('students').add(body);
-    joining=false;login({id:ref.id,...body});flash(`환영해요, ${name}!`,'#ffd27a');
-  }catch(x){btn.disabled=false;err.textContent=x&&x.code==='quota_exceeded'?'저장 공간이 가득 찼어요. 선생님께 알려 주세요.':'가입하지 못했어요. 이 기기에서 기록을 저장할 권한이 있는지 선생님께 확인해 주세요.'}
-});
 $('allowSignup').addEventListener('change',async e=>{
   const v=e.target.checked;
-  try{await db.doc('settings/class').set({units:enabled,signup:v});$('tMsg').textContent=v?'이제 학생이 스스로 가입할 수 있어요.':'학생 스스로 가입을 막았어요. 선생님이 직접 추가해 주세요.'}
+  try{await saveSettings({signup:v});$('tMsg').textContent=v?'이제 학생이 스스로 가입할 수 있어요.':'학생 스스로 가입을 막았어요. 선생님이 직접 추가해 주세요.'}
   catch(x){e.target.checked=!v;$('tMsg').textContent='설정을 저장하지 못했어요.'}
 });
 $('addForm').addEventListener('submit',async e=>{
-  e.preventDefault();const name=$('newName').value.trim(),p=$('newPin').value.trim();
+  e.preventDefault();const name=normName($('newName').value),p=$('newPin').value.trim();
   if(!name||!/^\d{4}$/.test(p)){$('tMsg').textContent='이름과 숫자 4자리 비밀번호를 넣어 주세요.';return}
-  try{await db.collection('students').add({...fresh(),name,pin:hash(p),last:''});$('newName').value='';$('newPin').value='';$('tMsg').textContent=`${name} 학생을 추가했어요.`}
-  catch(err){$('tMsg').textContent=err&&err.code==='quota_exceeded'?'저장 공간이 가득 찼어요.':'추가하지 못했어요. 이 화면에서 데이터를 쓸 권한이 있는지 확인해 주세요.'}
+  const btn=e.target.querySelector('.btn');btn.disabled=true;
+  try{
+    // 선생님 로그인이 풀리지 않게 보조 연결로 학생 계정을 만들어요
+    fbApp2=fbApp2||FAPP.initializeApp(FB_CONFIG,'creator');const a2=FA.getAuth(fbApp2);
+    const cred=await FA.createUserWithEmailAndPassword(a2,await idEmail(name),pinPw(p));
+    await FF.setDoc(FF.doc(fs,COL_ST,cred.user.uid),{...fresh(),name,joined:new Date().toISOString(),self:false,last:''});
+    await FA.signOut(a2);
+    $('newName').value='';$('newPin').value='';$('tMsg').textContent=`${name} 학생을 추가했어요. 이름과 비밀번호 ${p}로 들어올 수 있어요.`;
+  }catch(x){$('tMsg').textContent=String(x&&x.code).includes('email-already-in-use')?'같은 이름의 학생이 이미 있어요. 번호나 별명을 붙여 주세요.':'추가하지 못했어요. '+authMsg(x)}
+  btn.disabled=false;
 });
 document.addEventListener('click',async e=>{
-  const del=e.target.closest('[data-del]'),rp=e.target.closest('[data-repin]');
+  const del=e.target.closest('[data-del]');
   if(del){
-    if(!del.dataset.c){del.dataset.c=1;del.textContent='정말 삭제?';setTimeout(()=>{delete del.dataset.c;del.textContent='삭제'},3000);return}
-    try{await db.collection('students').doc(del.dataset.del).delete()}catch(err){$('tMsg').textContent='삭제하지 못했어요.'}
+    if(!del.dataset.c){del.dataset.c=1;del.textContent='정말 삭제?';setTimeout(()=>{delete del.dataset.c;del.textContent='기록 삭제'},3000);return}
+    try{await FF.deleteDoc(FF.doc(fs,COL_ST,del.dataset.del));$('tMsg').textContent='기록을 지웠어요. 그 학생이 같은 이름과 예전 비밀번호로 다시 가입하면 새 기록으로 시작해요.'}
+    catch(err){$('tMsg').textContent='삭제하지 못했어요.'}
   }
-  if(rp){
-    const row=rp.closest('td');
-    row.innerHTML=`<form class="repin" data-id="${esc(rp.dataset.repin)}" style="flex-wrap:nowrap"><input inputmode="numeric" maxlength="4" pattern="[0-9]{4}" placeholder="새 4자리" aria-label="새 비밀번호" style="width:110px;flex:none" required><button class="btn sm">저장</button></form>`;
-    row.querySelector('input').focus();
-  }
-});
-document.addEventListener('submit',async e=>{
-  const f=e.target.closest('.repin');if(!f)return;e.preventDefault();
-  const p=f.querySelector('input').value.trim();if(!/^\d{4}$/.test(p))return;
-  try{await db.collection('students').doc(f.dataset.id).update({pin:hash(p)});$('tMsg').textContent='비밀번호를 바꿨어요.'}catch(err){$('tMsg').textContent='비밀번호를 바꾸지 못했어요.'}
-  renderRoster();
 });
 
 /* ---------- 게임 조작 ---------- */
 document.addEventListener('click',e=>{
-  const un=e.target.closest('[data-unit]'),ch=e.target.closest('[data-ch]'),sem=e.target.closest('[data-sem]'),sid=e.target.closest('[data-sid]'),k=e.target.closest('[data-k]');
+  const un=e.target.closest('[data-unit]'),ch=e.target.closest('[data-ch]'),sem=e.target.closest('[data-sem]');
   if(un){
     const list=(enabled.length?enabled:UNITS.map(u=>u.id)).filter(id=>U[id]),c=chosen(),id=un.dataset.unit;
     let next;
@@ -798,20 +876,21 @@ document.addEventListener('click',e=>{
   if(ch&&cur.choices)answer(cur.choices[+ch.dataset.ch]===cur.ans);
   if(sem){const ids=UNITS.filter(u=>u.sem===sem.dataset.sem).map(u=>u.id),d=new Set(rangeDraft||enabled),all=ids.every(i=>d.has(i));ids.forEach(i=>all?d.delete(i):d.add(i));rangeDraft=UNITS.map(u=>u.id).filter(i=>d.has(i));renderRange();$('rMsg').textContent='저장하지 않은 변경이 있어요.'}
   if(e.target.id==='saveRange')saveRange();
-  if(sid){picked=students.find(s=>s.id===sid.dataset.sid)||null;pin='';showGate()}
-  if(k)pinKey(k.dataset.k);
   if(e.target.id==='logout')logout();
   const art=e.target.closest('[data-art]');
   if(art){ART=art.dataset.art;try{localStorage.setItem('forge-art',ART)}catch(err){}document.querySelectorAll('[data-art]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.art===ART));render()}
   const jp=e.target.closest('[data-jump]');
   if(jp&&test&&!busy){const L=+jp.dataset.jump*STEP;morph(()=>{S.w={L};S.fails=0;S.best=Math.max(S.best,L);sel=[]},true,`${gname(gOf(L))} +${L}`)}
-  if(e.target.id==='toJoin'){joining=true;picked=null;showGate()}
+  if(e.target.id==='toJoin'){joining=true;showGate()}
+  if(e.target.id==='teacherLogin'){const b=e.target;b.disabled=true;FA.signInWithPopup(auth,new FA.GoogleAuthProvider()).catch(x=>{const m=authMsg(x);if(m&&$('liErr'))$('liErr').textContent=m}).finally(()=>{b.disabled=false})}
+  if(e.target.id==='tryLocal'){$('gate').hidden=true;startLocal()}
+  if(e.target.id==='toLogin'){mode='fb';S=fresh();render();if(auth&&auth.currentUser)onAuth(auth.currentUser);else{renderWho();showGate()}}
   if(e.target.id==='suBack'){joining=false;showGate()}
   if(e.target.id==='testOn')startTest();
   if(e.target.id==='testOff')endTest();
-  if(e.target.id==='toTeacher'){$('gate').hidden=true;$('teacher').scrollIntoView({behavior:'smooth'});$('newName').focus()}
+  if(e.target.id==='toTeacher'){$('teacher').scrollIntoView({behavior:'smooth'})}
 });
-document.addEventListener('keydown',e=>{if(!$('gate').hidden&&picked){if(/^\d$/.test(e.key))pinKey(e.key);if(e.key==='Backspace')pinKey('back');return}
+document.addEventListener('keydown',e=>{
   if($('gate').hidden&&cur.choices&&/^[1-4]$/.test(e.key)&&!e.target.closest('input')){const i=+e.key-1;if(cur.choices[i])answer(cur.choices[i]===cur.ans)}});
 document.addEventListener('change',e=>{const c=e.target.closest('[data-rid]');if(!c)return;rangeDraft=[...document.querySelectorAll('[data-rid]')].filter(x=>x.checked).map(x=>x.dataset.rid);$('rMsg').textContent='저장하지 않은 변경이 있어요.'});
 function answer(ok){
@@ -884,27 +963,24 @@ function startLocal(){
   mode='local';try{const v=JSON.parse(localStorage.getItem(LKEY));if(v)S=fromRaw(v)}catch(e){}
   chips();cur=gen();render();renderWho();
 }
+async function startFirebase(){
+  if(window.__fbMock){({FAPP,FA,FF}=window.__fbMock)}
+  else{[FAPP,FA,FF]=await Promise.all([import(CDN+'firebase-app.js'),import(CDN+'firebase-auth.js'),import(CDN+'firebase-firestore.js')])}
+  fbApp=FAPP.initializeApp(FB_CONFIG);auth=FA.getAuth(fbApp);fs=FF.getFirestore(fbApp);
+}
 (async()=>{
-  try{db=await window.claude?.use?.('db');user=await window.claude?.use?.('user')}catch(e){db=null}
-  if(!db){startLocal();return}
-  mode='db';
-  try{canManage=!!((await user?.canEdit())??false)||!!((await user?.isOwner())??false)}catch(e){canManage=false}
-  let first=true;const timer=setTimeout(()=>{if(first){$('gbox').innerHTML='<h2>잠시만요</h2><p class="note">학생 명단을 아직 불러오지 못했어요. 인터넷 연결을 확인해 주세요.</p>';$('gate').hidden=false}},10000);
   $('gbox').innerHTML='<h2>대장간 문을 여는 중…</h2>';$('gate').hidden=false;
-  db.doc('settings/class').onSnapshot(d=>{
-    const dd=d.exists?d.data():{},v=dd.units,u=Array.isArray(v)?v.filter(x=>U[x]):[];
-    cfg={signup:dd.signup!==false};if($('allowSignup'))$('allowSignup').checked=cfg.signup;if(!me&&!picked&&!$('gate').hidden&&!joining)showGate();
+  try{await Promise.race([startFirebase(),new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),12000))])}
+  catch(e){$('gate').hidden=true;startLocal();return}
+  fbReady=true;mode='fb';
+  FF.onSnapshot(FF.doc(fs,COL_SET,'class'),d=>{
+    const dd=d.exists()?d.data():{},v=dd.units,u=Array.isArray(v)?v.filter(x=>U[x]):[];
+    const wasSignup=cfg.signup;cfg={signup:dd.signup!==false};$('allowSignup').checked=cfg.signup;
+    if(wasSignup!==cfg.signup&&!me&&!isTeacher&&!$('gate').hidden&&!joining&&mode==='fb')showGate();
     enabled=u.length?u:UNITS.map(x=>x.id);
     chips();renderRange();if(!enabled.includes(cur.unit)){cur=gen();render()}
   },()=>{});
-  db.collection('students').onSnapshot(snap=>{
-    if(!snap.metadata.fromCache){clearTimeout(timer)}
-    first=false;
-    students=snap.docs.map(d=>({id:d.id,...d.data()}));
-    renderRoster();
-    if(me){if(!students.find(s=>s.id===me.id)){me=null;S=fresh();render();renderWho();showGate()}}
-    else showGate();
-  },err=>{clearTimeout(timer);if(!me){$('gate').hidden=true;startLocal()}});
+  FA.onAuthStateChanged(auth,onAuth);
 })();
 }
 </script>

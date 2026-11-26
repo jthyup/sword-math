@@ -12,10 +12,20 @@
 
 ## 실행
 
-`index.html`을 브라우저로 열면 체험 모드(기록은 그 기기에만 저장)로 동작해요.
 GitHub Pages 주소: https://jthyup.github.io/sword-math/
 
-> 학생 가입·선생님 관리처럼 여러 기기의 기록을 모으는 기능은 Firebase 연결 후 동작합니다(작업 예정).
+- **학생:** "처음 왔어요"로 이름과 비밀번호 숫자 4자리를 정해 가입하고, 다음부터 같은 이름과 비밀번호로 들어와요.
+- **선생님:** "선생님 로그인 (구글)"로 들어오면 모든 학생 기록, 출제 범위, 가입 허용 설정이 보여요.
+- **로그인 없이 체험하기:** 기록이 그 기기에만 저장돼요.
+
+## Firebase 구성
+
+- 프로젝트: `project-eraser-71be8` (Spark 무료 요금제)
+- Authentication: 이메일/비밀번호(학생), Google(선생님). 승인된 도메인에 `jthyup.github.io` 추가
+- Firestore: `asia-northeast3 (서울)`. 이 게임의 데이터는 `sm_students`, `sm_settings`에만 저장해요.
+- 보안 규칙: `firestore.rules` 내용을 Firebase 콘솔 > Firestore Database > 규칙 탭에 붙여 넣고 게시해요. 규칙을 고치면 콘솔에서도 다시 게시해야 해요.
+
+학생 이름은 로그인용 내부 주소(`s…@sword-math.app`, 실제 메일 아님)로 바뀌어 저장돼요. 학생이 비밀번호를 잊으면 선생님이 기록을 지우고, 이름에 번호를 붙여 다시 가입하게 해 주세요.
 
 ## 파일 구성
 
