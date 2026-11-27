@@ -1374,7 +1374,8 @@ function renderQ(){
   if(cur.choices){ch.hidden=false;f.hidden=true;ch.innerHTML=cur.choices.map((c,i)=>`<button data-ch="${i}"><span class="key" aria-hidden="true">${i+1}</span>${c}</button>`).join('')}
   else{ch.hidden=true;f.hidden=false;ch.innerHTML=''}
 }
-function focusAns(){if(!cur.choices&&!cur.none&&$('gate').hidden&&$('urModal').hidden)$('ans').focus()}
+var touchUI=false;
+function focusAns(){if(!touchUI&&!cur.choices&&!cur.none&&$('gate').hidden&&$('urModal').hidden)$('ans').focus()}
 const canMerge=(a,b)=>a&&b&&a.L===b.L&&a.L>=1;
 const wname=L=>`${gname(gOf(L))} +${L}`;
 let sel=[],busy=false;
@@ -2266,10 +2267,19 @@ function answer(ok,given){
   else{if(S.combo)$('combo').classList.remove('show');S.combo=0;fb.className='feedback bad';fb.innerHTML=`아쉬워요. 정답은 ${cur.ans}`}
   cur=gen();$('ans').value='';render();save();focusAns();
 }
-document.querySelector('.nkp').addEventListener('click',e=>{const b=e.target.closest('[data-nk]');if(!b)return;const a=$('ans'),k=b.dataset.nk;
+function nkPress(k){const a=$('ans');
   if(k==='del')a.value=a.value.slice(0,-1);else if(a.value.length<10&&!(k==='.'&&a.value.includes('.')))a.value+=(k==='.'&&!a.value?'0.':k);
-  if(!coarse)a.focus()});
-const coarse=matchMedia('(pointer:coarse)').matches;if(coarse)$('ans').setAttribute('inputmode','none');
+  if(!touchUI)a.focus()}
+document.querySelector('.nkp').addEventListener('pointerdown',e=>{if(e.target.closest('[data-nk]'))e.preventDefault()});
+document.querySelector('.nkp').addEventListener('click',e=>{const b=e.target.closest('[data-nk]');if(b)nkPress(b.dataset.nk)});
+// 터치 화면(패드·휴대폰)에서는 기기 키보드를 띄우지 않고 우리 키패드만 써요.
+function setTouchUI(){if(touchUI)return;touchUI=true;const a=$('ans');a.setAttribute('inputmode','none');a.setAttribute('readonly','');if(document.activeElement===a)a.blur()}
+if(navigator.maxTouchPoints>0||matchMedia('(any-pointer:coarse)').matches)setTouchUI();
+addEventListener('pointerdown',e=>{if(e.pointerType==='touch'||e.pointerType==='pen')setTouchUI()},{capture:true,passive:true});
+document.addEventListener('keydown',e=>{
+  if(!touchUI||e.ctrlKey||e.metaKey||e.altKey||tab!=='forge'||cur.choices||cur.none||!$('gate').hidden||!$('urModal').hidden)return;
+  const t=e.target;if(t&&t.closest&&t.closest('input,textarea,select')&&t.id!=='ans')return;
+  if(/^[0-9.]$/.test(e.key)){e.preventDefault();nkPress(e.key)}else if(e.key==='Backspace'){e.preventDefault();nkPress('del')}else if(e.key==='Enter'&&!(t&&t.closest&&t.closest('button'))){e.preventDefault();$('f').requestSubmit()}});
 $('f').addEventListener('submit',e=>{
   e.preventDefault();const v=$('ans').value.trim();if(v===''||cur.choices||cur.none)return;
   answer(Number(v.replace(/,/g,''))===Number(cur.ans),v);
