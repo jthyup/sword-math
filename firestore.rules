@@ -4,7 +4,7 @@ rules_version = '2';
 // - 학생: 자기 기록(sm_students/{자기 uid})만 읽고 쓸 수 있어요.
 // - 관리자(아래 구글 계정): 모든 학생 기록을 보고, 지우고, 출제 범위·가입 허용·랭킹 공개를 바꾸고, 담임 요청을 승인해요.
 // - 담임(관리자가 승인한 구글 계정): 자기 반 학생 기록과 자기 반 출제 범위만 관리해요.
-// - 랭킹판(sm_rank): 로그인한 학생끼리 별명·최고 강화·주간 문제 수만 볼 수 있어요.
+// - 랭킹판(sm_rank): 로그인한 학생끼리 별명·최고 강화·주간 문제 수와 공개 프로필(대표 검·칭호·한마디 등)만 볼 수 있어요.
 // - 그 밖의 모든 경로는 막혀 있어요.
 // Firebase 콘솔 > Firestore Database > 규칙 탭에 이 내용을 통째로 붙여 넣고 [게시]를 누르세요.
 
@@ -54,7 +54,9 @@ service cloud.firestore {
         && request.resource.data.nick.size() > 0
         && request.resource.data.nick.size() <= 8
         && request.resource.data.best is int
-        && request.resource.data.uid == request.auth.uid;
+        && request.resource.data.uid == request.auth.uid
+        // 공개 프로필(p): 정해진 칸 몇 개뿐이라 작게 제한해요. 실명·학년·반·정답률은 넣지 않아요.
+        && (!('p' in request.resource.data) || (request.resource.data.p is map && request.resource.data.p.size() <= 14));
     }
 
     // 학년·반·번호: 그대로이거나, 처음 정하거나, 마지막 변경 뒤 7일이 지났을 때만 (변경 시각은 서버 시각)

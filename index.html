@@ -410,6 +410,30 @@ ul{margin:0;padding-left:1.2em}li{margin:4px 0}
 .newtag{display:inline-block;margin-left:6px;padding:0 6px;border-radius:6px;background:var(--ember);color:#fff;font-size:12px;vertical-align:middle}
 .teacher[hidden]{display:none}
 .tbl{overflow-x:auto}
+.pcname{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:left;text-decoration:underline dotted rgba(255,200,120,.45);text-underline-offset:4px}.pcname:hover{color:#ffb35c}
+.pcwrap{position:relative;width:min(100%,780px)}.pcx{position:absolute;top:12px;right:14px;z-index:3;background:rgba(0,0,0,.4)}
+.pcard{display:grid;grid-template-columns:minmax(0,340px) minmax(0,1fr);border-radius:22px;overflow:hidden;border:1px solid rgba(255,170,90,.4);box-shadow:0 24px 60px rgba(0,0,0,.6);background:#1a120d;color:#f3e7d8}
+.pcl{position:relative;background:#120c09 center/cover;min-height:440px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.pcl:after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 55%,rgba(255,140,40,.22),rgba(0,0,0,.55) 78%);pointer-events:none}
+.pcl svg{position:relative;z-index:1;width:min(300px,92%);height:auto;margin-top:28px;overflow:visible;filter:drop-shadow(0 0 16px rgba(255,180,80,.4))}
+.pclv{position:absolute;z-index:2;top:12px;left:16px;font:400 44px "Black Han Sans";color:#ffc46b;text-shadow:0 0 14px rgba(255,140,30,.7)}
+.pcr{padding:20px 22px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.pctt{align-self:flex-start;font-size:12px;background:linear-gradient(90deg,#7048e8,#ae3ec9);color:#fff;border-radius:999px;padding:2px 10px;font-weight:700}
+.pcnm{font:400 30px "Black Han Sans";margin:0;word-break:break-all}.pcrk{color:#ffb35c;font-size:14px}
+.pcsay{background:rgba(255,255,255,.06);border-left:3px solid #ffb35c;padding:8px 12px;font-size:15px;border-radius:0 10px 10px 0}
+.pcst{display:grid;grid-template-columns:1fr 1fr;gap:8px}.pcst div{background:rgba(255,255,255,.05);border-radius:10px;padding:8px 10px}.pcst small{display:block;font-size:12px;color:#b9a48f}.pcst b{font-size:16px}
+.pchm{display:flex;align-items:center;gap:8px;font-size:14px}.pchm img{height:40px}
+.pcbd{display:flex;gap:6px;flex-wrap:wrap}.pcbd span{font-size:12px;background:#2a1c15;border:1px solid #6b5247;border-radius:8px;padding:2px 8px}
+.pfgrid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:18px;align-items:start}
+.pfprev .pcard{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.pfprev .pcl{min-height:380px}
+.pfopt{display:flex;flex-direction:column;gap:14px;font-size:14px}.pfopt>div>b{color:#ffb35c}.pfopt .chips{margin-top:6px}
+.pfopt .chip{min-height:34px;font-size:14px;padding:0 12px}
+#pcModal{align-items:flex-start}
+.pfopt .chip:disabled{opacity:.45;cursor:not-allowed}
+.pfshow{display:flex;gap:6px 14px;flex-wrap:wrap;margin-top:6px}.pfshow label{display:inline-flex;align-items:center;gap:5px;cursor:pointer}.pfshow input{width:16px;height:16px;min-height:0;flex:none;margin:0}
+@media (max-width:900px){.pfgrid{grid-template-columns:1fr}}
+@media (max-width:640px){.pcard,.pfprev .pcard{grid-template-columns:1fr}.pcl,.pfprev .pcl{min-height:300px}.pcl svg{width:min(250px,80%)}.pcr{padding:16px}.pcnm{font-size:26px}}
+
 .eqtop{display:grid;grid-template-columns:1.1fr 1fr;gap:14px}
 .eqpanel{background:rgba(0,0,0,.25);border:1px solid rgba(255,170,90,.22);border-radius:16px;padding:16px}
 .eqpanel h3{margin:0 0 12px;font-size:16px;color:#ffb35c}.eqpanel h3 small{color:var(--mute);font-weight:400;font-size:13px}
@@ -515,7 +539,7 @@ legend{font-family:"Black Han Sans";font-size:18px;padding:0 6px}
 </header>
 
 <nav class="tabs" id="tabs" role="tablist">
-  <button role="tab" data-tab="forge">강화·보관함</button><button role="tab" data-tab="equip">장비</button><button role="tab" data-tab="rank" id="tabRank" hidden>랭킹</button><button role="tab" data-tab="shop">상점</button><button role="tab" data-tab="codex">도감</button><button role="tab" data-tab="help">설명</button><button class="sndbtn" id="sndBtn" aria-pressed="false">🔇 소리 꺼짐</button>
+  <button role="tab" data-tab="forge">강화·보관함</button><button role="tab" data-tab="equip">장비</button><button role="tab" data-tab="prof">프로필</button><button role="tab" data-tab="rank" id="tabRank" hidden>랭킹</button><button role="tab" data-tab="shop">상점</button><button role="tab" data-tab="codex">도감</button><button role="tab" data-tab="help">설명</button><button class="sndbtn" id="sndBtn" aria-pressed="false">🔇 소리 꺼짐</button>
 </nav>
 <main class="band" style="padding-top:12px">
 <section class="game" data-panel="forge">
@@ -588,6 +612,11 @@ legend{font-family:"Black Han Sans";font-size:18px;padding:0 6px}
   <div class="actions" id="invActions"></div>
   <p class="note" id="invMsg"></p>
 </section>
+<section class="card shelfcard pfcard" data-panel="prof">
+  <div class="shelfhead"><h2>프로필 관리</h2><span class="note" id="pfNote"></span></div>
+  <div id="pfBody"></div>
+</section>
+<div class="gate" id="pcModal" hidden><div class="pcwrap" role="dialog" aria-modal="true" aria-label="친구 프로필"><div id="pcBody"></div></div></div>
 <section class="card shelfcard eqcard" data-panel="equip">
   <div class="shelfhead"><h2>장비</h2></div>
   <div id="eqBody"></div>
@@ -628,6 +657,7 @@ legend{font-family:"Black Han Sans";font-size:18px;padding:0 6px}
       <li>5연속 정답마다 → 보너스 강화권 1장</li>
       <li>검이 부서지면 강화 단계만큼 검 조각을 받아요 (+23 → 조각 23개). 조각은 상점에서 강화권·골드·강화 주문서로 바꿀 수 있고, 많이 모으면 업적 보상을 받아요</li>
       <li>🧿 파괴 방지 부적(조각 60개): 파괴될 때 한 번 막아주고 1단계만 내려가요. 🛡️ 콤보 방패(조각 20개): 3콤보 이상에서 한 번 틀려도 콤보가 이어져요</li>
+      <li>프로필 탭에서 대표 검·칭호·배경·한마디를 고르면, 랭킹에서 친구가 내 별명을 눌렀을 때 보여요 (실명·학년·반·정답률은 안 보여요)</li>
       <li>🔒 버튼으로 아끼는 검을 잠글 수 있어요. 잠긴 검은 강화·판매·합치기가 안 돼요 (강화대와 보관함 모두)</li>
       <li>주관식은 키보드로 치거나 옆의 숫자 키패드를 눌러서 답해요</li>
       <li>상점에서 +10·+15·+20 검을 골드나 검 조각(50·100·180개)으로 사서 바로 시작할 수도 있어요</li>
@@ -771,6 +801,22 @@ const FRAG_SHOP=[
   {id:'scroll',name:'강화 주문서 (+10%p, 1회)',cost:30, give:s=>{s.scroll=Math.min(5,s.scroll+1)}, can:s=>s.scroll<5, have:s=>`가진 주문서 ${s.scroll}/5`},
   {id:'ward',name:'🧿 파괴 방지 부적',cost:60, desc:'검이 파괴될 때 한 번 막아줘요. 대신 1단계 내려가요.', give:s=>{s.ward=1}, can:s=>s.ward<1, have:s=>`가진 부적 ${s.ward}/1`},
   {id:'shield',name:'🛡️ 콤보 방패',cost:20, desc:'3콤보 이상일 때 한 번 틀려도 콤보가 이어져요.', give:s=>{s.shield=Math.min(3,s.shield+1)}, can:s=>s.shield<3, have:s=>`가진 방패 ${s.shield}/3`}];
+const TITLES=[
+  {id:'combo',  name:'🔥 콤보 장인',          how:'21콤보 달성',            ok:s=>s.maxCombo>=21},
+  {id:'combo2', name:'⚡ 콤보의 신',          how:'50콤보 달성',            ok:s=>s.maxCombo>=50},
+  {id:'frag',   name:'🧩 조각 수집가',        how:'검 조각 100개 모으기',    ok:s=>s.fragTotal>=100},
+  {id:'frag2',  name:'💎 조각 대수집가',      how:'검 조각 300개 모으기',    ok:s=>s.fragTotal>=300},
+  {id:'boom',   name:'💥 파괴왕',             how:'검 10자루 부수기',        ok:s=>s.booms>=10},
+  {id:'phoenix',name:'🛡️ 불굴의 대장장이',    how:'검을 부순 적 있고 +30 달성', ok:s=>s.booms>=1&&s.best>=30},
+  {id:'wing',   name:'🪽 날개 달린 대장장이', how:'+30 달성',               ok:s=>s.best>=30},
+  {id:'legend', name:'🏆 전설의 대장장이',    how:'+50 달성',               ok:s=>s.best>=50},
+  {id:'solve',  name:'📚 문제 사냥꾼',        how:'문제 500개 풀기',         ok:s=>s.solved>=500},
+  {id:'hams',   name:'🔨 망치 수집가',        how:'망치 10개 모두 모으기',   ok:s=>HAM.every(h=>!h.price||s.hams.includes(h.id))}];
+const SAYS=['안녕! 👋','오늘은 +50 간다!! 🔥','같이 강화하자 ⚒️','파멸의 망치 최고 💥','내 검 멋있지? ✨','콤보 이어가는 중 🔥','조각 모으는 중 🧩','수학 문제 다 덤벼! 📚','부서져도 다시 만든다 💪','날개 달 때까지 간다 🪽'];
+const repLv=()=>{const p=S.prof;return p.rep==='best'?S.best:p.rep==='pick'?Math.min(p.repL,S.best):S.w.L};
+function pubProf(){const p=S.prof,o={L:repLv(),cur:S.w.L,t:TITLES.some(x=>x.id===p.title&&x.ok(S))?p.title:'',bg:S.bgs.includes(p.bg)?p.bg:'',s:p.say>=0&&p.say<SAYS.length?p.say:-1};
+  if(p.show.combo)o.mc=S.maxCombo;if(p.show.booms)o.bm=S.booms;if(p.show.ham){o.h=S.ham||'wood';if(S.ham2)o.h2=S.ham2}if(!p.show.best)o.nb=1;if(p.show.wk)o.sw=1;
+  o.bd=[S.fragTotal>=300?'f2':S.fragTotal>=100?'f1':'',`hm${S.hams.filter(id=>HAM.some(h=>h.id===id&&h.price>0)).length}`].filter(Boolean);return o}
 const ACH=[
   {id:'frag1',name:'조각 수집가 I', need:100, reward:'강화대 배경 「영혼의 빛 동굴」', has:s=>s.bgs.includes('soul'), give:s=>{if(!s.bgs.includes('soul'))s.bgs.push('soul')}},
   {id:'frag2',name:'조각 수집가 II',need:300, reward:'망치 불꽃 「혼불」 (푸른 영혼의 불꽃)', has:s=>s.soulFx, give:s=>{s.soulFx=true}}];
@@ -788,7 +834,7 @@ const SHOP_BG=[
   {id:'soul',name:'영혼의 빛 동굴',price:0,ach:'조각 수집가 I'}];
 let lastGold=null,previewBg=null,sellArm=false,sellArmT=0;
 const sellPrice=L=>L<1?5:L*L*10;
-const def={w:{L:0},inv:[],best:0,tk:0,gold:0,bgs:[],bg:'',hams:[],ham:'',tutDone:false,ham2:'',nickTk:0,frag:0,fragTotal:0,scroll:0,ward:0,shield:0,wrong:[],lastBroken:null,soulFx:false,soulOn:false,solved:0,right:0,combo:0,fails:0,booms:0,units:[],byUnit:{},nick:'',wk:'',wn:0,rangeSet:false};
+const def={w:{L:0},inv:[],best:0,tk:0,gold:0,bgs:[],bg:'',hams:[],ham:'',tutDone:false,ham2:'',maxCombo:0,prof:{rep:'cur',repL:0,title:'',bg:'',say:-1,show:{best:true,combo:true,booms:true,ham:true,wk:false}},nickTk:0,frag:0,fragTotal:0,scroll:0,ward:0,shield:0,wrong:[],lastBroken:null,soulFx:false,soulOn:false,solved:0,right:0,combo:0,fails:0,booms:0,units:[],byUnit:{},nick:'',wk:'',wn:0,rangeSet:false};
 const fresh=()=>JSON.parse(JSON.stringify(def));
 let S=fresh();
 const $=id=>document.getElementById(id);
@@ -828,7 +874,7 @@ async function flush(){
   try{
     await FF.setDoc(FF.doc(fs,COL_ST,me.id),body,{merge:true});
     if(S.nick){
-      const wk=weekKey(),rb={uid:me.id,nick:S.nick,best:S.best,grade:myGrade||0,cls:me.cls||0,wk,['wn_'+wk]:S.wk===wk?S.wn:0},j=JSON.stringify(rb);
+      const wk=weekKey(),rb={uid:me.id,nick:S.nick,best:S.best,grade:myGrade||0,cls:me.cls||0,wk,['wn_'+wk]:S.wk===wk?S.wn:0,p:pubProf()},j=JSON.stringify(rb);
       if(j!==lastRankJ){await FF.setDoc(FF.doc(fs,COL_RANK,me.id),rb);lastRankJ=j}
     }
   }
@@ -908,13 +954,16 @@ function fromRaw(raw){
   o.units=Array.isArray(o.units)?o.units.filter(x=>typeof x==='string'):[];
   if(raw.units===undefined&&typeof raw.unit==='string'&&raw.unit!=='mix')o.units=[raw.unit];
   o.wrong=(Array.isArray(o.wrong)?o.wrong:[]).filter(x=>x&&typeof x==='object').slice(-WRONG_MAX).map(x=>({q:String(x.q||'').slice(0,60),a:String(x.a??'').slice(0,20),m:String(x.m??'').slice(0,20),u:String(x.u||''),t:+x.t||0}));
+  {const pr=o.prof&&typeof o.prof==='object'?o.prof:{},sh=pr.show&&typeof pr.show==='object'?pr.show:{};
+   o.prof={rep:['cur','best','pick'].includes(pr.rep)?pr.rep:'cur',repL:Math.max(0,Math.floor(+pr.repL||0)),title:typeof pr.title==='string'?pr.title:'',bg:typeof pr.bg==='string'?pr.bg:'',say:Number.isInteger(pr.say)?pr.say:-1,
+     show:{best:sh.best!==false,combo:sh.combo!==false,booms:sh.booms!==false,ham:sh.ham!==false,wk:sh.wk===true}}}
   o.rangeSet=o.rangeSet===true;o.tutDone=o.tutDone===true;
   o.lastBroken=o.lastBroken&&Number.isFinite(+o.lastBroken.L)&&+o.lastBroken.L>0?{L:Math.floor(+o.lastBroken.L),frag:Math.max(0,Math.floor(+o.lastBroken.frag||0))}:null;
   o.soulFx=o.soulFx===true;o.soulOn=o.soulFx&&o.soulOn===true;o.scroll=Math.min(5,o.scroll);
   o.bgs=Array.isArray(o.bgs)?o.bgs.filter(x=>SHOP_BG.some(b=>b.id===x)):[];o.bg=o.bgs.includes(o.bg)?o.bg:'';
   o.hams=Array.isArray(o.hams)?o.hams.filter(x=>HAM.some(h=>h.id===x&&h.price>0)):[];o.ham=o.hams.includes(o.ham)?o.ham:'';o.ham2=typeof o.ham2==='string'&&o.hams.includes(o.ham2)&&o.ham2!==o.ham?o.ham2:'';
   o.nick=typeof o.nick==='string'?o.nick.slice(0,8):'';o.wk=typeof o.wk==='string'?o.wk:'';
-  for(const k of ['tk','gold','nickTk','frag','fragTotal','scroll','ward','shield','solved','right','combo','fails','booms','wn'])o[k]=Math.max(0,Math.floor(+o[k]||0));
+  for(const k of ['tk','gold','nickTk','frag','fragTotal','scroll','ward','shield','maxCombo','solved','right','combo','fails','booms','wn'])o[k]=Math.max(0,Math.floor(+o[k]||0));
   return o;
 }
 const r1=v=>+(+v).toFixed(1);
@@ -1640,6 +1689,51 @@ document.addEventListener('click',e=>{
   const sb=e.target.closest('[data-eqsub]');if(sb){const id=sb.dataset.eqsub,h=HAM.find(x=>x.id===id);if(id==='x')return;if(id&&(!h||!h.eff||h.noSub||!S.hams.includes(id)||id===S.ham))return;S.ham2=id;eqSel=null;render();save();$('eqMsg').textContent=id?`'${h.name}'을(를) 보조 칸에 끼웠어요. ${h.eff} 효과가 절반만큼 더해져요.`:'보조 망치를 뺐어요.';return}
   const gs=e.target.closest('[data-gostab]');if(gs){shopTab=gs.dataset.gostab;renderShop()}
 });
+function profCard(d){const p=d.p&&typeof d.p==='object'?d.p:{},best=Math.max(0,Math.floor(+d.best||0));
+  const L=Math.max(0,Math.min(best,Math.floor(Number.isFinite(+p.L)?+p.L:best))),cur=Math.max(0,Math.floor(+p.cur||0));
+  const bg=SHOP_BG.some(b=>b.id===p.bg)?`url(img/bg-${p.bg}.webp)`:'',tl=TITLES.find(x=>x.id===p.t),say=SAYS[p.s];
+  const hm=HAM.find(h=>h.id===p.h),h2=HAM.find(h=>h.id===p.h2),n=x=>Math.max(0,Math.floor(+x||0));
+  const st=[[ '대표 검',`${esc(gname(gOf(L)))} +${L}`]];
+  if(Number.isFinite(+p.cur)&&cur!==L)st.push(['지금 검',`${esc(gname(gOf(cur)))} +${cur}`]);
+  if(!p.nb)st.push(['최고 기록',`+${best}`]);
+  if(p.mc!=null)st.push(['최고 콤보',`${n(p.mc)}콤보`]);
+  if(p.bm!=null)st.push(['부순 검',`${n(p.bm)}자루${n(p.bm)?' 💥':''}`]);
+  if(p.sw&&d.wn!=null)st.push(['이번 주 맞힌 문제',`${n(d.wn)}개`]);
+  const bd=(Array.isArray(p.bd)?p.bd:[]).map(x=>x==='f2'?'💎 조각 300개':x==='f1'?'🧩 조각 100개':/^hm\d+$/.test(x)&&+x.slice(2)>0?`🔨 망치 ${+x.slice(2)}/${HAM.length-1}`:'').filter(Boolean);
+  if(n(p.mc)>=21)bd.push(`🔥 ${n(p.mc)>=50?50:21}콤보 달성`);
+  return `<div class="pcard"><div class="pcl" style="${bg?`background-image:${bg}`:''}"><span class="pclv">+${L}</span><svg viewBox="-40 -52 208 226" aria-hidden="true">${swordSVG(gOf(L),L%STEP,'pc'+(d.uid||'x'),L,true)}</svg></div>
+   <div class="pcr">${tl?`<span class="pctt">${tl.name}</span>`:''}<h2 class="pcnm">${esc(d.nick||'?')}</h2>${d.rk?`<span class="pcrk">${esc(d.rk)}</span>`:''}
+   ${say?`<div class="pcsay">"${esc(say)}"</div>`:''}
+   <div class="pcst">${st.map(([a,b])=>`<div><small>${a}</small><b>${b}</b></div>`).join('')}</div>
+   ${hm?`<div class="pchm"><img src="img/hm-${hm.id}.webp" alt=""><span>들고 있는 망치 <b>${esc(hm.name)}</b>${h2?` · 보조 <b>${esc(h2.name)}</b>`:''}</span></div>`:''}
+   ${bd.length?`<div class="pcbd">${bd.map(x=>`<span>${x}</span>`).join('')}</div>`:''}</div></div>`}
+function openPC(id){const list=(rankAll||[]).concat(rankRows||[]),r=list.find(x=>x.id===id);if(!r)return;
+  const f='wn_'+weekKey(),src=rankAll||rankRows,val=x=>Math.floor(+(rtab==='best'?x.best:x[f])||0),rk=src.filter(x=>val(x)>val(r)).length+1;
+  const scope=rscope==='grade'?'학년':rscope==='class'?'반':'전체';
+  $('pcBody').innerHTML=`<button class="ghost pcx" id="pcClose">닫기</button>`+profCard({...r,wn:r.wk===weekKey()?r[f]:0,rk:`${scope} 랭킹 ${rk}등 · ${rtab==='best'?'최고 강화':'이번 주 맞힌 문제'} 기준`});
+  $('pcModal').hidden=false;$('pcClose').focus()}
+function renderProf(){const el=$('pfBody');if(!el)return;const p=S.prof;
+  const chip=(k,v,lbl,on,dis,tip)=>`<button class="chip" data-pf="${k}" data-v="${esc(String(v))}" aria-pressed="${on}" ${dis?'disabled':''} ${tip?`title="${esc(tip)}"`:''}>${lbl}</button>`;
+  const picks=[...new Set([S.w.L,...S.inv.map(x=>x.L)].filter(x=>x>0))].sort((a,b)=>b-a);
+  const preview=profCard({nick:S.nick||'내 별명',best:S.best,p:pubProf(),wn:S.wk===weekKey()?S.wn:0,uid:'me',rk:S.nick?'친구들이 보는 내 프로필이에요':'랭킹 별명을 정해야 친구들에게 보여요'});
+  el.innerHTML=`<div class="pfgrid"><div class="pfprev">${preview}</div><div class="pfopt">
+   <div><b>대표 검</b><div class="chips">${chip('rep','cur',`지금 작업대 검 (+${S.w.L})`,p.rep==='cur')}${chip('rep','best',`최고 기록 검 (+${S.best})`,p.rep==='best')}${chip('rep','pick','보관함에서 고르기',p.rep==='pick',!picks.length)}</div>
+     ${p.rep==='pick'?`<div class="chips" style="margin-top:6px">${picks.map(L=>chip('repL',L,`${esc(gname(gOf(L)))} +${L}`,p.repL===L)).join('')}</div>`:''}</div>
+   <div><b>칭호</b> <small class="note">업적을 이루면 열려요</small><div class="chips">${chip('title','','없음',!p.title)}${TITLES.map(x=>{const ok=x.ok(S);return chip('title',x.id,ok?x.name:`🔒 ${x.name.replace(/^\S+\s/,'')}`,p.title===x.id,!ok,ok?'':x.how)}).join('')}</div></div>
+   <div><b>프로필 배경</b> <small class="note">상점에서 산 강화대 배경</small><div class="chips">${chip('bg','','기본',!p.bg||!S.bgs.includes(p.bg))}${SHOP_BG.filter(b=>S.bgs.includes(b.id)).map(b=>chip('bg',b.id,esc(b.name),p.bg===b.id)).join('')}</div></div>
+   <div><b>한마디</b><div class="chips">${chip('say',-1,'없음',p.say<0)}${SAYS.map((s,i)=>chip('say',i,esc(s),p.say===i)).join('')}</div></div>
+   <div><b>보여줄 정보</b><div class="pfshow">${[['best','최고 기록'],['combo','최고 콤보'],['booms','부순 검 수'],['ham','들고 있는 망치'],['wk','이번 주 맞힌 문제']].map(([k,n])=>`<label><input type="checkbox" data-pfs="${k}" ${p.show[k]?'checked':''}> ${n}</label>`).join('')}</div></div>
+   <p class="note" style="margin:0">바꾸면 바로 저장돼요. 실명, 학년·반, 정답률은 친구들에게 보이지 않아요.</p></div></div>`;
+}
+document.addEventListener('click',e=>{
+  const pc=e.target.closest('[data-pc]');if(pc){openPC(pc.dataset.pc);return}
+  if(e.target.id==='pcClose'||e.target.id==='pcModal'){$('pcModal').hidden=true;return}
+  const pf=e.target.closest('[data-pf]');if(pf&&!pf.disabled){const k=pf.dataset.pf,v=pf.dataset.v,p=S.prof;
+    if(k==='rep'){p.rep=v;if(v==='pick'&&!p.repL)p.repL=Math.max(S.w.L,...S.inv.map(x=>x.L))}else if(k==='repL')p.repL=+v;else if(k==='say')p.say=+v;else p[k]=v;
+    renderProf();save();return}
+});
+document.addEventListener('change',e=>{const c=e.target.closest('[data-pfs]');if(!c)return;S.prof.show[c.dataset.pfs]=c.checked;renderProf();save()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('pcModal').hidden)$('pcModal').hidden=true});
 function renderShop(){
   const fmt=n=>n.toLocaleString('ko-KR'),cur=S.bg;
   const card=(id,name,price,th)=>{const own=!id||S.bgs.includes(id),on=cur===id,ach=(SHOP_BG.find(b=>b.id===id)||{}).ach;
@@ -1659,7 +1753,7 @@ function renderShop(){
   $('hamGrid').innerHTML=`<div class="hamsum"><b>망치 수집 ${nOwn}/${HAM.length-1}</b> · 강화 확률 +${colBonus()}%p <small>(가진 망치 1개당 +0.2%p)</small> · 산 망치는 <button class="linkbtn" data-tab="equip">장비 탭</button>에서 주 망치·보조 칸에 끼워요</div>`+HAM.map(h=>{const own=!h.price||S.hams.includes(h.id),on=curH===h.id,isSub=sub&&sub.id===h.id;
     const btn=own?`<button class="bt use" data-tab="equip">${on?'주 망치 사용 중':isSub?'보조 사용 중':'보유 중 · 장비'}</button>`:S.gold>=h.price?`<button class="bt" data-buyham="${h.id}">사기</button>`:`<button class="bt" disabled>${fmt(h.price-S.gold)} 골드 부족</button>`;
     return `<div class="hcard${on?' on':''}${isSub?' subon':''}${h.ruin?' ruin':''}">${isSub?'<span class="subtag">보조</span>':''}<img src="img/hm-${h.id}.webp" alt="" loading="lazy"><span class="nm">${h.name}</span><span class="st">${h.up?`강화 확률 +${h.up}%p`:h.ruin?'강화 확률 보너스 없음':'기본 망치'}</span><span class="ef">${h.eff?`<b>${h.eff}</b> · ${h.desc}`:''}${h.noSub?'<br><small>보조 칸에는 못 껴요</small>':''}</span><span class="pr">${h.price?fmt(h.price)+' 골드':'기본 제공'}</span><div class="hbtns">${btn}</div></div>`}).join('');
-  renderEquip();
+  renderEquip();renderProf();
   $('shopGrid').innerHTML=card('','기본 대장간',0)+SHOP_BG.map(b=>card(b.id,b.name,b.price)).join('');
   const pid=previewBg===null?S.bg:previewBg,pv=$('shopPv'),pit=SHOP_BG.find(b=>b.id===pid);
   pv.classList.toggle('def',!pid);pv.style.backgroundImage=pid?`url(img/bg-${pid}.webp)`:'';
@@ -2201,7 +2295,7 @@ function renderRank(){
   const f='wn_'+weekKey(),val=r=>Math.max(0,Math.floor(+(rtab==='best'?r.best:r[f])||0));
   // 같은 기록이면 같은 등수
   B.innerHTML=off+`<ol class="ranklist">${rankRows.map((r,i)=>{const b=Math.max(0,Math.floor(+r.best||0)),mine=me&&r.id===me.id,rk=rankRows.filter(x=>val(x)>val(r)).length+1;
-    return `<li class="${mine?'me':''} r${rk}"><span class="rk">${rk}</span><svg viewBox="0 0 128 128" aria-hidden="true">${swordSVG(gOf(b),b%STEP,'r'+i,b)}</svg><span class="nk">${esc(r.nick||'?')}${mine?' (나)':''}</span><span class="val">${rtab==='best'?`${esc(gname(gOf(b)))} <b>+${b}</b>`:`<b>${Math.max(0,Math.floor(+r[f]||0))}</b>문제`}</span>${isAdmin||(tClass&&+r.grade===tClass.grade&&+r.cls===tClass.cls)?`<button class="linkbtn" data-rdel="${esc(r.id)}" title="랭킹에서 빼기">빼기</button>`:''}</li>`}).join('')}</ol>`
+    return `<li class="${mine?'me':''} r${rk}"><span class="rk">${rk}</span><svg viewBox="0 0 128 128" aria-hidden="true">${swordSVG(gOf(b),b%STEP,'r'+i,b)}</svg><span class="nk"><button class="pcname" data-pc="${esc(r.id)}" title="프로필 보기">${esc(r.nick||'?')}</button>${mine?' (나)':''}</span><span class="val">${rtab==='best'?`${esc(gname(gOf(b)))} <b>+${b}</b>`:`<b>${Math.max(0,Math.floor(+r[f]||0))}</b>문제`}</span>${isAdmin||(tClass&&+r.grade===tClass.grade&&+r.cls===tClass.cls)?`<button class="linkbtn" data-rdel="${esc(r.id)}" title="랭킹에서 빼기">빼기</button>`:''}</li>`}).join('')}</ol>`
     +(me?(S.nickTk>0?'<button class="linkbtn" id="nickEdit">내 별명 바꾸기 (변경권 1장 사용)</button>':'<button class="linkbtn" id="nickShop">별명을 바꾸려면 변경권이 필요해요 (상점 → 기타)</button>'):'');
 }
 document.addEventListener('click',async e=>{
@@ -2275,7 +2369,7 @@ function answer(ok,given){
   S.solved++;S.byUnit[u]=[bu[0]+(ok?1:0),bu[1]+1];
   {const wk=weekKey();if(S.wk!==wk){S.wk=wk;S.wn=0}if(ok)S.wn++}
   if(ok){
-    S.right++;S.combo++;const c=S.combo;let g=cur.hard?2:1;const notes=[],tags=[];
+    S.right++;S.combo++;const c=S.combo;if(c>S.maxCombo)S.maxCombo=c;let g=cur.hard?2:1;const notes=[],tags=[];
     const tier=c>=21?2:c>=11?1:0,okUnit=comboUnitOK(u);
     if(tier&&okUnit){g+=tier;notes.push(`${c}콤보: 강화권 +${tier}장 더`);tags.push(`강화권 +${tier} 더`)}
     if(c%5===0){g++;notes.push(`${c}연속 보너스!`);tags.push('보너스 +1')}
