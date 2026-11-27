@@ -395,6 +395,12 @@ ul{margin:0;padding-left:1.2em}li{margin:4px 0}
 .newtag{display:inline-block;margin-left:6px;padding:0 6px;border-radius:6px;background:var(--ember);color:#fff;font-size:12px;vertical-align:middle}
 .teacher[hidden]{display:none}
 .tbl{overflow-x:auto}
+.hamsum{grid-column:1/-1;font-size:14px;line-height:1.7;background:rgba(255,255,255,.05);border:1px solid rgba(255,190,120,.25);border-radius:12px;padding:10px 14px}.hamsum small{color:var(--mute)}
+.hbtns{display:flex;flex-direction:column;gap:6px;margin-top:auto;width:100%}.hbtns .bt{margin-top:0}
+.hcard .bt.sub{background:transparent;border:1.5px solid #4dabf7;color:#a5d8ff}.hcard .bt.sub.on{background:#1c7ed6;color:#fff}
+.hcard.subon{outline:2px solid #4dabf7;outline-offset:-2px;position:relative}.subtag{position:absolute;top:8px;left:8px;background:#1c7ed6;color:#fff;font-size:12px;border-radius:6px;padding:1px 7px}
+.hcard.ruin{background:linear-gradient(180deg,rgba(120,20,10,.45),rgba(29,21,17,0) 60%),#1d1511}
+
 .sdname{font:inherit;font-weight:700;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-decoration:underline dotted rgba(255,200,120,.5);text-underline-offset:4px}
 .sdname:hover{color:#ffb35c}
 .sdbox{width:min(100%,680px)}
@@ -586,6 +592,8 @@ legend{font-family:"Black Han Sans";font-size:18px;padding:0 6px}
       <li>랭킹 별명은 처음 한 번은 무료로 정하고, 바꿀 때는 상점의 별명 변경권(3,000골드)이 필요해요</li>
       <li>직전에 부서진 검은 상점에서 골드를 내고 한 번 되살릴 수 있어요</li>
       <li>상점에서 산 망치를 들면 강화 확률이 오르고(+0.5%p ~ +5%p), 좋은 망치에는 특별한 효과가 있어요</li>
+      <li>망치를 모을수록 1개당 강화 확률 +0.2%p. 특수 효과가 있는 망치 하나를 보조로 끼우면 그 효과가 절반만큼 더해져요</li>
+      <li>💥 파멸의 망치는 검이 훨씬 잘 부서지고(+10부터 3%), 부서지면 조각을 1.5배 받아요. 대신 강화 보너스가 없고 부적이 작동하지 않아요</li>
       <li>11~20콤보: 정답마다 강화권 1장 더, 21콤보부터: 2장 더 (자기 학년 단원에서 받아요)</li>
       <li>오답 → 정답을 보여 주고 연속 기록 초기화</li>
     </ul>
@@ -704,6 +712,7 @@ const HAM=[
   {id:'stone', name:'돌망치',        price:500,   up:.5,  spark:'#ffd27a'},
   {id:'iron',  name:'쇠 망치',       price:1000,  up:1,   spark:'#ffd27a'},
   {id:'steel', name:'강철 망치',     price:2000,  up:1.5, spark:'#e6f0ff'},
+  {id:'ruin',  name:'파멸의 망치',   price:3000,  up:0,   spark:'#ff5a1f', eff:'파멸', desc:'파괴 확률 3배 (+10부터 최소 3%) · 부서지면 조각 1.5배 · 부적 작동 안 함', ruin:true, fragMul:1.5, noSub:true},
   {id:'dwarf', name:'드워프 망치',   price:4000,  up:2,   spark:'#ffc46b', eff:'단단함', desc:'파괴 확률 20% 감소', boomCut:.2},
   {id:'gold',  name:'황금 망치',     price:6000,  up:2.5, spark:'#ffe066', eff:'부자', desc:'무기 판매 골드 +20%', sellBonus:.2},
   {id:'rune',  name:'룬 망치',       price:9000,  up:3,   spark:'#66e0ff', eff:'룬의 끈기', desc:'실패할 때 쌓이는 보정 +3%p → +4%p', pity:4},
@@ -711,6 +720,9 @@ const HAM=[
   {id:'void',  name:'공허 망치',     price:18000, up:4,   spark:'#c77dff', eff:'공허의 보호막', desc:'파괴 확률 40% 감소', boomCut:.4},
   {id:'dragon',name:'용군주의 망치', price:25000, up:5,   spark:'#7ee8ff', eff:'용의 일격', desc:'성공할 때 5% 확률로 +2강', double:.05}];
 const curHam=()=>HAM.find(h=>h.id===S.ham)||HAM[0];
+const subHam=()=>{const h=HAM.find(x=>x.id===S.ham2);return h&&h.eff&&!h.noSub&&h.id!==S.ham&&S.hams.includes(h.id)?h:null};
+const colBonus=()=>Math.round(S.hams.filter(id=>HAM.some(h=>h.id===id&&h.price>0)).length*2)/10;
+const hEff=k=>{const a=curHam()[k]||0,s=subHam();return a+(s&&s[k]?s[k]/2:0)};
 const FRAG_SHOP=[
   {id:'tk',  name:'강화권 1장',              cost:10, give:s=>{s.tk+=1}},
   {id:'gold',name:'골드 300',                cost:10, give:s=>{s.gold+=300}},
@@ -724,7 +736,7 @@ const restorePrice=L=>100000;
 const NICK_PRICE=3000;
 const SHOP_SW=[10,15,20],swPrice=L=>L*L*20,SW_FRAG={10:50,15:100,20:180};
 function checkAch(){const got=[];for(const a of ACH)if(S.fragTotal>=a.need&&!a.has(S)){a.give(S);got.push(a)}return got}
-const sellGold=L=>Math.floor(sellPrice(L)*(1+(curHam().sellBonus||0)));
+const sellGold=L=>Math.floor(sellPrice(L)*(1+hEff('sellBonus')));
 let shopTab='bg';
 const SHOP_BG=[
   {id:'lava',name:'용암 동굴',price:3000},
@@ -734,7 +746,7 @@ const SHOP_BG=[
   {id:'soul',name:'영혼의 빛 동굴',price:0,ach:'조각 수집가 I'}];
 let lastGold=null,previewBg=null,sellArm=false,sellArmT=0;
 const sellPrice=L=>L<1?5:L*L*10;
-const def={w:{L:0},inv:[],best:0,tk:0,gold:0,bgs:[],bg:'',hams:[],ham:'',tutDone:false,nickTk:0,frag:0,fragTotal:0,scroll:0,ward:0,shield:0,wrong:[],lastBroken:null,soulFx:false,soulOn:false,solved:0,right:0,combo:0,fails:0,booms:0,units:[],byUnit:{},nick:'',wk:'',wn:0,rangeSet:false};
+const def={w:{L:0},inv:[],best:0,tk:0,gold:0,bgs:[],bg:'',hams:[],ham:'',tutDone:false,ham2:'',nickTk:0,frag:0,fragTotal:0,scroll:0,ward:0,shield:0,wrong:[],lastBroken:null,soulFx:false,soulOn:false,solved:0,right:0,combo:0,fails:0,booms:0,units:[],byUnit:{},nick:'',wk:'',wn:0,rangeSet:false};
 const fresh=()=>JSON.parse(JSON.stringify(def));
 let S=fresh();
 const $=id=>document.getElementById(id);
@@ -858,7 +870,7 @@ function fromRaw(raw){
   o.lastBroken=o.lastBroken&&Number.isFinite(+o.lastBroken.L)&&+o.lastBroken.L>0?{L:Math.floor(+o.lastBroken.L),frag:Math.max(0,Math.floor(+o.lastBroken.frag||0))}:null;
   o.soulFx=o.soulFx===true;o.soulOn=o.soulFx&&o.soulOn===true;o.scroll=Math.min(5,o.scroll);
   o.bgs=Array.isArray(o.bgs)?o.bgs.filter(x=>SHOP_BG.some(b=>b.id===x)):[];o.bg=o.bgs.includes(o.bg)?o.bg:'';
-  o.hams=Array.isArray(o.hams)?o.hams.filter(x=>HAM.some(h=>h.id===x&&h.price>0)):[];o.ham=o.hams.includes(o.ham)?o.ham:'';
+  o.hams=Array.isArray(o.hams)?o.hams.filter(x=>HAM.some(h=>h.id===x&&h.price>0)):[];o.ham=o.hams.includes(o.ham)?o.ham:'';o.ham2=typeof o.ham2==='string'&&o.hams.includes(o.ham2)&&o.ham2!==o.ham?o.ham2:'';
   o.nick=typeof o.nick==='string'?o.nick.slice(0,8):'';o.wk=typeof o.wk==='string'?o.wk:'';
   for(const k of ['tk','gold','nickTk','frag','fragTotal','scroll','ward','shield','solved','right','combo','fails','booms','wn'])o[k]=Math.max(0,Math.floor(+o[k]||0));
   return o;
@@ -866,13 +878,15 @@ function fromRaw(raw){
 const r1=v=>+(+v).toFixed(1);
 function oddsOf(l,fails){
   const b=baseRate(l);let up=b.up,keep=b.keep,boom=b.boom;
-  const h=typeof S!=='undefined'?curHam():HAM[0];
-  if(h.boomCut&&boom){const cut=boom*h.boomCut;boom-=cut;keep+=cut}
-  const bonus=Math.min(PITY_MAX,fails*(h.pity||PITY_STEP));
-  const sc=typeof S!=='undefined'&&S.scroll>0&&b.up<100?10:0;
-  const add0=Math.min(100-up,bonus+(h.up||0)+sc);
+  const real=typeof S!=='undefined',h=real?curHam():HAM[0],sh=real?subHam():null;
+  if(h.ruin&&up<100){const nb=r1(Math.min(keep+boom,Math.max(boom*3,l>=10?3:0)));keep=r1(keep-(nb-boom));boom=nb}
+  else{const cut=1-(1-(h.boomCut||0))*(1-((sh&&sh.boomCut)||0)/2);if(cut&&boom){const c=boom*cut;boom-=c;keep+=c}}
+  const step=Math.max(h.pity||PITY_STEP,sh&&sh.pity?PITY_STEP+(sh.pity-PITY_STEP)/2:0);
+  const bonus=Math.min(PITY_MAX,fails*step);
+  const sc=real&&S.scroll>0&&b.up<100?10:0,cb=real?colBonus():0;
+  const add0=Math.min(100-up,bonus+(h.up||0)+cb+sc);
   if(up<100&&add0>0){up+=add0;const fromKeep=Math.min(add0,keep);keep-=fromKeep;boom-=add0-fromKeep}
-  return {up:r1(up),keep:r1(keep),boom:r1(Math.max(0,boom)),bonus:Math.min(bonus,100-b.up),ham:Math.min(h.up||0,Math.max(0,100-b.up)),scroll:sc};
+  return {up:r1(up),keep:r1(keep),boom:r1(Math.max(0,boom)),bonus:r1(Math.min(bonus,100-b.up)),ham:Math.min(h.up||0,Math.max(0,100-b.up)),col:b.up<100?cb:0,scroll:sc,ruin:!!h.ruin};
 }
 
 /* ---------- 문제: 3학년 교육과정 단원 ---------- */
@@ -1562,10 +1576,10 @@ function renderShop(){
    $('fragBox').innerHTML=`<div class="fhead">가진 검 조각 <b>${fmt(S.frag)}</b>개 <small>· 지금까지 모은 조각 ${fmt(S.fragTotal)}개</small></div>${rest}
    <h3 class="fsub">조각 교환</h3><div class="fgrid">${FRAG_SHOP.map(x=>{const ok=S.frag>=x.cost&&(!x.can||x.can(S));return `<div class="fcard"><div><b>${x.name}</b><span>조각 ${x.cost}개${x.have?` · ${x.have(S)}`:''}</span>${x.desc?`<small class="fdesc">${x.desc}</small>`:''}</div><button class="bt" data-fx="${x.id}" ${ok?'':'disabled'}>${S.frag<x.cost?'조각 부족':x.can&&!x.can(S)?'가득 찼어요':'바꾸기'}</button></div>`}).join('')}</div>
    <h3 class="fsub">업적</h3><div class="fgrid">${ACH.map(a=>{const done=a.has(S),pc=Math.min(100,Math.round(S.fragTotal/a.need*100));return `<div class="fcard ach${done?' done':''}"><div><b>${a.name}${done?' ✓':''}</b><span>조각 ${fmt(a.need)}개 모으기 → ${a.reward}</span><i class="pbar"><i style="width:${pc}%"></i></i></div>${a.id==='frag2'&&done?`<button class="bt ${S.soulOn?'':'use'}" data-soul="1">${S.soulOn?'혼불 끄기':'혼불 켜기'}</button>`:`<span class="pc">${done?'완료':Math.min(S.fragTotal,a.need)+' / '+a.need}</span>`}</div>`}).join('')}</div>`}
-  const curH=curHam().id;
-  $('hamGrid').innerHTML=HAM.map(h=>{const own=!h.price||S.hams.includes(h.id),on=curH===h.id;
-    const btn=on?'<button class="bt" disabled>사용 중</button>':own?`<button class="bt use" data-useham="${h.id}">사용하기</button>`:S.gold>=h.price?`<button class="bt" data-buyham="${h.id}">사기</button>`:`<button class="bt" disabled>${fmt(h.price-S.gold)} 골드 부족</button>`;
-    return `<div class="hcard${on?' on':''}"><img src="img/hm-${h.id}.webp" alt="" loading="lazy"><span class="nm">${h.name}</span><span class="st">${h.up?`강화 확률 +${h.up}%p`:'기본 망치'}</span><span class="ef">${h.eff?`<b>${h.eff}</b> · ${h.desc}`:''}</span><span class="pr">${h.price?fmt(h.price)+' 골드':'기본 제공'}</span>${btn}</div>`}).join('');
+  const curH=curHam().id,sub=subHam(),nOwn=S.hams.filter(id=>HAM.some(h=>h.id===id&&h.price>0)).length;
+  $('hamGrid').innerHTML=`<div class="hamsum"><b>망치 수집 ${nOwn}/${HAM.length-1}</b> · 강화 확률 +${colBonus()}%p <small>(가진 망치 1개당 +0.2%p)</small><br>주 망치: <b>${esc(curHam().name)}</b> · 보조 망치: <b>${sub?esc(sub.name):'없음'}</b> <small>(보조는 특수 효과만 절반 적용)</small></div>`+HAM.map(h=>{const own=!h.price||S.hams.includes(h.id),on=curH===h.id,isSub=sub&&sub.id===h.id,canSub=own&&h.eff&&!h.noSub&&!on;
+    const btn=on?'<button class="bt" disabled>주 망치 사용 중</button>':own?`<button class="bt use" data-useham="${h.id}">주 망치로 쓰기</button>${canSub?(isSub?`<button class="bt sub on" data-subham="">보조 해제</button>`:`<button class="bt sub" data-subham="${h.id}">보조로 끼우기</button>`):''}`:S.gold>=h.price?`<button class="bt" data-buyham="${h.id}">사기</button>`:`<button class="bt" disabled>${fmt(h.price-S.gold)} 골드 부족</button>`;
+    return `<div class="hcard${on?' on':''}${isSub?' subon':''}${h.ruin?' ruin':''}">${isSub?'<span class="subtag">보조</span>':''}<img src="img/hm-${h.id}.webp" alt="" loading="lazy"><span class="nm">${h.name}</span><span class="st">${h.up?`강화 확률 +${h.up}%p`:h.ruin?'강화 확률 보너스 없음':'기본 망치'}</span><span class="ef">${h.eff?`<b>${h.eff}</b> · ${h.desc}`:''}${h.noSub?'<br><small>보조 칸에는 못 껴요</small>':''}</span><span class="pr">${h.price?fmt(h.price)+' 골드':'기본 제공'}</span><div class="hbtns">${btn}</div></div>`}).join('');
   $('shopGrid').innerHTML=card('','기본 대장간',0)+SHOP_BG.map(b=>card(b.id,b.name,b.price)).join('');
   const pid=previewBg===null?S.bg:previewBg,pv=$('shopPv'),pit=SHOP_BG.find(b=>b.id===pid);
   pv.classList.toggle('def',!pid);pv.style.backgroundImage=pid?`url(img/bg-${pid}.webp)`:'';
@@ -1583,14 +1597,14 @@ function render(){
   const bars=$('oddbar').children,o=test&&forceWin?{up:100,keep:0,boom:0,bonus:0}:oddsOf(L,S.fails);
   [[0,o.up,'강화'],[1,o.keep,'유지'],[2,o.boom,'파괴']].forEach(([i,v,n])=>{bars[i].style.width=v+'%';bars[i].textContent=v>=14?`${n} ${v}%`:''});
   $('pUp').textContent=o.up+'%';$('pKeep').textContent=o.keep+'%';$('pBoom').textContent=o.boom+'%';
-  $('pity').textContent=o.bonus?`연속 실패 ${S.fails}번 · 강화 확률 +${o.bonus}%p 보정 중`:(o.boom?(S.ward>0?'🧿 부적이 있어서 파괴돼도 1단계만 내려가요':'파괴가 걱정되면 보관하고 새로 시작해도 돼요'):'');
+  $('pity').textContent=o.ruin&&o.boom?`💥 파멸의 망치: 파괴 ${o.boom}% · 부서지면 조각 1.5배 · 부적 작동 안 함`:o.bonus?`연속 실패 ${S.fails}번 · 강화 확률 +${o.bonus}%p 보정 중`:(o.boom?(S.ward>0?'🧿 부적이 있어서 파괴돼도 1단계만 내려가요':'파괴가 걱정되면 보관하고 새로 시작해도 돼요'):'');
   $('next').textContent=`다음 변신까지 ${STEP-k}강 · '${gname(g+1)}'`;
   $('nextBar').style.width=(k/STEP*100)+'%';
   $('tk').textContent=test?'∞':S.tk;
   $('hammer').disabled=busy||(!test&&S.tk<1);
   {const h=curHam(),hf=$('hammerFx');if(hf.dataset.h!==h.id){hf.dataset.h=h.id;hf.setAttribute('viewBox','0 0 110 110');hf.innerHTML=`<image href="img/hm-${h.id}.webp" x="-6" y="-8" width="122" height="122"/>`}
    $('sparks').style.setProperty('--spk',S.soulOn?'#9fe7ff':h.spark);
-   $('hamLine').textContent=[h.up||h.eff?`${h.name}${o.ham?` · 강화 +${o.ham}%p`:''}${h.eff?` · ${h.eff}: ${h.desc}`:''}`:'',o.scroll?`강화 주문서 사용 중 +10%p (남은 ${S.scroll}장)`:''].filter(Boolean).join(' / ')}
+   {const s2=subHam();$('hamLine').textContent=[h.up||h.eff?`${h.name}${o.ham?` · 강화 +${o.ham}%p`:''}${h.eff&&!h.ruin?` · ${h.eff}: ${h.desc}`:''}`:'',s2?`보조 ${s2.name} · ${s2.eff} 효과 절반`:'',o.col?`망치 수집 +${o.col}%p`:'',o.scroll?`강화 주문서 사용 중 +10%p (남은 ${S.scroll}장)`:''].filter(Boolean).join(' / ')}}
   {const sb=$('sellNow'),pr=sellGold(L);sb.disabled=busy||L<1;sb.classList.toggle('arm',sellArm&&L>=1);
    $('sellTxt').textContent=sellArm&&L>=1?'한 번 더!':'판매';$('sellSub').textContent=L<1?'+1부터 가능':(sellArm?'누르면 판매':`+${pr.toLocaleString('ko-KR')}골드`)}
   $('sSolved').textContent=S.solved;{const gb=document.querySelector('.goldbar');if(lastGold!==null&&S.gold>lastGold)replay(gb,'bump');lastGold=S.gold}$('sGold').textContent=S.gold.toLocaleString('ko-KR');$('sFrag').textContent=Math.max(0,S.frag-fragHold).toLocaleString('ko-KR');$('shopGold').textContent=S.gold.toLocaleString('ko-KR');
@@ -2200,27 +2214,27 @@ $('f').addEventListener('submit',e=>{
 });
 $('hammer').addEventListener('click',async()=>{
   const w=S.w;if(busy||(!test&&S.tk<1))return;
-  const hm=curHam(),freeHit=!test&&hm.free&&Math.random()<hm.free;
+  const hm=curHam(),pFree=hEff('free'),pDbl=hEff('double'),freeHit=!test&&pFree&&Math.random()<pFree;
   sellArm=false;busy=true;$('hammer').disabled=true;$('sellNow').disabled=true;if(!test&&!freeHit){S.tk--;$('tk').textContent=S.tk}
   const o=test&&forceWin?{up:100,keep:0,boom:0}:oddsOf(w.L,S.fails),sw=$('sword'),roll=Math.random()*100;
   if(S.scroll>0&&baseRate(w.L).up<100&&!(test&&forceWin))S.scroll--;
   if(!RM){replay($('hammerFx'),'swing');await wait(285);replay($('bang'),'pop');replay($('stage'),'shake')}
   sw.classList.remove('broken');replay(sw,'hit');
   if(roll<o.up){
-    const dbl=hm.double&&Math.random()<hm.double,nl=w.L+(dbl?2:1);S.fails=0;
+    const dbl=pDbl&&Math.random()<pDbl,nl=w.L+(dbl?2:1);S.fails=0;
     if(dbl)setTimeout(()=>flash(`용의 일격! +2강 → +${nl}`,'#7ee8ff'),900);
     if(gOf(nl)>gOf(w.L)){sparks(26);await morph(()=>{S.w.L=nl;S.best=Math.max(S.best,nl)},true,`변신! ${gname(gOf(nl))}`);busy=false;render();return}
     w.L=nl;S.best=Math.max(S.best,nl);sparks(26);flash(`강화 성공! +${nl}`,'#ffd27a');
   }
   else if(roll<o.up+o.keep){S.fails++;sparks(6);flash('실패… 단계 유지','#c9cfd6')}
-  else if(S.ward>0&&w.L>0){S.ward=0;S.fails=0;const was=w.L,nl=was-1;sparks(18);
+  else if(S.ward>0&&w.L>0&&!hm.ruin){S.ward=0;S.fails=0;const was=w.L,nl=was-1;sparks(18);
     if(gOf(nl)<gOf(was))await morph(()=>{S.w.L=nl},false,`부적이 지켜줬어요! +${nl}`);else w.L=nl;
     flash(`🧿 부적이 막았어요! +${was} → +${nl}`,'#b197fc');$('fb').className='feedback ok';$('fb').textContent=`파괴될 뻔했지만 파괴 방지 부적이 검을 지켜줬어요. 1단계만 내려가서 +${nl}(으)로 버텼어요.`}
   else{S.booms++;S.fails=0;const was=w.L;sfxBoom();
     if(RM){sw.classList.add('broken');setTimeout(()=>sw.classList.remove('broken'),1200)}else{await boomCrack();boomFx=true;fragHold=was}
     w.L=0;flash(`파괴! +${was} → 나무 검 +0`,'#ff8787');
-    S.frag+=was;S.fragTotal+=was;S.lastBroken={L:was,frag:was};const got=checkAch();
-    $('fb').className='feedback';$('fb').textContent=`검 조각 ${was}개를 얻었어요. 상점 '검 조각·복구'에서 바꾸거나 이 검을 되살릴 수 있어요.`+(got.length?` 🏆 업적 달성: ${got.map(a=>a.name).join(', ')}!`:'')}
+    const fg=Math.floor(was*(hm.fragMul||1));S.frag+=fg;S.fragTotal+=fg;S.lastBroken={L:was,frag:fg};const got=checkAch();
+    $('fb').className='feedback';$('fb').textContent=`검 조각 ${fg}개를 얻었어요${hm.fragMul?' (파멸의 망치 1.5배)':''}. 상점 '검 조각·복구'에서 바꾸거나 이 검을 되살릴 수 있어요.`+(got.length?` 🏆 업적 달성: ${got.map(a=>a.name).join(', ')}!`:'')}
   if(freeHit)$('fb').className='feedback ok',$('fb').textContent='축복! 이번 망치질은 강화권을 쓰지 않았어요.';
   render();save();
   if(boomFx){boomFx=false;await boomCollect(S.lastBroken?S.lastBroken.frag:0)}
@@ -2281,11 +2295,13 @@ document.addEventListener('click',e=>{
   const stb=e.target.closest('[data-stab]');
   if(stb){shopTab=stb.dataset.stab;renderShop();$('shopMsg').textContent=shopTab==='etc'?'처음 정하는 랭킹 별명은 무료예요. 그 뒤로 바꾸려면 변경권이 필요해요.':shopTab==='sword'?'검이 깨져서 처음부터 하기 힘들 때, 골드나 검 조각으로 +10·+15·+20 검을 사서 다시 시작할 수 있어요.':shopTab==='frag'?'검이 부서지면 그 강화 단계만큼 검 조각을 받아요. 조각은 강화권·골드·주문서·부적·방패·검으로 바꾸거나 업적을 채우는 데 써요.':shopTab==='ham'?'망치를 바꾸면 강화 확률이 오르고 특별한 효과가 생겨요. 비싼 망치일수록 강해요.':'보관함의 무기를 팔면 골드를 받아요. 산 배경은 언제든 바꿔 쓸 수 있고, 그림을 누르면 위에서 크게 볼 수 있어요.';return}
   const uh=e.target.closest('[data-useham]');
-  if(uh){S.ham=uh.dataset.useham==='wood'?'':uh.dataset.useham;render();save();$('shopMsg').textContent=`'${curHam().name}'(으)로 바꿨어요.`;return}
+  if(uh){S.ham=uh.dataset.useham==='wood'?'':uh.dataset.useham;if(S.ham2===S.ham)S.ham2='';render();save();$('shopMsg').textContent=`'${curHam().name}'(으)로 바꿨어요.`;return}
+  const shb=e.target.closest('[data-subham]');
+  if(shb){const id=shb.dataset.subham,h=HAM.find(x=>x.id===id);if(id&&(!h||!h.eff||h.noSub||!S.hams.includes(id)||id===S.ham))return;S.ham2=id;render();save();$('shopMsg').textContent=id?`'${h.name}'을(를) 보조 망치로 끼웠어요. ${h.eff} 효과가 절반만큼 더해져요.`:'보조 망치를 뺐어요.';return}
   const bh=e.target.closest('[data-buyham]');
   if(bh){const it=HAM.find(h=>h.id===bh.dataset.buyham);if(!it||S.hams.includes(it.id)||S.gold<it.price)return;
     if(!bh.dataset.ok){bh.dataset.ok=1;bh.textContent='정말 살까요? 한 번 더';return}
-    S.gold-=it.price;S.hams.push(it.id);S.ham=it.id;render();save();
+    S.gold-=it.price;S.hams.push(it.id);S.ham=it.id;if(S.ham2===it.id)S.ham2='';render();save();
     $('shopMsg').textContent=`'${it.name}'을(를) 샀어요! 바로 손에 들었어요.`;return}
   const ub=e.target.closest('[data-usebg]');
   if(ub){previewBg=null;S.bg=ub.dataset.usebg;render();save();$('shopMsg').textContent=S.bg?`강화대 배경을 '${SHOP_BG.find(b=>b.id===S.bg).name}'(으)로 바꿨어요.`:'기본 대장간으로 돌아왔어요.';return}
