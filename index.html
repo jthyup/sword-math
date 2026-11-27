@@ -134,6 +134,15 @@ header p{margin:4px 0 0;color:#e2cdb6;text-shadow:0 2px 6px rgba(0,0,0,.8)}
 form{display:flex;gap:10px;flex-wrap:wrap}
 input{flex:1;font:inherit;font-size:16px;min-height:48px;padding:0 14px;border-radius:12px;border:2px solid var(--line);background:var(--bg);color:var(--ink)}
 #ans{font-size:24px;min-height:56px;text-align:center;border-radius:14px}
+#f{flex-wrap:nowrap;align-items:center;justify-content:center;gap:16px}
+#f #ans{flex:0 1 200px;min-width:0}
+.nkp{display:grid;grid-template-columns:repeat(3,56px);gap:7px}
+.nkp button{font:400 24px "Black Han Sans",sans-serif;height:50px;border:0;border-radius:11px;background:#3a2a20;color:#fff;cursor:pointer;box-shadow:0 3px 0 #120c09;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.nkp button:active{transform:translateY(2px);box-shadow:0 1px 0 #120c09}
+.nkp .del{background:#4a3226;font-family:inherit;font-size:22px}
+.nkp .nok{grid-column:span 3;height:54px;min-height:0;font-size:20px;background:linear-gradient(180deg,#ff7a1a,#c2410c);box-shadow:0 4px 0 #7c2d12}
+@media (max-width:560px){#f{flex-direction:column;gap:12px}#f #ans{flex:none;width:min(240px,100%)}.nkp{grid-template-columns:repeat(4,minmax(56px,1fr));width:min(320px,100%)}.nkp .nok{grid-column:span 4}.nkp [data-nk="1"]{order:1}.nkp [data-nk="2"]{order:2}.nkp [data-nk="3"]{order:3}.nkp [data-nk="del"]{order:4}.nkp [data-nk="4"]{order:5}.nkp [data-nk="5"]{order:6}.nkp [data-nk="6"]{order:7}.nkp [data-nk="."]{order:8}.nkp [data-nk="7"]{order:9}.nkp [data-nk="8"]{order:10}.nkp [data-nk="9"]{order:11}.nkp [data-nk="0"]{order:12}.nkp .nok{order:13}}
+
 input:focus-visible,button:focus-visible{outline:3px solid var(--ember2);outline-offset:2px}
 .btn{font-family:"Black Han Sans";font-size:20px;min-height:56px;padding:0 22px;border:0;border-radius:14px;background:linear-gradient(180deg,#ff7a1a,#c2410c);box-shadow:0 4px 0 #7c2d12;color:#fff;cursor:pointer}
 .btn.sm{font-size:16px;min-height:48px;padding:0 16px;border-radius:12px}
@@ -497,7 +506,7 @@ legend{font-family:"Black Han Sans";font-size:18px;padding:0 6px}
       <div class="q" id="q" aria-live="polite">3 + 4 = ?</div>
       <form id="f" autocomplete="off">
         <input id="ans" inputmode="decimal" pattern="[0-9]*([.][0-9]*)?" placeholder="정답 입력" aria-label="정답">
-        <button class="btn">확인</button>
+        <div class="nkp" aria-label="숫자 키패드"><button type="button" data-nk="7">7</button><button type="button" data-nk="8">8</button><button type="button" data-nk="9">9</button><button type="button" data-nk="4">4</button><button type="button" data-nk="5">5</button><button type="button" data-nk="6">6</button><button type="button" data-nk="1">1</button><button type="button" data-nk="2">2</button><button type="button" data-nk="3">3</button><button type="button" data-nk=".">.</button><button type="button" data-nk="0">0</button><button type="button" data-nk="del" class="del" aria-label="한 글자 지우기">⌫</button><button class="btn nok">확인</button></div>
       </form>
       <div class="choices" id="choices" hidden></div>
       <div class="feedback" id="fb" aria-live="polite">문제를 맞히면 강화권을 받아요!</div>
@@ -551,6 +560,7 @@ legend{font-family:"Black Han Sans";font-size:18px;padding:0 6px}
       <li>정답 1개 → 강화권 1장 (★ 어려운 문제는 2장)</li>
       <li>5연속 정답마다 → 보너스 강화권 1장</li>
       <li>검이 부서지면 강화 단계만큼 검 조각을 받아요 (+23 → 조각 23개). 조각은 상점에서 강화권·골드·강화 주문서로 바꿀 수 있고, 많이 모으면 업적 보상을 받아요</li>
+      <li>주관식은 키보드로 치거나 옆의 숫자 키패드를 눌러서 답해요</li>
       <li>상점에서 +10·+15·+20 검을 골드나 검 조각(50·100·180개)으로 사서 바로 시작할 수도 있어요</li>
       <li>랭킹 별명은 처음 한 번은 무료로 정하고, 바꿀 때는 상점의 별명 변경권(3,000골드)이 필요해요</li>
       <li>직전에 부서진 검은 상점에서 골드를 내고 한 번 되살릴 수 있어요</li>
@@ -2121,6 +2131,10 @@ function answer(ok){
   }else{if(S.combo)$('combo').classList.remove('show');S.combo=0;fb.className='feedback bad';fb.innerHTML=`아쉬워요. 정답은 ${cur.ans}`}
   cur=gen();$('ans').value='';render();save();focusAns();
 }
+document.querySelector('.nkp').addEventListener('click',e=>{const b=e.target.closest('[data-nk]');if(!b)return;const a=$('ans'),k=b.dataset.nk;
+  if(k==='del')a.value=a.value.slice(0,-1);else if(a.value.length<10&&!(k==='.'&&a.value.includes('.')))a.value+=(k==='.'&&!a.value?'0.':k);
+  if(!coarse)a.focus()});
+const coarse=matchMedia('(pointer:coarse)').matches;if(coarse)$('ans').setAttribute('inputmode','none');
 $('f').addEventListener('submit',e=>{
   e.preventDefault();const v=$('ans').value.trim();if(v===''||cur.choices||cur.none)return;
   answer(Number(v.replace(/,/g,''))===Number(cur.ans));
