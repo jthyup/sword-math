@@ -253,6 +253,8 @@ body.testing .codexnote{display:inline}
 .goldbar .gs{margin-left:auto;font:inherit;font-size:14px;font-weight:700;border-radius:10px;padding:7px 12px;border:1.5px solid rgba(255,200,90,.5);background:transparent;color:#ffe3a3;cursor:pointer}
 .goldbar .gs:hover{background:rgba(255,200,90,.12)}
 .qcard{position:relative}
+.shchip{position:absolute;left:12px;top:10px;z-index:5;font-size:13px;color:#a5d8ff;background:rgba(28,126,214,.18);border:1px solid rgba(116,192,252,.4);border-radius:999px;padding:2px 10px}
+.fdesc{display:block;font-size:12px;color:#b9a48f;margin-top:2px}
 .combo{position:absolute;right:10px;top:4px;z-index:6;pointer-events:none;text-align:center;font-family:"Black Han Sans";line-height:.9;opacity:0}
 .combo.show{animation:combopop .45s cubic-bezier(.2,1.6,.4,1) forwards}
 @keyframes combopop{0%{opacity:0;transform:rotate(-8deg) scale(.4)}100%{opacity:1;transform:rotate(-8deg) scale(1)}}
@@ -503,6 +505,7 @@ legend{font-family:"Black Han Sans";font-size:18px;padding:0 6px}
     </div>
     <div class="card qcard">
       <div class="combo" id="combo" aria-hidden="true"></div>
+      <div class="shchip" id="shChip" hidden></div>
       <div class="q" id="q" aria-live="polite">3 + 4 = ?</div>
       <form id="f" autocomplete="off">
         <input id="ans" inputmode="decimal" pattern="[0-9]*([.][0-9]*)?" placeholder="정답 입력" aria-label="정답">
@@ -560,6 +563,7 @@ legend{font-family:"Black Han Sans";font-size:18px;padding:0 6px}
       <li>정답 1개 → 강화권 1장 (★ 어려운 문제는 2장)</li>
       <li>5연속 정답마다 → 보너스 강화권 1장</li>
       <li>검이 부서지면 강화 단계만큼 검 조각을 받아요 (+23 → 조각 23개). 조각은 상점에서 강화권·골드·강화 주문서로 바꿀 수 있고, 많이 모으면 업적 보상을 받아요</li>
+      <li>🧿 파괴 방지 부적(조각 60개): 파괴될 때 한 번 막아주고 1단계만 내려가요. 🛡️ 콤보 방패(조각 20개): 3콤보 이상에서 한 번 틀려도 콤보가 이어져요</li>
       <li>주관식은 키보드로 치거나 옆의 숫자 키패드를 눌러서 답해요</li>
       <li>상점에서 +10·+15·+20 검을 골드나 검 조각(50·100·180개)으로 사서 바로 시작할 수도 있어요</li>
       <li>랭킹 별명은 처음 한 번은 무료로 정하고, 바꿀 때는 상점의 별명 변경권(3,000골드)이 필요해요</li>
@@ -692,7 +696,9 @@ const curHam=()=>HAM.find(h=>h.id===S.ham)||HAM[0];
 const FRAG_SHOP=[
   {id:'tk',  name:'강화권 1장',              cost:10, give:s=>{s.tk+=1}},
   {id:'gold',name:'골드 300',                cost:10, give:s=>{s.gold+=300}},
-  {id:'scroll',name:'강화 주문서 (+10%p, 1회)',cost:30, give:s=>{s.scroll=Math.min(5,s.scroll+1)}, can:s=>s.scroll<5}];
+  {id:'scroll',name:'강화 주문서 (+10%p, 1회)',cost:30, give:s=>{s.scroll=Math.min(5,s.scroll+1)}, can:s=>s.scroll<5, have:s=>`가진 주문서 ${s.scroll}/5`},
+  {id:'ward',name:'🧿 파괴 방지 부적',cost:60, desc:'검이 파괴될 때 한 번 막아줘요. 대신 1단계 내려가요.', give:s=>{s.ward=1}, can:s=>s.ward<1, have:s=>`가진 부적 ${s.ward}/1`},
+  {id:'shield',name:'🛡️ 콤보 방패',cost:20, desc:'3콤보 이상일 때 한 번 틀려도 콤보가 이어져요.', give:s=>{s.shield=Math.min(3,s.shield+1)}, can:s=>s.shield<3, have:s=>`가진 방패 ${s.shield}/3`}];
 const ACH=[
   {id:'frag1',name:'조각 수집가 I', need:100, reward:'강화대 배경 「영혼의 빛 동굴」', has:s=>s.bgs.includes('soul'), give:s=>{if(!s.bgs.includes('soul'))s.bgs.push('soul')}},
   {id:'frag2',name:'조각 수집가 II',need:300, reward:'망치 불꽃 「혼불」 (푸른 영혼의 불꽃)', has:s=>s.soulFx, give:s=>{s.soulFx=true}}];
@@ -710,7 +716,7 @@ const SHOP_BG=[
   {id:'soul',name:'영혼의 빛 동굴',price:0,ach:'조각 수집가 I'}];
 let lastGold=null,previewBg=null,sellArm=false,sellArmT=0;
 const sellPrice=L=>L<1?5:L*L*10;
-const def={w:{L:0},inv:[],best:0,tk:0,gold:0,bgs:[],bg:'',hams:[],ham:'',tutDone:false,nickTk:0,frag:0,fragTotal:0,scroll:0,lastBroken:null,soulFx:false,soulOn:false,solved:0,right:0,combo:0,fails:0,booms:0,units:[],byUnit:{},nick:'',wk:'',wn:0,rangeSet:false};
+const def={w:{L:0},inv:[],best:0,tk:0,gold:0,bgs:[],bg:'',hams:[],ham:'',tutDone:false,nickTk:0,frag:0,fragTotal:0,scroll:0,ward:0,shield:0,lastBroken:null,soulFx:false,soulOn:false,solved:0,right:0,combo:0,fails:0,booms:0,units:[],byUnit:{},nick:'',wk:'',wn:0,rangeSet:false};
 const fresh=()=>JSON.parse(JSON.stringify(def));
 let S=fresh();
 const $=id=>document.getElementById(id);
@@ -835,7 +841,7 @@ function fromRaw(raw){
   o.bgs=Array.isArray(o.bgs)?o.bgs.filter(x=>SHOP_BG.some(b=>b.id===x)):[];o.bg=o.bgs.includes(o.bg)?o.bg:'';
   o.hams=Array.isArray(o.hams)?o.hams.filter(x=>HAM.some(h=>h.id===x&&h.price>0)):[];o.ham=o.hams.includes(o.ham)?o.ham:'';
   o.nick=typeof o.nick==='string'?o.nick.slice(0,8):'';o.wk=typeof o.wk==='string'?o.wk:'';
-  for(const k of ['tk','gold','nickTk','frag','fragTotal','scroll','solved','right','combo','fails','booms','wn'])o[k]=Math.max(0,Math.floor(+o[k]||0));
+  for(const k of ['tk','gold','nickTk','frag','fragTotal','scroll','ward','shield','solved','right','combo','fails','booms','wn'])o[k]=Math.max(0,Math.floor(+o[k]||0));
   return o;
 }
 const r1=v=>+(+v).toFixed(1);
@@ -1477,7 +1483,7 @@ const TUT=[
  {tab:'forge',el:'#sellNow',t:'5. 판매',x:'지금 검을 팔아 골드를 받아요. 높은 검일수록 훨씬 비싸요. 두 번 눌러야 팔려요.'},
  {tab:'forge',el:'.goldbar',t:'6. 골드와 검 조각',x:'판 골드가 여기 모여요. 검이 부서지면 그 단계만큼 검 조각도 받아요.'},
  {tab:'forge',el:'#shelfCard',t:'7. 보관함',x:'파괴가 걱정되면 검을 보관하고 새로 시작해요. 같은 단계 검 두 자루를 합치면 다음 단계로 100% 강화돼요.'},
- {tab:'shop',el:'.shopcard',t:'8. 상점',x:'골드로 강화대 배경, 망치, 검(+10·+15·+20)을 살 수 있어요. 좋은 망치는 강화 확률을 올려 주고 특별한 효과도 있어요. 검 조각은 강화권·골드·주문서·검으로 바꾸고, 부서진 검을 되살릴 수도 있어요.'},
+ {tab:'shop',el:'.shopcard',t:'8. 상점',x:'골드로 강화대 배경, 망치, 검(+10·+15·+20)을 살 수 있어요. 좋은 망치는 강화 확률을 올려 주고 특별한 효과도 있어요. 검 조각은 강화권·골드·주문서·검·파괴 방지 부적·콤보 방패로 바꾸고, 부서진 검을 되살릴 수도 있어요.'},
  {tab:'codex',el:'[data-panel="codex"]',t:'9. 도감',x:'지금까지 만든 검이 여기 모여요. 다음 검은 무엇일까요?'},
  {tab:'rank',el:'#rankCard',t:'10. 랭킹',x:'친구들과 최고 무기, 이번 주에 맞힌 문제 수를 겨뤄요. 별명을 정하면 참여할 수 있어요.',need:()=>!$('tabRank').hidden},
  {tab:'help',el:'[data-panel="help"]',t:'11. 설명',x:'강화 확률과 규칙이 궁금하면 언제든 여기서 봐요. 이 튜토리얼도 여기서 다시 볼 수 있어요.'},
@@ -1531,7 +1537,7 @@ function renderShop(){
    const rest=lb?`<div class="fcard rest"><div><b>직전에 부서진 검 복구</b><span>${esc(wname(lb.L))} · 골드와 함께 이 검에서 받은 조각 ${lb.frag}개도 다시 내요</span></div><div class="fr"><span class="pr">${fmt(rp)} 골드</span>${S.gold<rp?`<button class="bt" disabled>${fmt(rp-S.gold)} 골드 부족</button>`:S.frag<lb.frag?'<button class="bt" disabled>조각이 모자라요</button>':'<button class="bt" data-restore="1">복구하기</button>'}</div></div>`
      :'<div class="fcard rest off"><div><b>직전에 부서진 검 복구</b><span>최근에 부서진 검이 없어요. 검이 부서지면 여기서 한 번 되살릴 수 있어요.</span></div></div>';
    $('fragBox').innerHTML=`<div class="fhead">가진 검 조각 <b>${fmt(S.frag)}</b>개 <small>· 지금까지 모은 조각 ${fmt(S.fragTotal)}개</small></div>${rest}
-   <h3 class="fsub">조각 교환</h3><div class="fgrid">${FRAG_SHOP.map(x=>{const ok=S.frag>=x.cost&&(!x.can||x.can(S));return `<div class="fcard"><div><b>${x.name}</b><span>조각 ${x.cost}개${x.id==='scroll'?` · 가진 주문서 ${S.scroll}/5`:''}</span></div><button class="bt" data-fx="${x.id}" ${ok?'':'disabled'}>${S.frag<x.cost?'조각 부족':x.can&&!x.can(S)?'가득 찼어요':'바꾸기'}</button></div>`}).join('')}</div>
+   <h3 class="fsub">조각 교환</h3><div class="fgrid">${FRAG_SHOP.map(x=>{const ok=S.frag>=x.cost&&(!x.can||x.can(S));return `<div class="fcard"><div><b>${x.name}</b><span>조각 ${x.cost}개${x.have?` · ${x.have(S)}`:''}</span>${x.desc?`<small class="fdesc">${x.desc}</small>`:''}</div><button class="bt" data-fx="${x.id}" ${ok?'':'disabled'}>${S.frag<x.cost?'조각 부족':x.can&&!x.can(S)?'가득 찼어요':'바꾸기'}</button></div>`}).join('')}</div>
    <h3 class="fsub">업적</h3><div class="fgrid">${ACH.map(a=>{const done=a.has(S),pc=Math.min(100,Math.round(S.fragTotal/a.need*100));return `<div class="fcard ach${done?' done':''}"><div><b>${a.name}${done?' ✓':''}</b><span>조각 ${fmt(a.need)}개 모으기 → ${a.reward}</span><i class="pbar"><i style="width:${pc}%"></i></i></div>${a.id==='frag2'&&done?`<button class="bt ${S.soulOn?'':'use'}" data-soul="1">${S.soulOn?'혼불 끄기':'혼불 켜기'}</button>`:`<span class="pc">${done?'완료':Math.min(S.fragTotal,a.need)+' / '+a.need}</span>`}</div>`}).join('')}</div>`}
   const curH=curHam().id;
   $('hamGrid').innerHTML=HAM.map(h=>{const own=!h.price||S.hams.includes(h.id),on=curH===h.id;
@@ -1546,6 +1552,7 @@ function renderShop(){
 }
 function render(){
   const L=S.w.L,g=gOf(L),k=L%STEP;
+  $('shChip').hidden=!S.shield;$('shChip').textContent=`🛡️ 콤보 방패 ${S.shield}`;
   $('sword').innerHTML=swordSVG(g,k,'m',L,true);
   $('lvl').textContent='+'+L;
   $('tierIdx').textContent=`${g+1}단계 무기`;
@@ -1553,7 +1560,7 @@ function render(){
   const bars=$('oddbar').children,o=test&&forceWin?{up:100,keep:0,boom:0,bonus:0}:oddsOf(L,S.fails);
   [[0,o.up,'강화'],[1,o.keep,'유지'],[2,o.boom,'파괴']].forEach(([i,v,n])=>{bars[i].style.width=v+'%';bars[i].textContent=v>=14?`${n} ${v}%`:''});
   $('pUp').textContent=o.up+'%';$('pKeep').textContent=o.keep+'%';$('pBoom').textContent=o.boom+'%';
-  $('pity').textContent=o.bonus?`연속 실패 ${S.fails}번 · 강화 확률 +${o.bonus}%p 보정 중`:(o.boom?'파괴가 걱정되면 보관하고 새로 시작해도 돼요':'');
+  $('pity').textContent=o.bonus?`연속 실패 ${S.fails}번 · 강화 확률 +${o.bonus}%p 보정 중`:(o.boom?(S.ward>0?'🧿 부적이 있어서 파괴돼도 1단계만 내려가요':'파괴가 걱정되면 보관하고 새로 시작해도 돼요'):'');
   $('next').textContent=`다음 변신까지 ${STEP-k}강 · '${gname(g+1)}'`;
   $('nextBar').style.width=(k/STEP*100)+'%';
   $('tk').textContent=test?'∞':S.tk;
@@ -2128,7 +2135,8 @@ function answer(ok){
     if(c%5===0){g++;notes.push(`${c}연속 보너스!`);tags.push('보너스 +1')}
     S.tk+=g;showCombo(c,tier,tags);
     fb.className='feedback ok';fb.textContent=`정답! 강화권 +${g}${notes.length?' · '+notes.join(' · '):''}`;
-  }else{if(S.combo)$('combo').classList.remove('show');S.combo=0;fb.className='feedback bad';fb.innerHTML=`아쉬워요. 정답은 ${cur.ans}`}
+  }else if(S.combo>=3&&S.shield>0){S.shield--;fb.className='feedback bad';fb.innerHTML=`아쉬워요. 정답은 ${cur.ans} · <span style="color:#74c0fc">🛡️ 콤보 방패가 ${S.combo}콤보를 지켜줬어요 (남은 방패 ${S.shield}개)</span>`}
+  else{if(S.combo)$('combo').classList.remove('show');S.combo=0;fb.className='feedback bad';fb.innerHTML=`아쉬워요. 정답은 ${cur.ans}`}
   cur=gen();$('ans').value='';render();save();focusAns();
 }
 document.querySelector('.nkp').addEventListener('click',e=>{const b=e.target.closest('[data-nk]');if(!b)return;const a=$('ans'),k=b.dataset.nk;
@@ -2154,6 +2162,9 @@ $('hammer').addEventListener('click',async()=>{
     w.L=nl;S.best=Math.max(S.best,nl);sparks(26);flash(`강화 성공! +${nl}`,'#ffd27a');
   }
   else if(roll<o.up+o.keep){S.fails++;sparks(6);flash('실패… 단계 유지','#c9cfd6')}
+  else if(S.ward>0&&w.L>0){S.ward=0;S.fails=0;const was=w.L,nl=was-1;sparks(18);
+    if(gOf(nl)<gOf(was))await morph(()=>{S.w.L=nl},false,`부적이 지켜줬어요! +${nl}`);else w.L=nl;
+    flash(`🧿 부적이 막았어요! +${was} → +${nl}`,'#b197fc');$('fb').className='feedback ok';$('fb').textContent=`파괴될 뻔했지만 파괴 방지 부적이 검을 지켜줬어요. 1단계만 내려가서 +${nl}(으)로 버텼어요.`}
   else{S.booms++;S.fails=0;const was=w.L;sfxBoom();
     if(RM){sw.classList.add('broken');setTimeout(()=>sw.classList.remove('broken'),1200)}else{await boomCrack();boomFx=true;fragHold=was}
     w.L=0;flash(`파괴! +${was} → 나무 검 +0`,'#ff8787');
@@ -2217,7 +2228,7 @@ document.addEventListener('click',e=>{
     if(byF)S.frag-=pr;else S.gold-=pr;const moved=S.w.L>0;if(moved)S.inv.push({...S.w});S.w={L};S.fails=0;S.best=Math.max(S.best,L);sel=[];render();save();
     $('shopMsg').textContent=`${wname(L)}을(를) ${byF?`검 조각 ${pr}개로 `:''}샀어요! 작업대에 올렸어요.${moved?' 원래 검은 보관함으로 옮겼어요.':''}`;return}
   const stb=e.target.closest('[data-stab]');
-  if(stb){shopTab=stb.dataset.stab;renderShop();$('shopMsg').textContent=shopTab==='etc'?'처음 정하는 랭킹 별명은 무료예요. 그 뒤로 바꾸려면 변경권이 필요해요.':shopTab==='sword'?'검이 깨져서 처음부터 하기 힘들 때, 골드나 검 조각으로 +10·+15·+20 검을 사서 다시 시작할 수 있어요.':shopTab==='frag'?'검이 부서지면 그 강화 단계만큼 검 조각을 받아요. 조각은 강화권·골드·주문서로 바꾸거나 업적을 채우는 데 써요.':shopTab==='ham'?'망치를 바꾸면 강화 확률이 오르고 특별한 효과가 생겨요. 비싼 망치일수록 강해요.':'보관함의 무기를 팔면 골드를 받아요. 산 배경은 언제든 바꿔 쓸 수 있고, 그림을 누르면 위에서 크게 볼 수 있어요.';return}
+  if(stb){shopTab=stb.dataset.stab;renderShop();$('shopMsg').textContent=shopTab==='etc'?'처음 정하는 랭킹 별명은 무료예요. 그 뒤로 바꾸려면 변경권이 필요해요.':shopTab==='sword'?'검이 깨져서 처음부터 하기 힘들 때, 골드나 검 조각으로 +10·+15·+20 검을 사서 다시 시작할 수 있어요.':shopTab==='frag'?'검이 부서지면 그 강화 단계만큼 검 조각을 받아요. 조각은 강화권·골드·주문서·부적·방패·검으로 바꾸거나 업적을 채우는 데 써요.':shopTab==='ham'?'망치를 바꾸면 강화 확률이 오르고 특별한 효과가 생겨요. 비싼 망치일수록 강해요.':'보관함의 무기를 팔면 골드를 받아요. 산 배경은 언제든 바꿔 쓸 수 있고, 그림을 누르면 위에서 크게 볼 수 있어요.';return}
   const uh=e.target.closest('[data-useham]');
   if(uh){S.ham=uh.dataset.useham==='wood'?'':uh.dataset.useham;render();save();$('shopMsg').textContent=`'${curHam().name}'(으)로 바꿨어요.`;return}
   const bh=e.target.closest('[data-buyham]');
