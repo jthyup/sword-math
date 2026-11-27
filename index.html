@@ -182,6 +182,14 @@ body.testing .codexnote{display:inline}
 .hammerdeco{position:absolute;left:55%;top:6%;width:42%;z-index:3;pointer-events:none}
 .actrow{position:absolute;z-index:5;top:18px;left:50%;transform:translateX(-50%);display:flex;gap:8px;align-items:stretch}
 .actrow>button{width:100px}
+.actrow>.lockbtn{width:54px}
+.lockbtn{box-sizing:border-box;font:inherit;font-size:20px;line-height:1.1;padding:5px 4px;border-radius:12px;border:2px solid #6b5247;background:#2a1c15;color:#f3e3cf;cursor:pointer;box-shadow:0 4px 0 #120c09}
+.lockbtn small{display:block;font-size:11px;font-weight:700}
+.lockbtn[aria-pressed=true]{background:linear-gradient(180deg,#5c7cfa,#364fc7);border-color:#91a7ff;color:#fff;box-shadow:0 4px 0 #1e2a78}
+.lockbtn:active{transform:translateY(3px);box-shadow:0 1px 0 #120c09}
+.hllk{display:none}
+.hammerbtn.locked .hl1,.hammerbtn.locked .hl2{display:none}.hammerbtn.locked .hllk{display:block}.hammerbtn.locked .hllk small{display:block;font-family:"Gowun Dodum",sans-serif;font-weight:700;font-size:11px}
+.slot .lk{position:absolute;top:4px;right:4px;font-size:14px;line-height:1;filter:drop-shadow(0 1px 1px #000)}
 .actrow .hlabel,.actrow .sellbtn{font-size:19px;padding-left:6px;padding-right:6px}
 .actrow .hlabel{width:100%}
 .hammerbtn{position:relative;border:0;background:none;padding:0;cursor:pointer;display:flex;flex-direction:column;align-items:center;font:inherit;color:#fff}
@@ -513,7 +521,7 @@ legend{font-family:"Black Han Sans";font-size:18px;padding:0 6px}
 <section class="game" data-panel="forge">
   <div class="stage" id="stage">
     <div class="lvl" id="lvl">+0</div>
-    <div class="actrow"><button class="hammerbtn" id="hammer" aria-label="강화하기"><span class="hlabel">강화!<small>강화권 <b id="tk">0</b>장</small></span></button><button class="sellbtn" id="sellNow"><span id="sellTxt">판매</span><small id="sellSub"></small></button></div>
+    <div class="actrow"><button class="hammerbtn" id="hammer" aria-label="강화하기"><span class="hlabel"><span class="hl1">강화!</span><small class="hl2">강화권 <b id="tk">0</b>장</small><span class="hllk">🔒 잠김<small>잠금을 풀어야 강화</small></span></span></button><button class="sellbtn" id="sellNow"><span id="sellTxt">판매</span><small id="sellSub"></small></button><button class="lockbtn" id="lockW" aria-pressed="false" title="검 잠그기">🔓<small>잠금</small></button></div>
     <div class="tier"><span id="tierIdx">1단계 무기</span><b id="tierName">나무 검</b></div>
     <div class="swordbox">
       <svg id="sword" viewBox="-24 -48 176 176" aria-hidden="true"></svg>
@@ -620,6 +628,7 @@ legend{font-family:"Black Han Sans";font-size:18px;padding:0 6px}
       <li>5연속 정답마다 → 보너스 강화권 1장</li>
       <li>검이 부서지면 강화 단계만큼 검 조각을 받아요 (+23 → 조각 23개). 조각은 상점에서 강화권·골드·강화 주문서로 바꿀 수 있고, 많이 모으면 업적 보상을 받아요</li>
       <li>🧿 파괴 방지 부적(조각 60개): 파괴될 때 한 번 막아주고 1단계만 내려가요. 🛡️ 콤보 방패(조각 20개): 3콤보 이상에서 한 번 틀려도 콤보가 이어져요</li>
+      <li>🔒 버튼으로 아끼는 검을 잠글 수 있어요. 잠긴 검은 강화·판매·합치기가 안 돼요 (강화대와 보관함 모두)</li>
       <li>주관식은 키보드로 치거나 옆의 숫자 키패드를 눌러서 답해요</li>
       <li>상점에서 +10·+15·+20 검을 골드나 검 조각(50·100·180개)으로 사서 바로 시작할 수도 있어요</li>
       <li>랭킹 별명은 처음 한 번은 무료로 정하고, 바꿀 때는 상점의 별명 변경권(3,000골드)이 필요해요</li>
@@ -888,7 +897,7 @@ function fromRaw(raw){
   for(const k in def)if(raw[k]!==undefined)o[k]=JSON.parse(JSON.stringify(raw[k]));
   const toW=x=>{
     if(!x||typeof x!=='object')return null;
-    if(Number.isFinite(+x.L)&&+x.L>=0)return {L:Math.floor(+x.L)};
+    if(Number.isFinite(+x.L)&&+x.L>=0)return x.lk===true?{L:Math.floor(+x.L),lk:true}:{L:Math.floor(+x.L)};
     if(Number.isFinite(+x.g)&&Number.isFinite(+x.lvl)&&+x.g>=0&&+x.lvl>=0)return {L:Math.floor(+x.g)*STEP+Math.min(STEP,Math.floor(+x.lvl))};
     return null};
   if(raw.w===undefined&&raw.lvl!==undefined)o.w={L:Math.max(0,Math.floor(+raw.lvl||0))};
@@ -1384,7 +1393,7 @@ function renderQ(){
 }
 var touchUI=false;
 function focusAns(){if(!touchUI&&!cur.choices&&!cur.none&&$('gate').hidden&&$('urModal').hidden)$('ans').focus()}
-const canMerge=(a,b)=>a&&b&&a.L===b.L&&a.L>=1;
+const canMerge=(a,b)=>a&&b&&a.L===b.L&&a.L>=1&&!a.lk&&!b.lk;
 const wname=L=>`${gname(gOf(L))} +${L}`;
 let sel=[],busy=false;
 const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1672,11 +1681,12 @@ function render(){
   $('next').textContent=`다음 변신까지 ${STEP-k}강 · '${gname(g+1)}'`;
   $('nextBar').style.width=(k/STEP*100)+'%';
   $('tk').textContent=test?'∞':S.tk;
-  $('hammer').disabled=busy||(!test&&S.tk<1);
+  $('hammer').disabled=busy||!!S.w.lk||(!test&&S.tk<1);$('hammer').classList.toggle('locked',!!S.w.lk);
+  {const lb=$('lockW'),lk=!!S.w.lk;lb.setAttribute('aria-pressed',lk);lb.disabled=busy||S.w.L<1;lb.innerHTML=lk?'🔒<small>잠김</small>':'🔓<small>잠금</small>';lb.title=lk?'잠금 풀기':'검 잠그기 (실수로 강화·판매 못 하게)'}
   {const h=curHam(),hf=$('hammerFx');if(hf.dataset.h!==h.id){hf.dataset.h=h.id;hf.setAttribute('viewBox','0 0 110 110');hf.innerHTML=`<image href="img/hm-${h.id}.webp" x="-6" y="-8" width="122" height="122"/>`}
    $('sparks').style.setProperty('--spk',S.soulOn?'#9fe7ff':h.spark);
    {const s2=subHam();$('hamLine').textContent=[h.up||h.eff?`${h.name}${o.ham?` · 강화 +${o.ham}%p`:''}${h.eff&&!h.ruin?` · ${h.eff}: ${h.desc}`:''}`:'',s2?`보조 ${s2.name} · ${s2.eff} 효과 절반`:'',o.col?`망치 수집 +${o.col}%p`:'',o.scroll?`강화 주문서 사용 중 +10%p (남은 ${S.scroll}장)`:''].filter(Boolean).join(' / ')}}
-  {const sb=$('sellNow'),pr=sellGold(L);sb.disabled=busy||L<1;sb.classList.toggle('arm',sellArm&&L>=1);
+  {const sb=$('sellNow'),pr=sellGold(L);sb.disabled=busy||L<1||!!S.w.lk;sb.classList.toggle('arm',sellArm&&L>=1);
    $('sellTxt').textContent=sellArm&&L>=1?'한 번 더!':'판매';$('sellSub').textContent=L<1?'+1부터 가능':(sellArm?'누르면 판매':`+${pr.toLocaleString('ko-KR')}골드`)}
   $('sSolved').textContent=S.solved;{const gb=document.querySelector('.goldbar');if(lastGold!==null&&S.gold>lastGold)replay(gb,'bump');lastGold=S.gold}$('sGold').textContent=S.gold.toLocaleString('ko-KR');$('sFrag').textContent=Math.max(0,S.frag-fragHold).toLocaleString('ko-KR');$('shopGold').textContent=S.gold.toLocaleString('ko-KR');
   $('sAcc').textContent=S.solved?Math.round(S.right/S.solved*100)+'%':'0%';
@@ -1689,18 +1699,18 @@ function render(){
 }
 function renderShelf(){
   const inv=S.inv,L=S.w.L;sel=sel.filter(i=>i<inv.length);
-  const pairOf=i=>inv[i].L>=1&&(inv[i].L===L||inv.some((x,j)=>j!==i&&x.L===inv[i].L));
+  const pairOf=i=>!inv[i].lk&&inv[i].L>=1&&((inv[i].L===L&&!S.w.lk)||inv.some((x,j)=>j!==i&&!x.lk&&x.L===inv[i].L));
   $('invCount').textContent=`${inv.length} / ${INV_MAX}칸`;
   $('shelf').innerHTML=Array.from({length:INV_MAX},(_,i)=>{const x=inv[i];
     if(!x)return '<div class="slot empty">빈 칸</div>';
-    return `<button class="slot" data-slot="${i}" aria-pressed="${sel.includes(i)}">${pairOf(i)?'<span class="tag">짝</span>':''}<svg viewBox="0 0 128 128">${swordSVG(gOf(x.L),x.L%STEP,'s'+i,x.L)}</svg><b>+${x.L}</b>${esc(gname(gOf(x.L)))}</button>`}).join('');
-  const A=$('invActions'),M=$('invMsg'),mi=L>=1?inv.findIndex(x=>x.L===L):-1;
-  if(sel.length===1){const i=sel[0],x=inv[i],same=x.L===L&&L>=1;
-    A.innerHTML=(same?`<button class="btn sm merge" data-mw="${i}">작업대 무기와 합치기 → +${L+1}</button>`:'')+`<button class="btn sm" id="swapW">꺼내서 강화하기</button><button class="ghost" id="sellW">팔기 (골드 +${sellGold(x.L).toLocaleString('ko-KR')})</button>`;
-    M.textContent=`${wname(x.L)}을(를) 골랐어요. 꺼내면 지금 작업대의 무기가 이 칸에 들어가요.`+(same?' 작업대 무기와 단계가 같아서 바로 합칠 수 있어요.':' 같은 단계 무기를 하나 더 고르면 합칠 수 있어요.');
+    return `<button class="slot" data-slot="${i}" aria-pressed="${sel.includes(i)}">${pairOf(i)?'<span class="tag">짝</span>':''}${x.lk?'<span class="lk" title="잠김">🔒</span>':''}<svg viewBox="0 0 128 128">${swordSVG(gOf(x.L),x.L%STEP,'s'+i,x.L)}</svg><b>+${x.L}</b>${esc(gname(gOf(x.L)))}</button>`}).join('');
+  const A=$('invActions'),M=$('invMsg'),mi=L>=1&&!S.w.lk?inv.findIndex(x=>x.L===L&&!x.lk):-1;
+  if(sel.length===1){const i=sel[0],x=inv[i],same=x.L===L&&L>=1&&!x.lk&&!S.w.lk;
+    A.innerHTML=(same?`<button class="btn sm merge" data-mw="${i}">작업대 무기와 합치기 → +${L+1}</button>`:'')+`<button class="btn sm" id="swapW">꺼내서 작업대에 올리기</button>${x.lk?'':`<button class="ghost" id="sellW">팔기 (골드 +${sellGold(x.L).toLocaleString('ko-KR')})</button>`}<button class="ghost" id="lockSel">${x.lk?'🔓 잠금 풀기':'🔒 잠그기'}</button>`;
+    M.textContent=x.lk?`${wname(x.L)}은(는) 잠겨 있어서 팔거나 합칠 수 없어요. 꺼내도 잠긴 채로 올라가서 강화되지 않아요.`:`${wname(x.L)}을(를) 골랐어요. 꺼내면 지금 작업대의 무기가 이 칸에 들어가요.`+(same?' 작업대 무기와 단계가 같아서 바로 합칠 수 있어요.':' 같은 단계 무기를 하나 더 고르면 합칠 수 있어요.');
   }else if(sel.length===2){const [a,b]=sel.map(i=>inv[i]);
     if(canMerge(a,b)){A.innerHTML=`<button class="btn sm merge" id="mergeW">합치기 → +${a.L+1} (100%)</button>`;M.textContent='같은 단계 두 자루를 합치면 다음 단계로 확실하게 강화돼요. 합친 무기는 작업대에 올라가요.'}
-    else{A.innerHTML='<button class="ghost" id="clearSel">선택 취소</button>';M.textContent='합치려면 두 무기의 강화 단계가 같아야 해요.'}
+    else{A.innerHTML='<button class="ghost" id="clearSel">선택 취소</button>';M.textContent=a.lk||b.lk?'잠긴 무기는 합칠 수 없어요. 먼저 잠금을 풀어 주세요.':'합치려면 두 무기의 강화 단계가 같아야 해요.'}
   }else if(mi>=0){
     A.innerHTML=`<button class="btn sm merge" data-mw="${mi}">작업대 +${L}와 보관함 +${L} 합치기 → +${L+1} (100%)</button>`;
     M.textContent='작업대 무기와 같은 단계 무기가 보관함에 있어요! 합치면 다음 단계로 100% 강화돼요.';
@@ -2299,7 +2309,7 @@ $('f').addEventListener('submit',e=>{
   answer(Number(v.replace(/,/g,''))===Number(cur.ans),v);
 });
 $('hammer').addEventListener('click',async()=>{
-  const w=S.w;if(busy||(!test&&S.tk<1))return;
+  const w=S.w;if(busy||w.lk||(!test&&S.tk<1))return;
   const hm=curHam(),pFree=hEff('free'),pDbl=hEff('double'),freeHit=!test&&pFree&&Math.random()<pFree;
   sellArm=false;busy=true;$('hammer').disabled=true;$('sellNow').disabled=true;if(!test&&!freeHit){S.tk--;$('tk').textContent=S.tk}
   const o=test&&forceWin?{up:100,keep:0,boom:0}:oddsOf(w.L,S.fails),sw=$('sword'),roll=Math.random()*100;
@@ -2328,7 +2338,7 @@ $('hammer').addEventListener('click',async()=>{
   busy=false;render();
 });
 $('sellNow').addEventListener('click',()=>{
-  const L=S.w.L;if(busy||L<1)return;
+  const L=S.w.L;if(busy||L<1||S.w.lk)return;
   if(!sellArm){sellArm=true;clearTimeout(sellArmT);sellArmT=setTimeout(()=>{sellArm=false;render()},3000);render();return}
   sellArm=false;clearTimeout(sellArmT);const got=sellGold(L),nm=wname(L);
   busy=true;render();
@@ -2336,6 +2346,8 @@ $('sellNow').addEventListener('click',()=>{
     const sw=$('sword');replay(sw,'reveal');setTimeout(()=>sw.classList.remove('reveal'),760);
     $('invMsg').textContent=`${nm}을(를) 팔아서 ${got.toLocaleString('ko-KR')}골드를 받았어요. 새 나무 검으로 시작해요.`});
 });
+$('lockW').addEventListener('click',()=>{if(busy||S.w.L<1)return;if(S.w.lk)delete S.w.lk;else S.w.lk=true;sellArm=false;render();save();
+  $('invMsg').textContent=S.w.lk?`${wname(S.w.L)}을(를) 잠갔어요. 강화·판매·합치기를 할 수 없어요. 🔒을 다시 누르면 풀려요.`:`${wname(S.w.L)}의 잠금을 풀었어요.`});
 $('forceWin').addEventListener('change',e=>{forceWin=test&&e.target.checked;render()});
 $('keepNew').addEventListener('click',()=>{
   const M=$('invMsg');
@@ -2350,6 +2362,7 @@ document.addEventListener('click',e=>{
   if(sl){const i=+sl.dataset.slot;sel=sel.includes(i)?sel.filter(x=>x!==i):[...sel,i].slice(-2);renderShelf();return}
   const id=e.target.id;
   if(id==='clearSel'){sel=[];renderShelf()}
+  if(id==='lockSel'&&sel.length===1){const x=S.inv[sel[0]];if(!x)return;if(x.lk)delete x.lk;else x.lk=true;renderShelf();save();$('invMsg').textContent=x.lk?`${wname(x.L)}을(를) 잠갔어요. 팔거나 합칠 수 없어요.`:`${wname(x.L)}의 잠금을 풀었어요.`;return}
   if(mw){const i=+mw.dataset.mw,x=S.inv[i],L=S.w.L;if(!canMerge(x,S.w))return;
     const nl=L+1,up=gOf(nl)>gOf(L);
     morph(()=>{S.inv.splice(i,1);S.w={L:nl};S.fails=0;S.best=Math.max(S.best,nl);sel=[]},up,up?`변신! ${gname(gOf(nl))}`:`합성 성공! +${nl}`)}
@@ -2396,7 +2409,7 @@ document.addEventListener('click',e=>{
     if(!bb.dataset.ok){bb.dataset.ok=1;bb.textContent='정말 살까요? 한 번 더';return}
     previewBg=null;S.gold-=it.price;S.bgs.push(it.id);S.bg=it.id;render();save();
     $('shopMsg').textContent=`'${it.name}'을(를) 샀어요! 강화대 배경으로 바로 바꿨어요.`;return}
-  if(id==='sellW'&&sel.length===1){const b=e.target;
+  if(id==='sellW'&&sel.length===1){const b=e.target;if(S.inv[sel[0]]&&S.inv[sel[0]].lk)return;
     if(!b.dataset.ok){b.dataset.ok=1;b.textContent='정말 팔까요? 한 번 더 누르기';return}
     const i=sel[0],x=S.inv[i],got=sellGold(x.L),slot=document.querySelector(`[data-slot="${i}"] svg`);busy=true;
     sellFly(slot,got).then(()=>{S.inv.splice(i,1);S.gold+=got;sel=[];busy=false;render();save();
