@@ -395,6 +395,23 @@ ul{margin:0;padding-left:1.2em}li{margin:4px 0}
 .newtag{display:inline-block;margin-left:6px;padding:0 6px;border-radius:6px;background:var(--ember);color:#fff;font-size:12px;vertical-align:middle}
 .teacher[hidden]{display:none}
 .tbl{overflow-x:auto}
+.sdname{font:inherit;font-weight:700;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-decoration:underline dotted rgba(255,200,120,.5);text-underline-offset:4px}
+.sdname:hover{color:#ffb35c}
+.sdbox{width:min(100%,680px)}
+.sdhd{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}.sdhd h2{margin:0;font-size:22px}.sdhd small{color:var(--mute);font-weight:400;font-size:14px;margin-left:6px}
+.sdst{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0}
+.sdst div{background:rgba(255,255,255,.05);border-radius:10px;padding:9px;text-align:center}.sdst small{display:block;font-size:12px;color:var(--mute)}.sdst b{font-size:20px}
+.sdflt{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}.sdflt button{font:inherit;font-size:13px;background:transparent;border:1px solid var(--line);color:var(--ink);border-radius:999px;padding:4px 12px;cursor:pointer}.sdflt button[aria-pressed=true]{background:#e2571b;border-color:#e2571b;color:#fff}
+.sdh{font-size:14px;color:#ffb35c;margin:16px 0 6px;font-weight:700}
+.sdu{display:grid;grid-template-columns:minmax(120px,190px) 1fr 50px 80px;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:14px}
+.sdbar{height:11px;background:rgba(255,255,255,.07);border-radius:6px;overflow:hidden}.sdbar i{display:block;height:100%;border-radius:6px}
+.sdu .p{text-align:right;font-weight:700}.sdu .c{text-align:right;color:var(--mute);font-size:12px}
+.sdlo{color:#ff8787}.sdmid{color:#ffd43b}.sdhi{color:#8ce99a}.sdfew{color:var(--mute)}
+.sdtag{font-size:11px;background:#a61e1e;color:#fff;border-radius:6px;padding:1px 6px;margin-left:4px;white-space:nowrap}
+.sdw{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:14px}
+.sdw .wq{font-weight:600}.sdw .wt{color:var(--mute);font-size:12px;text-align:right}.sdw .wa{grid-column:1/-1;font-size:13px}.sdw .wa s{color:#ff8787;text-decoration:none}.sdw .wa b{color:#8ce99a}
+@media (max-width:560px){.sdst{grid-template-columns:repeat(2,1fr)}.sdu{grid-template-columns:1fr 44px 64px}.sdu .sdbar{grid-column:1/-1;order:5}}
+
 .swbuy{display:flex;flex-direction:column;gap:6px;width:100%;margin-top:auto}
 .swbuy .bt{margin-top:0}
 .swbuy .fragbt{background:linear-gradient(180deg,#4dabf7,#1c7ed6);color:#fff}
@@ -610,6 +627,7 @@ legend{font-family:"Black Han Sans";font-size:18px;padding:0 6px}
   <form class="signup" id="grForm"><div style="display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:10px"><div style="display:grid;gap:6px"><label for="grG">학년</label><select id="grG" required style="font:inherit;font-size:18px;min-height:52px;border-radius:12px;padding:0 10px"><option value="">고르기</option><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option><option value="4">4학년</option><option value="5">5학년</option><option value="6">6학년</option></select></div><div style="display:grid;gap:6px"><label for="grC">반</label><input id="grC" type="number" inputmode="numeric" min="1" max="20" placeholder="예: 2" required></div><div style="display:grid;gap:6px"><label for="grN">번호</label><input id="grN" type="number" inputmode="numeric" min="1" max="50" placeholder="예: 7" required></div></div>
   <div class="err" id="grErr"></div><div class="actions"><button class="btn">확인</button><button type="button" class="ghost" id="grCancel" hidden>취소</button></div></form>
 </div></div>
+<div class="gate" id="sdModal" hidden><div class="gbox sdbox" role="dialog" aria-modal="true" aria-labelledby="sdName"><div id="sdBody"></div></div></div>
 <div class="gate" id="urModal" hidden><div class="gbox urbox">
   <h2>어떤 문제를 풀까요?</h2>
   <p class="note" style="margin:0 0 12px">풀고 싶은 단원을 눌러 고르세요. 여러 개를 고르면 섞여서 나와요.</p>
@@ -716,7 +734,7 @@ const SHOP_BG=[
   {id:'soul',name:'영혼의 빛 동굴',price:0,ach:'조각 수집가 I'}];
 let lastGold=null,previewBg=null,sellArm=false,sellArmT=0;
 const sellPrice=L=>L<1?5:L*L*10;
-const def={w:{L:0},inv:[],best:0,tk:0,gold:0,bgs:[],bg:'',hams:[],ham:'',tutDone:false,nickTk:0,frag:0,fragTotal:0,scroll:0,ward:0,shield:0,lastBroken:null,soulFx:false,soulOn:false,solved:0,right:0,combo:0,fails:0,booms:0,units:[],byUnit:{},nick:'',wk:'',wn:0,rangeSet:false};
+const def={w:{L:0},inv:[],best:0,tk:0,gold:0,bgs:[],bg:'',hams:[],ham:'',tutDone:false,nickTk:0,frag:0,fragTotal:0,scroll:0,ward:0,shield:0,wrong:[],lastBroken:null,soulFx:false,soulOn:false,solved:0,right:0,combo:0,fails:0,booms:0,units:[],byUnit:{},nick:'',wk:'',wn:0,rangeSet:false};
 const fresh=()=>JSON.parse(JSON.stringify(def));
 let S=fresh();
 const $=id=>document.getElementById(id);
@@ -835,6 +853,7 @@ function fromRaw(raw){
   if(!o.byUnit||typeof o.byUnit!=='object'||Array.isArray(o.byUnit))o.byUnit={};
   o.units=Array.isArray(o.units)?o.units.filter(x=>typeof x==='string'):[];
   if(raw.units===undefined&&typeof raw.unit==='string'&&raw.unit!=='mix')o.units=[raw.unit];
+  o.wrong=(Array.isArray(o.wrong)?o.wrong:[]).filter(x=>x&&typeof x==='object').slice(-WRONG_MAX).map(x=>({q:String(x.q||'').slice(0,60),a:String(x.a??'').slice(0,20),m:String(x.m??'').slice(0,20),u:String(x.u||''),t:+x.t||0}));
   o.rangeSet=o.rangeSet===true;o.tutDone=o.tutDone===true;
   o.lastBroken=o.lastBroken&&Number.isFinite(+o.lastBroken.L)&&+o.lastBroken.L>0?{L:Math.floor(+o.lastBroken.L),frag:Math.max(0,Math.floor(+o.lastBroken.frag||0))}:null;
   o.soulFx=o.soulFx===true;o.soulOn=o.soulFx&&o.soulOn===true;o.scroll=Math.min(5,o.scroll);
@@ -868,6 +887,10 @@ const DEFAULT_UNITS=UNITS.map(u=>u.id);
 let enabled=DEFAULT_UNITS.slice(),classUnits=DEFAULT_UNITS.slice(),myRange=null;
 const pick=a=>a[r(0,a.length-1)];
 const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=r(0,i);[a[i],a[j]]=[a[j],a[i]]}return a};
+const WRONG_MAX=20;
+function plainQ(h){h=String(h??'');
+  h=h.replace(/<span class="fr"><b>([^<]*)<\/b><i>([^<]*)<\/i><\/span>/g,' $1/$2').replace(/<table[^>]*>/gi,' (').replace(/<\/table>/gi,')').replace(/<\/tr>\s*(?=(<\/tbody>)?\s*\))/gi,'').replace(/<\/tr>/gi,' / ').replace(/<br\s*\/?>|<\/t[dh]>|<\/tr>/gi,' ').replace(/<span class="unitlbl">.*?<\/span>/,'').replace(/<[^>]+>/g,'');
+  const ta=document.createElement('textarea');ta.innerHTML=h;return ta.value.replace(/\s+/g,' ').replace(/\(\s+/g,'(').replace(/\s+\)/g,')').replace(/\s*\/\s*\)/g,')').replace(/(\d) (\d+\/)/g,'$1 $2').trim()}
 const fr=(n,d)=>`<span class="fr"><b>${n}</b><i>${d}</i></span>`;
 const mx=(w,n,d)=>`${w}${fr(n,d)}`;
 const num=(q,ans,o={})=>({q,ans:String(ans),...o});
@@ -1895,6 +1918,32 @@ function audit(s){
   if(st.wn>st.solved)why.push('이번 주 맞힌 문제가 전체보다 많아요');
   return why;
 }
+let sdId=null,sdSort='weak';
+function renderSD(){const s=students.find(x=>x.id===sdId);if(!s){$('sdModal').hidden=true;return}
+  const bu=s.byUnit&&typeof s.byUnit==='object'?s.byUnit:{},order=Object.keys(U);
+  let rows=Object.keys(bu).filter(id=>U[id]&&Array.isArray(bu[id])&&+bu[id][1]>0).map(id=>({id,r:+bu[id][0]||0,n:+bu[id][1],p:Math.round((+bu[id][0]||0)/+bu[id][1]*100)}));
+  const need=rows.filter(x=>x.n>=3&&x.p<60).length,acc=s.solved?Math.round(s.right/s.solved*100)+'%':'-';
+  if(sdSort==='unit')rows.sort((a,b)=>order.indexOf(a.id)-order.indexOf(b.id));
+  else{rows.sort((a,b)=>((a.n<3)-(b.n<3))||a.p-b.p||b.n-a.n);if(sdSort==='low')rows=rows.filter(x=>x.n>=3&&x.p<60)}
+  const col=x=>x.n<3?['sdfew','#6b5a4c']:x.p<60?['sdlo','#e03131']:x.p<85?['sdmid','#f59f00']:['sdhi','#37b24d'];
+  const ws=(Array.isArray(s.wrong)?s.wrong:[]).slice().reverse();
+  const when=t=>{if(!t)return'';const d=new Date(t);return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`};
+  const myId=sid(+s.grade,+s.cls,+s.no);
+  $('sdBody').innerHTML=`<div class="sdhd"><h2 id="sdName">${esc(s.name)}<small>${myId?myId+' · ':''}${s.nick?'랭킹 별명 '+esc(s.nick):'랭킹 별명 없음'}</small></h2><button class="ghost" id="sdClose">닫기</button></div>
+  <div class="sdst"><div><small>푼 문제</small><b>${(+s.solved||0).toLocaleString('ko-KR')}</b></div><div><small>정답률</small><b>${acc}</b></div><div><small>푼 단원</small><b>${Object.keys(bu).filter(id=>U[id]).length}개</b></div><div><small>도움 필요 단원</small><b class="${need?'sdlo':''}">${need}개</b></div></div>
+  <div class="sdflt">${[['weak','약한 순'],['unit','단원 순'],['low','60% 미만만']].map(([k,n])=>`<button data-sds="${k}" aria-pressed="${sdSort===k}">${n}</button>`).join('')}</div>
+  <div class="sdh">단원별 정답률</div>
+  ${rows.length?rows.map(x=>{const [c,bc]=col(x);return `<div class="sdu"><span>${esc(U[x.id].sem+' '+U[x.id].name)}${x.n>=3&&x.p<60?'<span class="sdtag">도움 필요</span>':''}</span><div class="sdbar"><i style="width:${Math.max(x.p,2)}%;background:${bc}"></i></div><span class="p ${c}">${x.p}%</span><span class="c">${x.r} / ${x.n}문제</span></div>`}).join(''):`<p class="note">${sdSort==='low'?'60% 미만인 단원이 없어요.':'아직 푼 문제가 없어요.'}</p>`}
+  <p class="note" style="margin-top:8px">빨강 60% 미만 · 노랑 60~84% · 초록 85% 이상 · 회색은 3문제 미만이라 아직 판단하기 일러요</p>
+  <div class="sdh">최근 틀린 문제 <small class="note" style="font-weight:400">최근 ${WRONG_MAX}개까지</small></div>
+  ${ws.length?ws.map(w=>`<div class="sdw"><span class="wq">${esc(w.q)}</span><span class="wt">${U[w.u]?esc(U[w.u].sem+' '+U[w.u].name)+' · ':''}${when(w.t)}</span><span class="wa">학생 답 <s>${esc(w.m||'-')}</s> → 정답 <b>${esc(w.a)}</b></span></div>`).join(''):'<p class="note">아직 기록된 틀린 문제가 없어요. 이 기능을 넣은 뒤로 틀린 문제부터 쌓여요.</p>'}`;
+}
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-sd]');if(b){sdId=b.dataset.sd;sdSort='weak';renderSD();$('sdModal').hidden=false;$('sdClose').focus();return}
+  const so=e.target.closest('[data-sds]');if(so){sdSort=so.dataset.sds;renderSD();return}
+  if(e.target.id==='sdClose'||e.target.id==='sdModal'){$('sdModal').hidden=true;sdId=null}
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('sdModal').hidden){$('sdModal').hidden=true;sdId=null}});
 function renderRoster(){
   if(!canManage)return;
   $('teacher').hidden=false;
@@ -1906,9 +1955,10 @@ function renderRoster(){
     const last=s.last?(d=>`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`)(new Date(s.last)):'-';
     const fresh7=s.self&&s.joined&&Date.now()-Date.parse(s.joined)<7*864e5,aw=audit(s);if(aw.length)flagged++;
     const myId=sid(+s.grade,+s.cls,+s.no),dupId=myId&&list.filter(x=>sid(+x.grade,+x.cls,+x.no)===myId).length>1;
-    return `<tr><td style="white-space:nowrap;font-variant-numeric:tabular-nums">${myId?`<b${dupId?' style="color:#ff8787" title="같은 ID 학생이 있어요"':''}>${myId}</b>${dupId?' ⚠️':''}`:'<span class="note">미입력</span>'}</td><td style="white-space:nowrap"><select data-stg="${esc(s.id)}" aria-label="학년" class="tin" style="width:auto"><option value="">?</option>${SGR.map(g=>`<option value="${g}" ${String(s.grade)===g?'selected':''}>${g}</option>`).join('')}</select>-<input data-stc="${esc(s.id)}" type="number" min="1" max="20" value="${+s.cls||''}" aria-label="반" class="tin">-<input data-stn="${esc(s.id)}" type="number" min="1" max="50" value="${+s.no||''}" aria-label="번호" class="tin"></td><td class="stk"><b>${esc(s.name)}</b>${fresh7?'<span class="newtag">새로 가입</span>':''}${aw.length?`<div class="auditflag" title="${esc(aw.join(' / '))}">⚠️ 기록 확인 필요<small>${esc(aw.join(' · '))}</small></div>`:''}</td><td>${s.nick?`${esc(s.nick)} <button class="linkbtn" data-clrnick="${esc(s.id)}">지우기</button>`:'-'}</td><td style="white-space:nowrap">${normR(s.range)?`<b>개별 ${normR(s.range).length}개</b>`:'반 공통'} <button class="linkbtn" data-srange="${esc(s.id)}">정하기</button></td><td class="n">${+s.solved||0}</td><td class="n">${acc}</td><td>${esc(wname(st.w.L))}</td><td>${esc(wname(st.best))}</td><td class="n">${st.gold.toLocaleString('ko-KR')}</td><td class="n">${+s.booms||0}</td><td style="white-space:nowrap"><label><input type="checkbox" data-care="${esc(s.id)}" ${s.care===true?'checked':''}> 켜기</label></td><td class="weak" title="${esc(weak(s))}">${esc(weak(s))}</td><td style="font-variant-numeric:tabular-nums">${esc(last)}</td>
+    return `<tr><td style="white-space:nowrap;font-variant-numeric:tabular-nums">${myId?`<b${dupId?' style="color:#ff8787" title="같은 ID 학생이 있어요"':''}>${myId}</b>${dupId?' ⚠️':''}`:'<span class="note">미입력</span>'}</td><td style="white-space:nowrap"><select data-stg="${esc(s.id)}" aria-label="학년" class="tin" style="width:auto"><option value="">?</option>${SGR.map(g=>`<option value="${g}" ${String(s.grade)===g?'selected':''}>${g}</option>`).join('')}</select>-<input data-stc="${esc(s.id)}" type="number" min="1" max="20" value="${+s.cls||''}" aria-label="반" class="tin">-<input data-stn="${esc(s.id)}" type="number" min="1" max="50" value="${+s.no||''}" aria-label="번호" class="tin"></td><td class="stk"><button class="sdname" data-sd="${esc(s.id)}" title="자세히 보기">${esc(s.name)}</button>${fresh7?'<span class="newtag">새로 가입</span>':''}${aw.length?`<div class="auditflag" title="${esc(aw.join(' / '))}">⚠️ 기록 확인 필요<small>${esc(aw.join(' · '))}</small></div>`:''}</td><td>${s.nick?`${esc(s.nick)} <button class="linkbtn" data-clrnick="${esc(s.id)}">지우기</button>`:'-'}</td><td style="white-space:nowrap">${normR(s.range)?`<b>개별 ${normR(s.range).length}개</b>`:'반 공통'} <button class="linkbtn" data-srange="${esc(s.id)}">정하기</button></td><td class="n">${+s.solved||0}</td><td class="n">${acc}</td><td>${esc(wname(st.w.L))}</td><td>${esc(wname(st.best))}</td><td class="n">${st.gold.toLocaleString('ko-KR')}</td><td class="n">${+s.booms||0}</td><td style="white-space:nowrap"><label><input type="checkbox" data-care="${esc(s.id)}" ${s.care===true?'checked':''}> 켜기</label></td><td class="weak" title="${esc(weak(s))}">${esc(weak(s))}</td><td style="font-variant-numeric:tabular-nums">${esc(last)}</td>
     <td style="white-space:nowrap"><button class="ghost danger" data-del="${esc(s.id)}">기록 삭제</button></td></tr>`}).join('')
     ||'<tr><td colspan="15" class="note">아직 학생이 없어요. 학생이 가입하면 여기에 바로 나타나요.</td></tr>';
+  if(sdId&&!$('sdModal').hidden)renderSD();
   if(flagged)$('rosterCount').innerHTML=`${list.length}명 · <span style="color:#ff8787">⚠️ 기록 확인 필요 ${flagged}명</span>`;
 }
 document.addEventListener('change',e=>{
@@ -2102,7 +2152,7 @@ document.addEventListener('click',e=>{
     else next=[...c,id];
     S.units=next.length===list.length&&!next.includes('-')?[]:next;
     chips();if(!chosen().includes(cur.unit)){cur=gen()}render();save();focusAns()}
-  if(ch&&cur.choices)answer(cur.choices[+ch.dataset.ch]===cur.ans);
+  if(ch&&cur.choices)answer(cur.choices[+ch.dataset.ch]===cur.ans,cur.choices[+ch.dataset.ch]);
   const rx=e.target.closest('[data-rx]');if(rx){const g=rx.dataset.rx;rpOpen.r.has(g)?rpOpen.r.delete(g):rpOpen.r.add(g);renderRange();return}
   const rb=e.target.closest('[data-ru],[data-rg]');
   if(rb&&canManage){const d=new Set(rangeDraft||rgUnits||enabled);togglePick(d,rb,'r');rangeDraft=UNITS.map(u=>u.id).filter(i=>d.has(i));renderRange();$('rMsg').textContent='저장하지 않은 변경이 있어요.'}
@@ -2122,10 +2172,11 @@ document.addEventListener('click',e=>{
   if(e.target.id==='toTeacher'){$('teacher').scrollIntoView({behavior:'smooth'})}
 });
 document.addEventListener('keydown',e=>{
-  if($('gate').hidden&&$('urModal').hidden&&tab==='forge'&&cur.choices&&/^[1-4]$/.test(e.key)&&!e.target.closest('input')){e.preventDefault();const i=+e.key-1;if(cur.choices[i])answer(cur.choices[i]===cur.ans)}});
-function answer(ok){
+  if($('gate').hidden&&$('urModal').hidden&&tab==='forge'&&cur.choices&&/^[1-4]$/.test(e.key)&&!e.target.closest('input')){e.preventDefault();const i=+e.key-1;if(cur.choices[i])answer(cur.choices[i]===cur.ans,cur.choices[i])}});
+function answer(ok,given){
   if(cur.none)return;
   const fb=$('fb'),u=cur.unit,bu=Array.isArray(S.byUnit[u])?S.byUnit[u]:[0,0];
+  if(!ok){S.wrong.push({q:plainQ(cur.q).slice(0,60),a:plainQ(cur.ans).slice(0,20),m:plainQ(given).slice(0,20),u,t:Date.now()});if(S.wrong.length>WRONG_MAX)S.wrong=S.wrong.slice(-WRONG_MAX)}
   S.solved++;S.byUnit[u]=[bu[0]+(ok?1:0),bu[1]+1];
   {const wk=weekKey();if(S.wk!==wk){S.wk=wk;S.wn=0}if(ok)S.wn++}
   if(ok){
@@ -2145,7 +2196,7 @@ document.querySelector('.nkp').addEventListener('click',e=>{const b=e.target.clo
 const coarse=matchMedia('(pointer:coarse)').matches;if(coarse)$('ans').setAttribute('inputmode','none');
 $('f').addEventListener('submit',e=>{
   e.preventDefault();const v=$('ans').value.trim();if(v===''||cur.choices||cur.none)return;
-  answer(Number(v.replace(/,/g,''))===Number(cur.ans));
+  answer(Number(v.replace(/,/g,''))===Number(cur.ans),v);
 });
 $('hammer').addEventListener('click',async()=>{
   const w=S.w;if(busy||(!test&&S.tk<1))return;
