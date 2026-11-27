@@ -395,6 +395,27 @@ ul{margin:0;padding-left:1.2em}li{margin:4px 0}
 .newtag{display:inline-block;margin-left:6px;padding:0 6px;border-radius:6px;background:var(--ember);color:#fff;font-size:12px;vertical-align:middle}
 .teacher[hidden]{display:none}
 .tbl{overflow-x:auto}
+.eqtop{display:grid;grid-template-columns:1.1fr 1fr;gap:14px}
+.eqpanel{background:rgba(0,0,0,.25);border:1px solid rgba(255,170,90,.22);border-radius:16px;padding:16px}
+.eqpanel h3{margin:0 0 12px;font-size:16px;color:#ffb35c}.eqpanel h3 small{color:var(--mute);font-weight:400;font-size:13px}
+.eqslots{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.eqslot{width:160px;text-align:center}.eqslot b{display:block;margin-top:8px;font-size:15px}.eqslot small{display:block;font-size:12px;color:var(--mute);line-height:1.5}
+.eqbox{height:150px;border-radius:16px;display:flex;align-items:center;justify-content:center;position:relative}.eqbox img{height:130px}
+.eqslot.m .eqbox{background:radial-gradient(circle,#4a2a12,#24160e);border:3px solid #f59f00;box-shadow:0 0 18px rgba(245,159,0,.35)}
+.eqslot.s .eqbox{background:radial-gradient(circle,#11304d,#14161e);border:3px solid #4dabf7;box-shadow:0 0 18px rgba(77,171,247,.3)}
+.eqslot.l .eqbox{background:rgba(0,0,0,.3);border:2px dashed #4a3a30;color:#6b5a4c;font-size:34px}
+.eqlbl{position:absolute;top:-10px;left:50%;transform:translateX(-50%);font-size:12px;padding:1px 10px;border-radius:999px;color:#fff;font-weight:700;white-space:nowrap}
+.eqslot.m .eqlbl{background:#e8590c}.eqslot.s .eqlbl{background:#1c7ed6}.eqslot.l .eqlbl{background:#4a3a30}
+.eqsum div{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:14px}.eqsum b{color:#8ce99a;text-align:right}.eqsum .bad b{color:#ff8787}.eqsum .ward b{color:#b197fc}.eqsum .shield b{color:#74c0fc}
+.eqgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:10px}
+.eqit{font:inherit;color:inherit;background:#1a120e;border:2px solid #2e2019;border-radius:12px;padding:8px 6px;text-align:center;position:relative;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px}
+.eqit:hover{border-color:#6b5247}.eqit img{height:74px}.eqit b{font-size:13px}.eqit small{font-size:11px;color:var(--mute)}
+.eqit.main{border-color:#f59f00}.eqit.sub{border-color:#4dabf7}.eqit.sel{box-shadow:0 0 0 3px #fff3}
+.eqtg{position:absolute;top:5px;left:5px;font-style:normal;font-size:11px;padding:0 6px;border-radius:6px;color:#fff}.eqtg.m{background:#e8590c}.eqtg.s{background:#1c7ed6}
+.eqpop{margin-top:12px;background:#2a1c15;border:1px solid #6b5247;border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:10px;font-size:14px;flex-wrap:wrap}.eqpop img{height:44px}.eqpop small{color:var(--mute)}
+.eqpop .bt{font:inherit;font-size:14px;font-weight:700;border:0;border-radius:10px;padding:8px 14px;color:#fff;background:linear-gradient(180deg,#ff9a3c,#e2571b);cursor:pointer}.eqpop .bt.b{background:#1c7ed6}.eqpop .bt:disabled{background:#3a2e29;color:#9c8678;cursor:default}
+@media (max-width:760px){.eqtop{grid-template-columns:1fr}.eqslot{width:calc(50% - 7px);max-width:160px}.eqbox{height:120px}.eqbox img{height:104px}.eqgrid{grid-template-columns:repeat(auto-fill,minmax(92px,1fr))}.eqit img{height:60px}.eqpanel{padding:12px}}
+
 .hamsum{grid-column:1/-1;font-size:14px;line-height:1.7;background:rgba(255,255,255,.05);border:1px solid rgba(255,190,120,.25);border-radius:12px;padding:10px 14px}.hamsum small{color:var(--mute)}
 .hbtns{display:flex;flex-direction:column;gap:6px;margin-top:auto;width:100%}.hbtns .bt{margin-top:0}
 .hcard .bt.sub{background:transparent;border:1.5px solid #4dabf7;color:#a5d8ff}.hcard .bt.sub.on{background:#1c7ed6;color:#fff}
@@ -479,7 +500,7 @@ legend{font-family:"Black Han Sans";font-size:18px;padding:0 6px}
 </header>
 
 <nav class="tabs" id="tabs" role="tablist">
-  <button role="tab" data-tab="forge">강화·보관함</button><button role="tab" data-tab="rank" id="tabRank" hidden>랭킹</button><button role="tab" data-tab="shop">상점</button><button role="tab" data-tab="codex">도감</button><button role="tab" data-tab="help">설명</button><button class="sndbtn" id="sndBtn" aria-pressed="false">🔇 소리 꺼짐</button>
+  <button role="tab" data-tab="forge">강화·보관함</button><button role="tab" data-tab="equip">장비</button><button role="tab" data-tab="rank" id="tabRank" hidden>랭킹</button><button role="tab" data-tab="shop">상점</button><button role="tab" data-tab="codex">도감</button><button role="tab" data-tab="help">설명</button><button class="sndbtn" id="sndBtn" aria-pressed="false">🔇 소리 꺼짐</button>
 </nav>
 <main class="band" style="padding-top:12px">
 <section class="game" data-panel="forge">
@@ -550,6 +571,10 @@ legend{font-family:"Black Han Sans";font-size:18px;padding:0 6px}
   <div class="shelf" id="shelf"></div>
   <div class="actions" id="invActions"></div>
   <p class="note" id="invMsg"></p>
+</section>
+<section class="card shelfcard eqcard" data-panel="equip">
+  <div class="shelfhead"><h2>장비</h2></div>
+  <div id="eqBody"></div>
 </section>
 <section class="card shelfcard shopcard" data-panel="shop">
   <div class="shelfhead"><h2>상점</h2><span class="goldpill">가진 골드 <b id="shopGold">0</b></span></div>
@@ -1520,7 +1545,7 @@ const TUT=[
  {tab:'forge',el:'#sellNow',t:'5. 판매',x:'지금 검을 팔아 골드를 받아요. 높은 검일수록 훨씬 비싸요. 두 번 눌러야 팔려요.'},
  {tab:'forge',el:'.goldbar',t:'6. 골드와 검 조각',x:'판 골드가 여기 모여요. 검이 부서지면 그 단계만큼 검 조각도 받아요.'},
  {tab:'forge',el:'#shelfCard',t:'7. 보관함',x:'파괴가 걱정되면 검을 보관하고 새로 시작해요. 같은 단계 검 두 자루를 합치면 다음 단계로 100% 강화돼요.'},
- {tab:'shop',el:'.shopcard',t:'8. 상점',x:'골드로 강화대 배경, 망치, 검(+10·+15·+20)을 살 수 있어요. 좋은 망치는 강화 확률을 올려 주고 특별한 효과도 있어요. 검 조각은 강화권·골드·주문서·검·파괴 방지 부적·콤보 방패로 바꾸고, 부서진 검을 되살릴 수도 있어요.'},
+ {tab:'shop',el:'.shopcard',t:'8. 상점',x:'골드로 강화대 배경, 망치, 검(+10·+15·+20)을 살 수 있어요. 좋은 망치는 강화 확률을 올려 주고 특별한 효과도 있어요. 산 망치는 「장비」 탭에서 주 망치·보조 칸에 끼워요. 검 조각은 강화권·골드·주문서·검·파괴 방지 부적·콤보 방패로 바꾸고, 부서진 검을 되살릴 수도 있어요.'},
  {tab:'codex',el:'[data-panel="codex"]',t:'9. 도감',x:'지금까지 만든 검이 여기 모여요. 다음 검은 무엇일까요?'},
  {tab:'rank',el:'#rankCard',t:'10. 랭킹',x:'친구들과 최고 무기, 이번 주에 맞힌 문제 수를 겨뤄요. 별명을 정하면 참여할 수 있어요.',need:()=>!$('tabRank').hidden},
  {tab:'help',el:'[data-panel="help"]',t:'11. 설명',x:'강화 확률과 규칙이 궁금하면 언제든 여기서 봐요. 이 튜토리얼도 여기서 다시 볼 수 있어요.'},
@@ -1561,6 +1586,42 @@ function applyBg(){
   if(id){st.classList.add('hasbg');st.style.backgroundImage=`linear-gradient(180deg,rgba(0,0,0,.35),rgba(0,0,0,0) 30%,rgba(0,0,0,0) 70%,rgba(0,0,0,.45)),url(img/bg-${id}.webp)`}
   else{st.classList.remove('hasbg');st.style.backgroundImage=''}
 }
+let eqSel=null;
+function renderEquip(){const el=$('eqBody');if(!el)return;
+  const m=curHam(),s=subHam(),own=HAM.filter(h=>!h.price||S.hams.includes(h.id)),cb=colBonus(),nOwn=own.length-1;
+  const pct=v=>Math.round(v*1000)/10;
+  const cut=m.ruin?0:1-(1-(m.boomCut||0))*(1-((s&&s.boomCut)||0)/2);
+  const step=Math.max(m.pity||PITY_STEP,s&&s.pity?PITY_STEP+(s.pity-PITY_STEP)/2:0);
+  const ef=h=>h.eff?`${h.eff} · ${h.desc}`:'특수 효과 없음';
+  const half=h=>h.boomCut?`파괴 ${pct(h.boomCut/2)}% 감소`:h.sellBonus?`판매 골드 +${pct(h.sellBonus/2)}%`:h.pity?`실패 보정 +${PITY_STEP+(h.pity-PITY_STEP)/2}%p`:h.free?`${pct(h.free/2)}% 확률로 강화권 안 씀`:h.double?`성공 시 ${pct(h.double/2)}% 확률로 +2강`:'';
+  const rows=[['강화 확률 (주 망치)',m.up?`+${m.up}%p`:'없음'],[`망치 수집 보너스 (${nOwn}개)`,`+${cb}%p`]];
+  if(m.ruin)rows.push(['💥 파멸','파괴 3배 · 조각 1.5배','bad']);
+  if(cut)rows.push(['파괴 확률 감소',`${pct(cut)}%`]);
+  if(hEff('free'))rows.push(['강화권 안 쓸 확률',`${pct(hEff('free'))}%`]);
+  if(hEff('double'))rows.push(['성공 시 +2강 확률',`${pct(hEff('double'))}%`]);
+  if(hEff('sellBonus'))rows.push(['무기 판매 골드',`+${pct(hEff('sellBonus'))}%`]);
+  if(step!==PITY_STEP)rows.push(['실패할 때 쌓이는 보정',`+${step}%p`]);
+  rows.push(['🧿 파괴 방지 부적',`${S.ward}개${m.ruin&&S.ward?' (파멸 중엔 쉬어요)':''}`,'ward'],['🛡️ 콤보 방패',`${S.shield}개`,'shield']);
+  const sel=eqSel&&own.find(h=>h.id===eqSel);
+  const canSub=h=>h.eff&&!h.noSub&&h.id!==m.id;
+  el.innerHTML=`<div class="eqtop"><div class="eqpanel"><h3>장착 중인 망치</h3><div class="eqslots">
+    <div class="eqslot m"><div class="eqbox"><span class="eqlbl">주 망치</span><img src="img/hm-${m.id}.webp" alt=""></div><b>${m.name}</b><small>${m.up?`강화 +${m.up}%p · `:''}${ef(m)}</small></div>
+    <div class="eqslot ${s?'s':'l'}"><div class="eqbox">${s?`<span class="eqlbl">보조</span><img src="img/hm-${s.id}.webp" alt="">`:'<span class="eqlbl">보조</span>＋'}</div><b>${s?s.name:'비어 있어요'}</b><small>${s?`${s.eff} 절반 · ${half(s)}`:'특수 효과가 있는 망치를 끼울 수 있어요'}</small>${s?'<button class="linkbtn" data-eqsub="">빼기</button>':''}</div>
+  </div><p class="note" style="text-align:center;margin:10px 0 0">아래 가방에서 망치를 누르면 끼울 칸을 고를 수 있어요</p></div>
+  <div class="eqpanel eqsum"><h3>지금 내 능력치</h3>${rows.map(([a,b,c])=>`<div class="${c||''}"><span>${a}</span><b>${b}</b></div>`).join('')}</div></div>
+  <div class="eqpanel" style="margin-top:14px"><h3>망치 가방 <small>${nOwn} / ${HAM.length-1} · <button class="linkbtn" data-tab="shop" data-gostab="ham">상점에서 더 사기</button></small></h3>
+  <div class="eqgrid">${own.map(h=>`<button class="eqit${h.id===m.id?' main':''}${s&&h.id===s.id?' sub':''}${sel&&sel.id===h.id?' sel':''}" data-eqsel="${h.id}">${h.id===m.id?'<em class="eqtg m">주</em>':''}${s&&h.id===s.id?'<em class="eqtg s">보조</em>':''}<img src="img/hm-${h.id}.webp" alt=""><b>${h.name}</b><small>${h.up?`+${h.up}%p`:h.price?'+0%p':'기본'}${h.eff?' · '+h.eff:''}</small></button>`).join('')}</div>
+  ${sel?`<div class="eqpop"><img src="img/hm-${sel.id}.webp" alt=""><span><b>${sel.name}</b> · ${ef(sel)}<br><small>${sel.id===m.id?'지금 주 망치예요':s&&sel.id===s.id?'지금 보조 망치예요':'어디에 끼울까요?'}</small></span><span style="flex:1"></span>
+    <button class="bt" data-eqmain="${sel.id}" ${sel.id===m.id?'disabled':''}>주 망치로</button>
+    <button class="bt b" data-eqsub="${canSub(sel)?sel.id:'x'}" ${canSub(sel)&&!(s&&s.id===sel.id)?'':'disabled'} title="${sel.noSub?'파멸의 망치는 보조 칸에 못 껴요':!sel.eff?'특수 효과가 없어서 보조로는 효과가 없어요':''}">보조로</button></div>`:''}
+  <p class="note" id="eqMsg" style="margin:10px 0 0"></p></div>`;
+}
+document.addEventListener('click',e=>{
+  const a=e.target.closest('[data-eqsel]');if(a){eqSel=eqSel===a.dataset.eqsel?null:a.dataset.eqsel;renderEquip();return}
+  const mm=e.target.closest('[data-eqmain]');if(mm){const id=mm.dataset.eqmain,h=HAM.find(x=>x.id===id);if(!h||(h.price&&!S.hams.includes(id))||busy)return;S.ham=id==='wood'?'':id;if(S.ham2===S.ham)S.ham2='';eqSel=null;render();save();$('eqMsg').textContent=`'${h.name}'을(를) 주 망치로 들었어요.`;return}
+  const sb=e.target.closest('[data-eqsub]');if(sb){const id=sb.dataset.eqsub,h=HAM.find(x=>x.id===id);if(id==='x')return;if(id&&(!h||!h.eff||h.noSub||!S.hams.includes(id)||id===S.ham))return;S.ham2=id;eqSel=null;render();save();$('eqMsg').textContent=id?`'${h.name}'을(를) 보조 칸에 끼웠어요. ${h.eff} 효과가 절반만큼 더해져요.`:'보조 망치를 뺐어요.';return}
+  const gs=e.target.closest('[data-gostab]');if(gs){shopTab=gs.dataset.gostab;renderShop()}
+});
 function renderShop(){
   const fmt=n=>n.toLocaleString('ko-KR'),cur=S.bg;
   const card=(id,name,price,th)=>{const own=!id||S.bgs.includes(id),on=cur===id,ach=(SHOP_BG.find(b=>b.id===id)||{}).ach;
@@ -1577,9 +1638,10 @@ function renderShop(){
    <h3 class="fsub">조각 교환</h3><div class="fgrid">${FRAG_SHOP.map(x=>{const ok=S.frag>=x.cost&&(!x.can||x.can(S));return `<div class="fcard"><div><b>${x.name}</b><span>조각 ${x.cost}개${x.have?` · ${x.have(S)}`:''}</span>${x.desc?`<small class="fdesc">${x.desc}</small>`:''}</div><button class="bt" data-fx="${x.id}" ${ok?'':'disabled'}>${S.frag<x.cost?'조각 부족':x.can&&!x.can(S)?'가득 찼어요':'바꾸기'}</button></div>`}).join('')}</div>
    <h3 class="fsub">업적</h3><div class="fgrid">${ACH.map(a=>{const done=a.has(S),pc=Math.min(100,Math.round(S.fragTotal/a.need*100));return `<div class="fcard ach${done?' done':''}"><div><b>${a.name}${done?' ✓':''}</b><span>조각 ${fmt(a.need)}개 모으기 → ${a.reward}</span><i class="pbar"><i style="width:${pc}%"></i></i></div>${a.id==='frag2'&&done?`<button class="bt ${S.soulOn?'':'use'}" data-soul="1">${S.soulOn?'혼불 끄기':'혼불 켜기'}</button>`:`<span class="pc">${done?'완료':Math.min(S.fragTotal,a.need)+' / '+a.need}</span>`}</div>`}).join('')}</div>`}
   const curH=curHam().id,sub=subHam(),nOwn=S.hams.filter(id=>HAM.some(h=>h.id===id&&h.price>0)).length;
-  $('hamGrid').innerHTML=`<div class="hamsum"><b>망치 수집 ${nOwn}/${HAM.length-1}</b> · 강화 확률 +${colBonus()}%p <small>(가진 망치 1개당 +0.2%p)</small><br>주 망치: <b>${esc(curHam().name)}</b> · 보조 망치: <b>${sub?esc(sub.name):'없음'}</b> <small>(보조는 특수 효과만 절반 적용)</small></div>`+HAM.map(h=>{const own=!h.price||S.hams.includes(h.id),on=curH===h.id,isSub=sub&&sub.id===h.id,canSub=own&&h.eff&&!h.noSub&&!on;
-    const btn=on?'<button class="bt" disabled>주 망치 사용 중</button>':own?`<button class="bt use" data-useham="${h.id}">주 망치로 쓰기</button>${canSub?(isSub?`<button class="bt sub on" data-subham="">보조 해제</button>`:`<button class="bt sub" data-subham="${h.id}">보조로 끼우기</button>`):''}`:S.gold>=h.price?`<button class="bt" data-buyham="${h.id}">사기</button>`:`<button class="bt" disabled>${fmt(h.price-S.gold)} 골드 부족</button>`;
+  $('hamGrid').innerHTML=`<div class="hamsum"><b>망치 수집 ${nOwn}/${HAM.length-1}</b> · 강화 확률 +${colBonus()}%p <small>(가진 망치 1개당 +0.2%p)</small> · 산 망치는 <button class="linkbtn" data-tab="equip">장비 탭</button>에서 주 망치·보조 칸에 끼워요</div>`+HAM.map(h=>{const own=!h.price||S.hams.includes(h.id),on=curH===h.id,isSub=sub&&sub.id===h.id;
+    const btn=own?`<button class="bt use" data-tab="equip">${on?'주 망치 사용 중':isSub?'보조 사용 중':'보유 중 · 장비'}</button>`:S.gold>=h.price?`<button class="bt" data-buyham="${h.id}">사기</button>`:`<button class="bt" disabled>${fmt(h.price-S.gold)} 골드 부족</button>`;
     return `<div class="hcard${on?' on':''}${isSub?' subon':''}${h.ruin?' ruin':''}">${isSub?'<span class="subtag">보조</span>':''}<img src="img/hm-${h.id}.webp" alt="" loading="lazy"><span class="nm">${h.name}</span><span class="st">${h.up?`강화 확률 +${h.up}%p`:h.ruin?'강화 확률 보너스 없음':'기본 망치'}</span><span class="ef">${h.eff?`<b>${h.eff}</b> · ${h.desc}`:''}${h.noSub?'<br><small>보조 칸에는 못 껴요</small>':''}</span><span class="pr">${h.price?fmt(h.price)+' 골드':'기본 제공'}</span><div class="hbtns">${btn}</div></div>`}).join('');
+  renderEquip();
   $('shopGrid').innerHTML=card('','기본 대장간',0)+SHOP_BG.map(b=>card(b.id,b.name,b.price)).join('');
   const pid=previewBg===null?S.bg:previewBg,pv=$('shopPv'),pit=SHOP_BG.find(b=>b.id===pid);
   pv.classList.toggle('def',!pid);pv.style.backgroundImage=pid?`url(img/bg-${pid}.webp)`:'';
