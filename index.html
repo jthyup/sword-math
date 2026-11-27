@@ -134,6 +134,13 @@ header p{margin:4px 0 0;color:#e2cdb6;text-shadow:0 2px 6px rgba(0,0,0,.8)}
 form{display:flex;gap:10px;flex-wrap:wrap}
 input{flex:1;font:inherit;font-size:16px;min-height:48px;padding:0 14px;border-radius:12px;border:2px solid var(--line);background:var(--bg);color:var(--ink)}
 #ans{font-size:24px;min-height:56px;text-align:center;border-radius:14px}
+#f.nokp .nkp{display:none}
+#f .nok2{display:none}#f.nokp .nok2{display:block}
+#f.nokp{flex-wrap:wrap}
+#f.nokp #ans{flex:1 1 200px}
+.nkopt{display:flex;justify-content:flex-end;align-items:center;gap:6px;font-size:13px;color:var(--mute);margin-top:8px;cursor:pointer;user-select:none}
+.nkopt[hidden]{display:none}
+.nkopt input{width:16px;height:16px;min-height:0;flex:none;margin:0}
 #f{flex-wrap:nowrap;align-items:center;justify-content:center;gap:16px}
 #f #ans{flex:0 1 200px;min-width:0}
 .nkp{display:grid;grid-template-columns:repeat(3,56px);gap:7px}
@@ -553,8 +560,9 @@ legend{font-family:"Black Han Sans";font-size:18px;padding:0 6px}
       <div class="q" id="q" aria-live="polite">3 + 4 = ?</div>
       <form id="f" autocomplete="off">
         <input id="ans" inputmode="decimal" pattern="[0-9]*([.][0-9]*)?" placeholder="정답 입력" aria-label="정답">
-        <div class="nkp" aria-label="숫자 키패드"><button type="button" data-nk="7">7</button><button type="button" data-nk="8">8</button><button type="button" data-nk="9">9</button><button type="button" data-nk="4">4</button><button type="button" data-nk="5">5</button><button type="button" data-nk="6">6</button><button type="button" data-nk="1">1</button><button type="button" data-nk="2">2</button><button type="button" data-nk="3">3</button><button type="button" data-nk=".">.</button><button type="button" data-nk="0">0</button><button type="button" data-nk="del" class="del" aria-label="한 글자 지우기">⌫</button><button class="btn nok">확인</button></div>
+        <div class="nkp" aria-label="숫자 키패드"><button type="button" data-nk="7">7</button><button type="button" data-nk="8">8</button><button type="button" data-nk="9">9</button><button type="button" data-nk="4">4</button><button type="button" data-nk="5">5</button><button type="button" data-nk="6">6</button><button type="button" data-nk="1">1</button><button type="button" data-nk="2">2</button><button type="button" data-nk="3">3</button><button type="button" data-nk=".">.</button><button type="button" data-nk="0">0</button><button type="button" data-nk="del" class="del" aria-label="한 글자 지우기">⌫</button><button class="btn nok">확인</button></div><button class="btn nok2">확인</button>
       </form>
+      <label class="nkopt" id="nkOpt"><input type="checkbox" id="nkShow" checked> 키패드 보이기</label>
       <div class="choices" id="choices" hidden></div>
       <div class="feedback" id="fb" aria-live="polite">문제를 맞히면 강화권을 받아요!</div>
     </div>
@@ -1367,12 +1375,12 @@ function closeRangePicker(){
 }
 function renderQ(){
   const u=U[cur.unit],q=$('q');
-  if(cur.none){q.className='q long';q.textContent=cur.q;$('f').hidden=true;$('choices').hidden=true;$('choices').innerHTML='';return}
+  if(cur.none){q.className='q long';q.textContent=cur.q;$('f').hidden=true;$('nkOpt').hidden=true;$('choices').hidden=true;$('choices').innerHTML='';return}
   q.className='q'+(cur.long||cur.choices?' long':'');
   q.innerHTML=`<span class="unitlbl">${u.sem} ${u.name}${cur.hard?' · ★ 어려운 문제':''}</span><br>${cur.q}`;
   const ch=$('choices'),f=$('f');
-  if(cur.choices){ch.hidden=false;f.hidden=true;ch.innerHTML=cur.choices.map((c,i)=>`<button data-ch="${i}"><span class="key" aria-hidden="true">${i+1}</span>${c}</button>`).join('')}
-  else{ch.hidden=true;f.hidden=false;ch.innerHTML=''}
+  if(cur.choices){ch.hidden=false;f.hidden=true;$('nkOpt').hidden=true;ch.innerHTML=cur.choices.map((c,i)=>`<button data-ch="${i}"><span class="key" aria-hidden="true">${i+1}</span>${c}</button>`).join('')}
+  else{ch.hidden=true;f.hidden=false;$('nkOpt').hidden=false;ch.innerHTML=''}
 }
 var touchUI=false;
 function focusAns(){if(!touchUI&&!cur.choices&&!cur.none&&$('gate').hidden&&$('urModal').hidden)$('ans').focus()}
@@ -2273,7 +2281,13 @@ function nkPress(k){const a=$('ans');
 document.querySelector('.nkp').addEventListener('pointerdown',e=>{if(e.target.closest('[data-nk]'))e.preventDefault()});
 document.querySelector('.nkp').addEventListener('click',e=>{const b=e.target.closest('[data-nk]');if(b)nkPress(b.dataset.nk)});
 // 터치 화면(패드·휴대폰)에서는 기기 키보드를 띄우지 않고 우리 키패드만 써요.
-function setTouchUI(){if(touchUI)return;touchUI=true;const a=$('ans');a.setAttribute('inputmode','none');a.setAttribute('readonly','');if(document.activeElement===a)a.blur()}
+let touchDev=false,nkOn=true;try{nkOn=localStorage.getItem('forge-nkp')!=='0'}catch(e){}
+function applyNk(){const a=$('ans');touchUI=touchDev&&nkOn;$('f').classList.toggle('nokp',!nkOn);$('nkShow').checked=nkOn;
+  if(touchUI){a.setAttribute('inputmode','none');a.setAttribute('readonly','');if(document.activeElement===a)a.blur()}
+  else{a.setAttribute('inputmode','decimal');a.removeAttribute('readonly')}}
+function setTouchUI(){if(touchDev)return;touchDev=true;applyNk()}
+applyNk();
+$('nkShow').addEventListener('change',e=>{nkOn=e.target.checked;try{localStorage.setItem('forge-nkp',nkOn?'1':'0')}catch(x){}applyNk();if(!nkOn&&!touchDev)focusAns()});
 if(navigator.maxTouchPoints>0||matchMedia('(any-pointer:coarse)').matches)setTouchUI();
 addEventListener('pointerdown',e=>{if(e.pointerType==='touch'||e.pointerType==='pen')setTouchUI()},{capture:true,passive:true});
 document.addEventListener('keydown',e=>{
