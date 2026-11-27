@@ -2,7 +2,8 @@ rules_version = '2';
 
 // 연산 대장간 Firestore 보안 규칙
 // - 학생: 자기 기록(sm_students/{자기 uid})만 읽고 쓸 수 있어요.
-// - 선생님(아래 구글 계정): 모든 학생 기록을 보고, 지우고, 출제 범위·가입 허용·랭킹 공개를 바꿀 수 있어요.
+// - 관리자(아래 구글 계정): 모든 학생 기록을 보고, 지우고, 출제 범위·가입 허용·랭킹 공개를 바꾸고, 담임 요청을 승인해요.
+// - 담임(관리자가 승인한 구글 계정): 자기 반 학생 기록과 자기 반 출제 범위만 관리해요.
 // - 랭킹판(sm_rank): 로그인한 학생끼리 별명·최고 강화·주간 문제 수만 볼 수 있어요.
 // - 그 밖의 모든 경로는 막혀 있어요.
 // Firebase 콘솔 > Firestore Database > 규칙 탭에 이 내용을 통째로 붙여 넣고 [게시]를 누르세요.
@@ -19,6 +20,21 @@ service cloud.firestore {
         && request.auth.token.email == 'donnie05124@gmail.com'
         && request.auth.token.email_verified == true
         && request.auth.token.firebase.sign_in_provider == 'google.com';
+    }
+
+    // 관리자가 승인한 담임 (sm_teachers/{uid}.status == 'approved')
+    function tdoc() {
+      return get(/databases/$(database)/documents/sm_teachers/$(request.auth.uid)).data;
+    }
+    function isStaff() {
+      return signedIn()
+        && request.auth.token.firebase.sign_in_provider == 'google.com'
+        && exists(/databases/$(database)/documents/sm_teachers/$(request.auth.uid))
+        && tdoc().status == 'approved';
+    }
+    // 그 기록이 이 담임의 반 학생 것인지
+    function myClassOf(d) {
+      return isStaff() && d.grade == tdoc().grade && d.cls == tdoc().cls;
     }
 
     // 선생님이 '학생 스스로 가입'을 끄면 새 기록을 만들 수 없어요.
@@ -79,7 +95,9 @@ service cloud.firestore {
     // 랭킹판에 올리는 별명과 최고 강화는 자기 학생 기록과 같아야 해요.
     function rankMatches() {
       return request.resource.data.nick == get(/databases/$(database)/documents/sm_students/$(request.auth.uid)).data.get('nick', '')
-        && request.resource.data.best <= get(/databases/$(database)/documents/sm_students/$(request.auth.uid)).data.get('best', 0);
+        && request.resource.data.best <= get(/databases/$(database)/documents/sm_students/$(request.auth.uid)).data.get('best', 0)
+        && request.resource.data.get('grade', 0) == get(/databases/$(database)/documents/sm_students/$(request.auth.uid)).data.get('grade', 0)
+        && request.resource.data.get('cls', 0) == get(/databases/$(database)/documents/sm_students/$(request.auth.uid)).data.get('cls', 0);
     }
 
     function validStudent() {
@@ -88,15 +106,29 @@ service cloud.firestore {
         && request.resource.data.name.size() <= 20;
     }
 
-    // 출제 범위, 가입 허용: 누구나 읽고, 선생님만 바꿔요.
+    // 출제 범위, 가입 허용: 누구나 읽어요. 학교 기본(class)은 관리자만, 반 범위(c학년_반)는 관리자와 그 반 담임이 바꿔요.
     match /sm_settings/{docId} {
       allow read: if true;
-      allow write: if isTeacher();
+      allow write: if isTeacher()
+        || (isStaff() && docId == 'c' + string(tdoc().grade) + '_' + string(tdoc().cls));
+    }
+
+    // 담임 계정 요청: 구글로 로그인한 본인이 '대기 중'으로만 보내고, 승인·거절·회수는 관리자만 해요.
+    match /sm_teachers/{uid} {
+      allow read: if isTeacher() || (signedIn() && request.auth.uid == uid);
+      allow create, update: if isTeacher()
+        || (signedIn() && request.auth.uid == uid
+            && request.auth.token.firebase.sign_in_provider == 'google.com'
+            && request.resource.data.status == 'pending'
+            && request.resource.data.email == request.auth.token.email
+            && request.resource.data.grade is int && request.resource.data.grade >= 1 && request.resource.data.grade <= 6
+            && request.resource.data.cls is int && request.resource.data.cls >= 1 && request.resource.data.cls <= 20);
+      allow delete: if isTeacher();
     }
 
     // 학생 기록
     match /sm_students/{uid} {
-      allow read: if signedIn() && (request.auth.uid == uid || isTeacher());
+      allow read: if signedIn() && (request.auth.uid == uid || isTeacher() || myClassOf(resource.data));
       allow create: if isTeacher()
         || (signedIn() && request.auth.uid == uid && signupOpen() && validStudent()
             && request.resource.data.get('care', false) == false
@@ -105,19 +137,19 @@ service cloud.firestore {
             && request.resource.data.get('nickTk', 0) == 0);
       // 학생은 자기 기록을 고칠 수 있지만, 선생님이 정한 '기초 지원'·'문제 범위'는 못 바꾸고,
       // 학년·반·번호(일주일 1번), 별명(변경권 필요)도 규칙대로만 바꿀 수 있어요.
-      allow update: if isTeacher()
+      allow update: if isTeacher() || myClassOf(resource.data)
         || (signedIn() && request.auth.uid == uid && validStudent()
             && request.resource.data.get('care', false) == resource.data.get('care', false)
             && request.resource.data.get('range', null) == resource.data.get('range', null)
             && classOK() && nickOK() && nickTkOK());
-      allow delete: if isTeacher();
+      allow delete: if isTeacher() || myClassOf(resource.data);
     }
 
     // 랭킹판: 별명, 최고 강화, 이번 주 맞힌 문제 수만 담아요. (정답률 등은 선생님만)
     match /sm_rank/{uid} {
-      allow read: if isTeacher() || (signedIn() && rankOpen());
+      allow read: if isTeacher() || isStaff() || (signedIn() && rankOpen());
       allow create, update: if signedIn() && request.auth.uid == uid && validRank() && rankMatches();
-      allow delete: if isTeacher() || (signedIn() && request.auth.uid == uid);
+      allow delete: if isTeacher() || myClassOf(resource.data) || (signedIn() && request.auth.uid == uid);
     }
   }
 }
